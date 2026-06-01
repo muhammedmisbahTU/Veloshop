@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import sessionConfig from "./src/config/session.js";
 
 const app = express();
 
@@ -10,6 +11,8 @@ connectDB();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+app.use(sessionConfig);
 
 //  Test Route
 app.get('/api/health', (req, res) => {
