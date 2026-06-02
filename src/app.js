@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import expressLayouts from 'express-ejs-layouts';
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 dotenv.config();
@@ -26,7 +27,7 @@ app.set('views', path.join(__dirname, './views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', authRoutes);
-
+app.use('/', userRoutes);
 
 
 // 5. Start Server listening immediately
