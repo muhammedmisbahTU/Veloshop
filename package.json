@@ -21,6 +21,7 @@
     "express": "^5.2.1",
     "express-ejs-layouts": "^2.5.1",
     "express-session": "^1.19.0",
+    "joi": "^18.2.1",
     "mongoose": "^9.6.3"
   }
 }
