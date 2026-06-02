@@ -1,0 +1,252 @@
+<div class="min-h-screen bg-black text-white lg:grid lg:grid-cols-2">
+
+    <!-- LEFT SIDE -->
+    <div class="hidden lg:flex relative overflow-hidden">
+
+        <!-- Background Image -->
+        <div class="absolute inset-0">
+            <img
+                src="\images\login-gaming-bg.jpg"
+                alt="Gaming Setup"
+                class="w-full h-full object-cover opacity-80"
+            >
+            <div class="absolute inset-0 bg-black/70"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="relative z-10 p-10 xl:p-14 flex flex-col justify-between w-full">
+
+            <!-- Logo -->
+            <div>
+                <h1 class="text-4xl font-bold">
+                    VELO<span class="text-lime-400">SHOP</span>
+                </h1>
+            </div>
+
+            <!-- Hero -->
+            <div class="max-w-md">
+
+                <p class="text-lime-400 uppercase text-sm font-semibold mb-4">
+                    For Gamers. By Gamers.
+                </p>
+
+                <h2 class="text-6xl font-bold leading-tight mb-6">
+                    GEAR UP.<br>
+                    GAME <span class="text-lime-400">AHEAD.</span>
+                </h2>
+
+                <p class="text-gray-400 text-lg mb-10">
+                    Premium gaming gear for those who play to win.
+                </p>
+
+                <div class="space-y-6">
+
+                    <div class="flex gap-4">
+                        <div class="text-lime-400">🔒</div>
+                        <div>
+                            <h4 class="font-semibold">Secure Payments</h4>
+                            <p class="text-sm text-gray-400">
+                                100% secure and encrypted transactions.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="text-lime-400">↩</div>
+                        <div>
+                            <h4 class="font-semibold">Easy Returns</h4>
+                            <p class="text-sm text-gray-400">
+                                Hassle-free returns within 30 days.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="text-lime-400">✔</div>
+                        <div>
+                            <h4 class="font-semibold">2-Year Warranty</h4>
+                            <p class="text-sm text-gray-400">
+                                Official warranty protection.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="text-lime-400">🎧</div>
+                        <div>
+                            <h4 class="font-semibold">24/7 Support</h4>
+                            <p class="text-sm text-gray-400">
+                                We are here to help anytime.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="text-sm text-gray-500">
+                © 2025 Veloshop. All rights reserved.
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="flex items-center justify-center p-5 sm:p-8">
+
+        <div class="w-full max-w-xl">
+
+            <!-- Mobile Logo -->
+            <div class="lg:hidden text-center mb-8">
+                <h1 class="text-3xl font-bold">
+                    VELO<span class="text-lime-400">SHOP</span>
+                </h1>
+            </div>
+
+            <div class="bg-white/[0.03] border border-white/10 rounded-3xl p-6 sm:p-8 lg:p-10 backdrop-blur-xl">
+
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-8">
+
+                    <div>
+                        <h2 class="text-3xl font-bold">
+                            Welcome back
+                        </h2>
+
+                        <p class="text-gray-400 mt-2">
+                            Login to continue to your account
+                        </p>
+                    </div>
+
+                    <div class="hidden sm:block text-sm text-gray-400 ">
+                        New to Veloshop?
+                        <a href="/register"
+                           class="text-lime-400 hover:underline ">
+                            Create account
+                        </a>
+                    </div>
+
+                </div>
+
+                <!-- Form -->
+                <form action="/login" method="POST" class="space-y-5">
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-sm mb-2">
+                            Email address
+                        </label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:border-lime-400 focus:outline-none"
+                        >
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="block text-sm mb-2">
+                            Password
+                        </label>
+
+                        <input
+                            type="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:border-lime-400 focus:outline-none"
+                        >
+                    </div>
+
+                    <!-- error -->
+
+                    <!-- Remember -->
+                    <div class="flex justify-between items-center text-sm">
+
+                        <label class="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                class="accent-lime-400"
+                            >
+                            Remember me
+                        </label>
+
+                        <a
+                            href="/forgot-password"
+                            class="text-lime-400"
+                        >
+                            Forgot password?
+                        </a>
+
+                    </div>
+
+                    <!-- Submit -->
+                    <button
+                        type="submit"
+                        class="w-full h-14 bg-lime-400 hover:bg-lime-300 text-black font-bold rounded-xl transition-all duration-300"
+                    >
+                        Login
+                    </button>
+
+                </form>
+
+                <!-- Divider -->
+                <div class="flex items-center gap-4 my-8">
+
+                    <div class="flex-1 h-px bg-white/10"></div>
+
+                    <span class="text-gray-500 text-xs">
+                        OR CONTINUE WITH
+                    </span>
+
+                    <div class="flex-1 h-px bg-white/10"></div>
+
+                </div>
+
+                <!-- Google -->
+                <a
+                    href="/auth/google"
+                    class="flex items-center justify-center gap-3 border border-white/10 rounded-xl h-14 hover:border-lime-400 transition"
+                >
+                    <span class="text-xl">G</span>
+                    Continue with Google
+                </a>
+
+                <!-- Terms -->
+                <p class="text-center text-xs text-gray-500 mt-6">
+                    By continuing, you agree to our
+                    <a href="/terms" class="text-lime-400">
+                        Terms of Service
+                    </a>
+                    and
+                    <a href="/privacy" class="text-lime-400">
+                        Privacy Policy
+                    </a>
+                </p>
+
+
+                <!-- Mobile Register -->
+                <div class="sm:hidden text-center mt-8 text-sm">
+
+                    New to Veloshop?
+
+                    <a
+                        href="/register"
+                        class="text-lime-400"
+                    >
+                        Create account
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
