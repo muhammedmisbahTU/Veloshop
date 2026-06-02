@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><%= title || "Ecommerce" %></title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body class="bg-black text-white">
+
+    <%- include('../partials/user/navbar') %>
+
+    <main class="min-h-screen">
+        <%- body %>
+    </main>
+
+    <%- include('../partials/user/footer') %>
+
+</body>
+</html>
