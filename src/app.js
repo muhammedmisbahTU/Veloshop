@@ -7,10 +7,13 @@ import { fileURLToPath } from 'url';
 import expressLayouts from 'express-ejs-layouts';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import morgan from 'morgan';
 
 const app = express();
 dotenv.config();
 connectDB();
+
+app.use(morgan("dev"))
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

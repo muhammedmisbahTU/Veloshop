@@ -1,0 +1,264 @@
+<div class="min-h-screen bg-black text-white p-6">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="grid lg:grid-cols-2 gap-8">
+
+            <!-- LEFT SIDE -->
+            <div
+                class="hidden lg:flex flex-col justify-between rounded-3xl  overflow-hidden">
+
+                <!-- Logo -->
+                <div class="p-8">
+                    <h1 class="text-3xl font-bold tracking-wide">
+                        <span class="text-lime-400">V</span> VELOSHOP
+                    </h1>
+                </div>
+
+                <!-- Product Image -->
+                <div class="flex justify-center px-8">
+                    <img
+                        src="/images/auth/headphone.png"
+                        alt="Headphone"
+                        class="max-h-[500px] object-contain">
+                </div>
+
+                <!-- Bottom Features -->
+                <div class="grid grid-cols-3 ">
+
+                    <div class="p-5 text-center">
+                        <div
+                            class="w-12 h-12 mx-auto mb-3 rounded-full bg-lime-500/10 flex items-center justify-center text-lime-400">
+                            🔒
+                        </div>
+
+                        <h3 class="font-medium">
+                            Secure & Encrypted
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-2">
+                            Your data is protected.
+                        </p>
+                    </div>
+
+                    <div class="p-5 text-center ">
+                        <div
+                            class="w-12 h-12 mx-auto mb-3 rounded-full bg-lime-500/10 flex items-center justify-center text-lime-400">
+                            🛡️
+                        </div>
+
+                        <h3 class="font-medium">
+                            Private & Trusted
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-2">
+                            We never share information.
+                        </p>
+                    </div>
+
+                    <div class="p-5 text-center">
+                        <div
+                            class="w-12 h-12 mx-auto mb-3 rounded-full bg-lime-500/10 flex items-center justify-center text-lime-400">
+                            ✔
+                        </div>
+
+                        <h3 class="font-medium">
+                            Protected Always
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-2">
+                            Industry-grade security.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE -->
+            <div class="flex items-center justify-center">
+
+                <div
+                    class="w-full max-w-2xl rounded-3xl border border-lime-500/20 bg-zinc-950 p-8 shadow-2xl">
+
+                    <!-- Logo -->
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold">
+                            Verify your
+                            <span class="text-lime-400">account</span>
+                        </h2>
+
+                        <p class="text-gray-400 mt-3">
+                            Enter the 6-digit verification code sent to
+                        </p>
+
+                        <p class="mt-2 text-lime-400 font-medium">
+                            <%= email %>
+                        </p>
+                    </div>
+
+                    <!-- OTP Inputs -->
+                    <form
+                        action="/verify-otp"
+                        method="POST">
+
+                        <input
+                            type="hidden"
+                            name="email"
+                            value="<%= email %>">
+
+                        <div
+                            class="flex justify-center gap-3 mb-8">
+
+                            <% for(let i=0;i<6;i++){ %>
+                                <input
+                                    type="text"
+                                    maxlength="1"
+                                    class="otp-input w-14 h-16 text-center text-2xl rounded-xl bg-black border border-zinc-700 focus:border-lime-400 focus:outline-none">
+                            <% } %>
+
+                        </div>
+
+                        <input
+                            type="hidden"
+                            id="otp"
+                            name="otp">
+
+                        <!-- Timer -->
+                        <div
+                            class="text-center text-sm text-gray-400 mb-6">
+                            Code expires in
+                            <span
+                                id="timer"
+                                class="text-lime-400 font-semibold">
+                                01:00
+                            </span>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div
+                            class="rounded-xl border border-zinc-800 p-4 bg-zinc-900 mb-6">
+
+                            <p class="text-sm text-gray-300">
+                                Enter the verification code sent to your
+                                email address.
+                            </p>
+
+                        </div>
+
+                        <!-- Submit -->
+                        <button
+                            type="submit"
+                            class="w-full bg-lime-400 text-black py-4 rounded-xl font-bold text-lg hover:bg-lime-300 transition">
+
+                            Verify OTP →
+                        </button>
+
+                    </form>
+
+                    <!-- Resend -->
+                    <div
+                        class="mt-6 flex justify-between items-center">
+
+                        <form
+                            action="/resend-otp"
+                            method="POST">
+
+                            <input
+                                type="hidden"
+                                name="email"
+                                value="<%= email %>">
+
+                            <button
+                                id="resendBtn"
+                                class="text-gray-300 hover:text-lime-400">
+
+                                Resend OTP
+                            </button>
+
+                        </form>
+
+                        <span
+                            class="text-sm text-gray-500">
+                            Attempts Remaining:
+                            <span class="text-lime-400">
+                                <%= attemptsLeft || 5 %>
+                            </span>
+                        </span>
+                    </div>
+
+                    <!-- Back -->
+                    <div class="mt-8 text-center">
+                        <a
+                            href="/register"
+                            class="text-gray-400 hover:text-lime-400">
+
+                            ← Back to Register
+
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const inputs = document.querySelectorAll(".otp-input");
+    const otpField = document.getElementById("otp");
+
+    inputs.forEach((input, index) => {
+
+        input.addEventListener("input", () => {
+
+            if (
+                input.value &&
+                index < inputs.length - 1
+            ) {
+                inputs[index + 1].focus();
+            }
+
+            otpField.value = [...inputs]
+                .map(i => i.value)
+                .join("");
+        });
+
+        input.addEventListener("keydown", (e) => {
+
+            if (
+                e.key === "Backspace" &&
+                !input.value &&
+                index > 0
+            ) {
+                inputs[index - 1].focus();
+            }
+
+        });
+
+    });
+
+    let time = 60;
+
+    const timer = document.getElementById("timer");
+
+    const interval = setInterval(() => {
+
+        let min = String(Math.floor(time / 60))
+            .padStart(2, "0");
+
+        let sec = String(time % 60)
+            .padStart(2, "0");
+
+        timer.textContent = `${min}:${sec}`;
+
+        time--;
+
+        if (time < 0) {
+            clearInterval(interval);
+            timer.textContent = "Expired";
+        }
+
+    }, 1000);
+</script>
