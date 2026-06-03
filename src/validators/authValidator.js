@@ -16,7 +16,14 @@ export const registerSchema = Joi.object({
   password: Joi.string()
     .min(6)
     .max(20)
+    .required(),
+
+  confirmPassword: Joi.any()
+    .valid(Joi.ref("password"))
     .required()
+    .messages({
+      "any.only": "Passwords do not match"
+    })
 
 });
 
