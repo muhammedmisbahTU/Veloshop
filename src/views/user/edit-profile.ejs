@@ -1,0 +1,356 @@
+<div class="max-w-4xl mx-auto px-4 py-10">
+
+    <!-- Back to Profile Link -->
+    <div class="mb-6">
+        <a href="/profile" class="text-lime-400 hover:text-lime-300 text-sm font-semibold flex items-center gap-1 transition">
+            ← Back to Profile Dashboard
+        </a>
+    </div>
+
+    <h1 class="text-3xl font-extrabold text-white mb-8">Edit Profile Settings</h1>
+
+    <div id="general-alert" class="hidden rounded-xl p-4 text-sm mb-6 text-center"></div>
+
+    <div class="space-y-8">
+
+        <!-- Form 1: Edit Name & Avatar -->
+        <div class="bg-zinc-950 border border-white/5 p-6 sm:p-8 rounded-3xl backdrop-blur-xl">
+            <h2 class="text-xl font-bold text-white mb-6">Personal Details</h2>
+            
+            <form id="editDetailsForm" enctype="multipart/form-data" class="space-y-6">
+                <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-white/5">
+                    <!-- Current Avatar Preview -->
+                    <div class="relative group cursor-pointer">
+                        <% if (profileUser.avatar) { %>
+                            <img id="avatarPreview" src="<%= profileUser.avatar %>" alt="Avatar Preview" class="w-20 h-20 rounded-full object-cover border-2 border-lime-400">
+                        <% } else { %>
+                            <div id="avatarPlaceholder" class="w-20 h-20 rounded-full bg-zinc-900 border-2 border-dashed border-zinc-700 flex items-center justify-center text-2xl font-bold text-lime-400">
+                                <%= profileUser.fullName.charAt(0).toUpperCase() %>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="flex-1 w-full text-center sm:text-left">
+                        <label class="block text-sm text-gray-300 mb-2 font-medium">Update Profile Image</label>
+                        <input 
+                            type="file" 
+                            name="avatar" 
+                            accept="image/*"
+                            id="avatarInput"
+                            class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-lime-400 hover:file:bg-zinc-700 file:cursor-pointer"
+                        >
+                        <p class="text-xs text-gray-500 mt-2">Maximum file size: 5MB. Format: JPG, PNG, WEBP, GIF.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm text-gray-300">Full Name</label>
+                    <input 
+                        type="text" 
+                        name="fullName" 
+                        value="<%= profileUser.fullName %>"
+                        class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 focus:border-lime-400 focus:outline-none text-white text-sm"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-black font-bold text-sm rounded-xl transition duration-300">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+
+        <!-- Form 2: Change Email with Verification -->
+        <div class="bg-zinc-950 border border-white/5 p-6 sm:p-8 rounded-3xl backdrop-blur-xl">
+            <h2 class="text-xl font-bold text-white mb-2">Change Email Address</h2>
+            <p class="text-xs text-gray-400 mb-6">Updating your email address requires entering a verification code sent to your new mailbox.</p>
+            
+            <div id="email-alert" class="hidden rounded-xl p-4 text-sm mb-5 text-center"></div>
+
+            <!-- Email Request Step -->
+            <form id="emailRequestForm" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Current Email</label>
+                        <input type="text" value="<%= profileUser.email %>" class="w-full bg-black/40 border border-zinc-800 rounded-xl px-4 py-3 text-gray-500 text-sm focus:outline-none" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">New Email Address</label>
+                        <input type="email" name="newEmail" id="newEmailInput" placeholder="Enter new email address" class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm focus:border-lime-400 focus:outline-none" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="sendEmailOtpBtn" class="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-black font-semibold text-xs rounded-xl transition">
+                    Send Verification Code
+                </button>
+            </form>
+
+            <!-- Email Verification Step (Hidden initially) -->
+            <form id="emailVerifyForm" class="hidden space-y-4 mt-6 pt-6 border-t border-white/5">
+                <div class="space-y-2 max-w-sm">
+                    <label class="block text-sm text-gray-300">Verification Code</label>
+                    <input 
+                        type="text" 
+                        name="otp" 
+                        maxlength="6"
+                        placeholder="Enter 6-digit OTP" 
+                        class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm text-center tracking-widest font-mono focus:border-lime-400 focus:outline-none"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-xs rounded-xl transition">
+                    Verify & Update Email
+                </button>
+            </form>
+        </div>
+
+        <!-- Form 3: Change Password (LOCAL users only) -->
+        <% if (profileUser.authProvider === 'LOCAL') { %>
+            <div class="bg-zinc-950 border border-white/5 p-6 sm:p-8 rounded-3xl backdrop-blur-xl shadow-2xl">
+                <h2 class="text-xl font-bold text-white mb-6">Change Account Password</h2>
+                
+                <div id="password-alert" class="hidden rounded-xl p-4 text-sm mb-5 text-center"></div>
+
+                <form id="changePasswordForm" class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm text-gray-300">Current Password</label>
+                        <input 
+                            type="password" 
+                            name="currentPassword" 
+                            placeholder="Enter current password" 
+                            class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 focus:border-lime-400 focus:outline-none text-white text-sm"
+                            required
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-sm text-gray-300">New Password</label>
+                            <input 
+                                type="password" 
+                                name="newPassword" 
+                                placeholder="Minimum 6 characters" 
+                                class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 focus:border-lime-400 focus:outline-none text-white text-sm"
+                                required
+                            >
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm text-gray-300">Confirm New Password</label>
+                            <input 
+                                type="password" 
+                                name="confirmPassword" 
+                                placeholder="Verify new password" 
+                                class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 focus:border-lime-400 focus:outline-none text-white text-sm"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <button type="submit" class="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-black font-bold text-sm rounded-xl transition duration-300">
+                        Update Password
+                    </button>
+                </form>
+            </div>
+        <% } %>
+
+    </div>
+
+</div>
+
+<script>
+// Avatar input preview helper
+const avatarInput = document.getElementById("avatarInput");
+const avatarPreview = document.getElementById("avatarPreview");
+const avatarPlaceholder = document.getElementById("avatarPlaceholder");
+
+if (avatarInput) {
+    avatarInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (avatarPreview) {
+                    avatarPreview.src = event.target.result;
+                } else if (avatarPlaceholder) {
+                    // Create an img element to replace placeholder
+                    const img = document.createElement("img");
+                    img.id = "avatarPreview";
+                    img.src = event.target.result;
+                    img.className = "w-20 h-20 rounded-full object-cover border-2 border-lime-400";
+                    avatarPlaceholder.parentNode.replaceChild(img, avatarPlaceholder);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// 1. Submit basic details form
+const editDetailsForm = document.getElementById("editDetailsForm");
+const generalAlert = document.getElementById("general-alert");
+
+editDetailsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    generalAlert.classList.add("hidden");
+    generalAlert.className = "hidden rounded-xl p-4 text-sm mb-6 text-center";
+
+    const formData = new FormData(editDetailsForm);
+
+    try {
+        const response = await fetch("/profile/edit", {
+            method: "POST",
+            body: formData // Form data sends fields and files properly
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            generalAlert.classList.remove("hidden");
+            generalAlert.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+            generalAlert.textContent = result.message || "Profile updated successfully!";
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            generalAlert.classList.remove("hidden");
+            generalAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            generalAlert.textContent = result.message || "Failed to update profile details.";
+        }
+    } catch (err) {
+        generalAlert.classList.remove("hidden");
+        generalAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+        generalAlert.textContent = "A network error occurred. Please try again.";
+    }
+});
+
+// 2. Email update forms
+const emailRequestForm = document.getElementById("emailRequestForm");
+const emailVerifyForm = document.getElementById("emailVerifyForm");
+const emailAlert = document.getElementById("email-alert");
+const sendEmailOtpBtn = document.getElementById("sendEmailOtpBtn");
+const newEmailInput = document.getElementById("newEmailInput");
+
+emailRequestForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    emailAlert.classList.add("hidden");
+    emailAlert.className = "hidden rounded-xl p-4 text-sm mb-5 text-center";
+    sendEmailOtpBtn.setAttribute("disabled", "true");
+    sendEmailOtpBtn.textContent = "Sending OTP...";
+
+    try {
+        const response = await fetch("/profile/change-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newEmail: newEmailInput.value })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            emailAlert.classList.remove("hidden");
+            emailAlert.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+            emailAlert.textContent = result.message || "Verification code sent!";
+            
+            // Show verification step
+            emailVerifyForm.classList.remove("hidden");
+            newEmailInput.setAttribute("readonly", "true");
+            sendEmailOtpBtn.classList.add("hidden");
+        } else {
+            sendEmailOtpBtn.removeAttribute("disabled");
+            sendEmailOtpBtn.textContent = "Send Verification Code";
+            emailAlert.classList.remove("hidden");
+            emailAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            emailAlert.textContent = result.message || "Failed to send code.";
+        }
+    } catch (err) {
+        sendEmailOtpBtn.removeAttribute("disabled");
+        sendEmailOtpBtn.textContent = "Send Verification Code";
+        emailAlert.classList.remove("hidden");
+        emailAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+        emailAlert.textContent = "A network error occurred. Please try again.";
+    }
+});
+
+emailVerifyForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    emailAlert.classList.add("hidden");
+    emailAlert.className = "hidden rounded-xl p-4 text-sm mb-5 text-center";
+
+    const otp = emailVerifyForm.querySelector("input[name='otp']").value;
+
+    try {
+        const response = await fetch("/profile/verify-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newEmail: newEmailInput.value, otp })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            emailAlert.classList.remove("hidden");
+            emailAlert.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+            emailAlert.textContent = result.message || "Email updated successfully!";
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            emailAlert.classList.remove("hidden");
+            emailAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            emailAlert.textContent = result.message || "Failed to verify code.";
+        }
+    } catch (err) {
+        emailAlert.classList.remove("hidden");
+        emailAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+        emailAlert.textContent = "A network error occurred. Please try again.";
+    }
+});
+
+// 3. Password change form
+const changePasswordForm = document.getElementById("changePasswordForm");
+const passwordAlert = document.getElementById("password-alert");
+
+if (changePasswordForm) {
+    changePasswordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        passwordAlert.classList.add("hidden");
+        passwordAlert.className = "hidden rounded-xl p-4 text-sm mb-5 text-center";
+
+        const formData = new FormData(changePasswordForm);
+        const data = Object.fromEntries(formData.entries());
+
+        if (data.newPassword !== data.confirmPassword) {
+            passwordAlert.classList.remove("hidden");
+            passwordAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            passwordAlert.textContent = "Passwords do not match.";
+            return;
+        }
+
+        try {
+            const response = await fetch("/profile/change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                passwordAlert.classList.remove("hidden");
+                passwordAlert.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+                passwordAlert.textContent = result.message || "Password updated successfully!";
+                changePasswordForm.reset();
+            } else {
+                passwordAlert.classList.remove("hidden");
+                passwordAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+                passwordAlert.textContent = result.message || "Failed to update password.";
+            }
+        } catch (err) {
+            passwordAlert.classList.remove("hidden");
+            passwordAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            passwordAlert.textContent = "A network error occurred. Please try again.";
+        }
+    });
+}
+</script>

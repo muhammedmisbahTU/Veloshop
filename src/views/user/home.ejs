@@ -1,0 +1,110 @@
+<section class="relative overflow-hidden border-b border-white/10">
+    <div class="absolute inset-0">
+        <img src="/images/login-gaming-bg.jpg" alt="Gaming setup" class="h-full w-full object-cover opacity-45">
+        <div class="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/35"></div>
+    </div>
+
+    <div class="relative mx-auto grid min-h-[78vh] max-w-7xl grid-cols-1 items-center gap-10 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr]">
+        <div class="max-w-3xl">
+            <p class="mb-4 text-sm font-bold uppercase tracking-[0.28em] text-lime-400">Premium gaming gear</p>
+            <h1 class="text-5xl font-black leading-tight text-white sm:text-6xl lg:text-7xl">
+                VELOSHOP
+            </h1>
+            <p class="mt-5 max-w-xl text-lg leading-8 text-zinc-300">
+                Performance peripherals, clean setups, and battle-ready accessories curated for players who care about feel, speed, and style.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-3">
+                <a href="/shop" class="rounded-lg bg-lime-400 px-6 py-3 text-sm font-bold text-black transition hover:bg-lime-300">Shop gear</a>
+                <a href="/register" class="rounded-lg border border-white/20 px-6 py-3 text-sm font-bold text-white transition hover:border-lime-400 hover:text-lime-400">Join Veloshop</a>
+            </div>
+        </div>
+
+        <div class="hidden justify-end lg:flex">
+            <img src="/images/auth/headphone.png" alt="Gaming headphone" class="max-h-[520px] w-full max-w-md object-contain drop-shadow-2xl">
+        </div>
+    </div>
+</section>
+
+<section class="mx-auto max-w-7xl px-6 py-12">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="border border-white/10 bg-zinc-950 p-6">
+            <p class="text-sm font-bold text-lime-400">Fast dispatch</p>
+            <p class="mt-2 text-sm leading-6 text-zinc-400">Packed quickly with tracking-ready order updates.</p>
+        </div>
+        <div class="border border-white/10 bg-zinc-950 p-6">
+            <p class="text-sm font-bold text-lime-400">Trusted brands</p>
+            <p class="mt-2 text-sm leading-6 text-zinc-400">Keyboards, headsets, controllers, chairs, and setup essentials.</p>
+        </div>
+        <div class="border border-white/10 bg-zinc-950 p-6">
+            <p class="text-sm font-bold text-lime-400">Secure checkout</p>
+            <p class="mt-2 text-sm leading-6 text-zinc-400">Built for wallet, card, UPI, and cash-on-delivery flows.</p>
+        </div>
+    </div>
+</section>
+
+<section class="border-y border-white/10 bg-zinc-950/70">
+    <div class="mx-auto max-w-7xl px-6 py-12">
+        <div class="mb-7 flex items-end justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.24em] text-lime-400">Explore</p>
+                <h2 class="mt-2 text-3xl font-black text-white">Popular Categories</h2>
+            </div>
+            <a href="/shop" class="text-sm font-bold text-lime-400 hover:text-lime-300">View shop</a>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <% if (categories && categories.length) { %>
+                <% categories.forEach(category => { %>
+                    <a href="/shop?category=<%= category.slug %>" class="border border-white/10 bg-black p-5 transition hover:border-lime-400/60">
+                        <p class="text-lg font-bold text-white"><%= category.name %></p>
+                        <p class="mt-2 text-sm text-zinc-500">Shop latest <%= category.name.toLowerCase() %> gear</p>
+                    </a>
+                <% }) %>
+            <% } else { %>
+                <% ["Headsets", "Keyboards", "Mice", "Controllers", "Streaming", "Chairs"].forEach(category => { %>
+                    <div class="border border-white/10 bg-black p-5">
+                        <p class="text-lg font-bold text-white"><%= category %></p>
+                        <p class="mt-2 text-sm text-zinc-500">Curated gaming essentials</p>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<section class="mx-auto max-w-7xl px-6 py-12">
+    <div class="mb-7">
+        <p class="text-xs font-bold uppercase tracking-[0.24em] text-lime-400">Trending</p>
+        <h2 class="mt-2 text-3xl font-black text-white">Featured Products</h2>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <% if (featuredProducts && featuredProducts.length) { %>
+            <% featuredProducts.forEach(product => { %>
+                <a href="/products/<%= product.slug %>" class="border border-white/10 bg-zinc-950 transition hover:border-lime-400/60">
+                    <div class="aspect-square bg-black">
+                        <% if (product.thumbnail) { %>
+                            <img src="<%= product.thumbnail %>" alt="<%= product.name %>" class="h-full w-full object-cover">
+                        <% } else { %>
+                            <div class="flex h-full items-center justify-center px-6 text-center text-sm font-bold text-zinc-600">Product image</div>
+                        <% } %>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-sm font-bold text-white"><%= product.name %></p>
+                        <p class="mt-2 text-xs uppercase tracking-widest text-lime-400"><%= product.brand %></p>
+                    </div>
+                </a>
+            <% }) %>
+        <% } else { %>
+            <% ["Pro wireless headset", "Rapid-fire keyboard", "Precision mouse", "Creator stream kit"].forEach((product, index) => { %>
+                <div class="border border-white/10 bg-zinc-950">
+                    <div class="flex aspect-square items-center justify-center bg-black px-6 text-center text-sm font-bold text-zinc-600">Coming soon</div>
+                    <div class="p-5">
+                        <p class="text-sm font-bold text-white"><%= product %></p>
+                        <p class="mt-2 text-xs uppercase tracking-widest text-lime-400">Veloshop pick <%= index + 1 %></p>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+</section>

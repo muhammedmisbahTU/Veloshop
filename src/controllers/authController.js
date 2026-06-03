@@ -3,6 +3,9 @@ import User from "../models/User.js";
 import Otp from "../models/Otp.js";
 import sendOtpEmail from "../services/sendOtpEmail.js";
 
+const VERIFY_OTP_TTL_MS = 5 * 60 * 1000;
+const RESET_OTP_TTL_MS = 5 * 60 * 1000;
+
 // Helper to generate a 6-digit OTP
 const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -61,7 +64,7 @@ export const postRegister = async (req, res) => {
 
     // Generate and save OTP
     const otpCode = generateOtp();
-    const expiresAt = new Date(Date.now() + 60 * 1000); // 1 minute expiry
+    const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
     // Delete existing verify OTPs for this email
     await Otp.deleteMany({ email: email.toLowerCase(), purpose: "VERIFY_EMAIL" });
@@ -136,7 +139,7 @@ export const postLogin = async (req, res) => {
     if (!user.isEmailVerified) {
       // Re-trigger OTP
       const otpCode = generateOtp();
-      const expiresAt = new Date(Date.now() + 60 * 1000);
+      const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
       await Otp.deleteMany({ email: user.email, purpose: "VERIFY_EMAIL" });
       await Otp.create({
@@ -306,7 +309,7 @@ export const resendOtp = async (req, res) => {
     }
 
     const otpCode = generateOtp();
-    const expiresAt = new Date(Date.now() + 60 * 1000); // 1 minute from now
+    const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
     // Recreate OTP
     await Otp.deleteMany({ email: email.toLowerCase(), purpose: "VERIFY_EMAIL" });
@@ -367,7 +370,7 @@ export const postForgotPassword = async (req, res) => {
 
     // Generate and save OTP for password reset
     const otpCode = generateOtp();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes for password reset
+    const expiresAt = new Date(Date.now() + RESET_OTP_TTL_MS);
 
     await Otp.deleteMany({ email: email.toLowerCase(), purpose: "RESET_PASSWORD" });
     await Otp.create({

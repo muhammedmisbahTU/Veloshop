@@ -143,7 +143,7 @@
                             <span
                                 id="timer"
                                 class="text-lime-400 font-semibold">
-                                01:00
+                                05:00
                             </span>
                         </div>
 
@@ -246,12 +246,12 @@
         });
     });
 
-    let time = 60;
+    let time = 300;
     let interval;
 
     function startTimer() {
         clearInterval(interval);
-        time = 60;
+        time = 300;
         submitBtn.removeAttribute("disabled");
         submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
         
