@@ -95,8 +95,22 @@
                         </p>
                     </div>
 
+                    <!-- Flash messages / AJAX containers -->
+                    <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                        <div class="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-4 text-sm mb-5 text-center">
+                            <%= errorMessage %>
+                        </div>
+                    <% } %>
+                    <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+                        <div class="bg-lime-500/10 border border-lime-500/30 text-lime-400 rounded-xl p-4 text-sm mb-5 text-center">
+                            <%= successMessage %>
+                        </div>
+                    <% } %>
+                    <div id="alert-container" class="hidden rounded-xl p-4 text-sm mb-5 text-center"></div>
+
                     <!-- OTP Inputs -->
                     <form
+                        id="verifyForm"
                         action="/verify-otp"
                         method="POST">
 
@@ -159,6 +173,7 @@
                         class="mt-6 flex justify-between items-center">
 
                         <form
+                            id="resendForm"
                             action="/resend-otp"
                             method="POST">
 
@@ -169,6 +184,7 @@
 
                             <button
                                 id="resendBtn"
+                                type="submit"
                                 class="text-gray-300 hover:text-lime-400">
 
                                 Resend OTP
@@ -179,8 +195,8 @@
                         <span
                             class="text-sm text-gray-500">
                             Attempts Remaining:
-                            <span class="text-lime-400">
-                                <%= attemptsLeft || 5 %>
+                            <span id="attemptsCount" class="text-lime-400">
+                                <%= attemptsLeft %>
                             </span>
                         </span>
                     </div>
@@ -208,57 +224,145 @@
 <script>
     const inputs = document.querySelectorAll(".otp-input");
     const otpField = document.getElementById("otp");
+    const verifyForm = document.getElementById("verifyForm");
+    const resendForm = document.getElementById("resendForm");
+    const alertContainer = document.getElementById("alert-container");
+    const attemptsCount = document.getElementById("attemptsCount");
+    const timer = document.getElementById("timer");
+    const submitBtn = verifyForm.querySelector("button[type='submit']");
 
     inputs.forEach((input, index) => {
-
         input.addEventListener("input", () => {
-
-            if (
-                input.value &&
-                index < inputs.length - 1
-            ) {
+            if (input.value && index < inputs.length - 1) {
                 inputs[index + 1].focus();
             }
-
-            otpField.value = [...inputs]
-                .map(i => i.value)
-                .join("");
+            otpField.value = [...inputs].map(i => i.value).join("");
         });
 
         input.addEventListener("keydown", (e) => {
-
-            if (
-                e.key === "Backspace" &&
-                !input.value &&
-                index > 0
-            ) {
+            if (e.key === "Backspace" && !input.value && index > 0) {
                 inputs[index - 1].focus();
             }
-
         });
-
     });
 
     let time = 60;
+    let interval;
 
-    const timer = document.getElementById("timer");
+    function startTimer() {
+        clearInterval(interval);
+        time = 60;
+        submitBtn.removeAttribute("disabled");
+        submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        
+        interval = setInterval(() => {
+            let min = String(Math.floor(time / 60)).padStart(2, "0");
+            let sec = String(time % 60).padStart(2, "0");
+            timer.textContent = `${min}:${sec}`;
+            time--;
 
-    const interval = setInterval(() => {
+            if (time < 0) {
+                clearInterval(interval);
+                timer.textContent = "Expired";
+                submitBtn.setAttribute("disabled", "true");
+                submitBtn.classList.add("opacity-50", "cursor-not-allowed");
+            }
+        }, 1000);
+    }
 
-        let min = String(Math.floor(time / 60))
-            .padStart(2, "0");
+    startTimer();
 
-        let sec = String(time % 60)
-            .padStart(2, "0");
+    // Verify OTP AJAX Submission
+    verifyForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        alertContainer.classList.add("hidden");
+        alertContainer.className = "rounded-xl p-4 text-sm mb-5 text-center";
+        
+        const email = verifyForm.querySelector("input[name='email']").value;
+        const otp = otpField.value;
 
-        timer.textContent = `${min}:${sec}`;
-
-        time--;
-
-        if (time < 0) {
-            clearInterval(interval);
-            timer.textContent = "Expired";
+        if (otp.length !== 6) {
+            alertContainer.classList.remove("hidden");
+            alertContainer.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            alertContainer.textContent = "Please enter all 6 digits of the OTP.";
+            return;
         }
 
-    }, 1000);
+        try {
+            const response = await fetch("/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                alertContainer.classList.remove("hidden");
+                alertContainer.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+                alertContainer.textContent = result.message || "Email verified! Redirecting...";
+                setTimeout(() => {
+                    if (result.role === "ADMIN") {
+                        window.location.href = "/admin/users";
+                    } else {
+                        window.location.href = "/";
+                    }
+                }, 1500);
+            } else {
+                alertContainer.classList.remove("hidden");
+                alertContainer.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+                alertContainer.textContent = result.message || "Invalid verification code.";
+                if (result.attemptsLeft !== undefined) {
+                    attemptsCount.textContent = result.attemptsLeft;
+                }
+            }
+        } catch (err) {
+            alertContainer.classList.remove("hidden");
+            alertContainer.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            alertContainer.textContent = "A network error occurred. Please try again.";
+        }
+    });
+
+    // Resend OTP AJAX Submission
+    resendForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        alertContainer.classList.add("hidden");
+        alertContainer.className = "rounded-xl p-4 text-sm mb-5 text-center";
+        
+        const email = resendForm.querySelector("input[name='email']").value;
+
+        try {
+            const response = await fetch("/resend-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                alertContainer.classList.remove("hidden");
+                alertContainer.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+                alertContainer.textContent = result.message || "OTP resent successfully!";
+                
+                // Clear input boxes
+                inputs.forEach(i => i.value = "");
+                otpField.value = "";
+                
+                // Restart timer
+                startTimer();
+                
+                // Reset attempts displays
+                attemptsCount.textContent = "5";
+            } else {
+                alertContainer.classList.remove("hidden");
+                alertContainer.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+                alertContainer.textContent = result.message || "Failed to resend OTP.";
+            }
+        } catch (err) {
+            alertContainer.classList.remove("hidden");
+            alertContainer.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            alertContainer.textContent = "A network error occurred. Please try again.";
+        }
+    });
 </script>

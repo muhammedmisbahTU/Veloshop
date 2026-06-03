@@ -131,6 +131,19 @@
 
                 </div>
 
+                <!-- Flash messages -->
+                <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                    <div class="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-4 text-sm mb-5">
+                        <%= errorMessage %>
+                    </div>
+                <% } %>
+                <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+                    <div class="bg-lime-500/10 border border-lime-500/30 text-lime-400 rounded-xl p-4 text-sm mb-5">
+                        <%= successMessage %>
+                    </div>
+                <% } %>
+                <div id="error-container" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-4 text-sm mb-5"></div>
+
                 <!-- Form -->
                 <form action="/login" method="POST" class="space-y-5">
 
@@ -250,3 +263,52 @@
     </div>
 
 </div>
+
+<script>
+const form = document.querySelector('form');
+const errorContainer = document.getElementById('error-container');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorContainer.classList.add('hidden');
+  errorContainer.innerHTML = '';
+
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      if (result.role === 'ADMIN') {
+        window.location.href = '/admin/users';
+      } else {
+        window.location.href = '/';
+      }
+    } else {
+      if (result.requiresVerification) {
+        // Redirect to OTP verification
+        window.location.href = `/verify-otp?email=${encodeURIComponent(result.email)}`;
+      } else {
+        errorContainer.classList.remove('hidden');
+        if (result.errors && Array.isArray(result.errors)) {
+          errorContainer.innerHTML = result.errors.join('<br>');
+        } else {
+          errorContainer.textContent = result.message || 'Login failed. Please check credentials.';
+        }
+      }
+    }
+  } catch (error) {
+    errorContainer.classList.remove('hidden');
+    errorContainer.textContent = 'A network error occurred. Please try again.';
+  }
+});
+</script>
