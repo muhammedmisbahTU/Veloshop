@@ -11,14 +11,37 @@
         <a href="/orders" class="hover:text-lime-400">Orders</a>
     </div>
 
-    <div class="flex gap-3">
-        <a href="/login" class="px-4 py-2 border border-white/20 rounded-lg hover:border-lime-400">
-            Login
-        </a>
+    <div class="flex items-center gap-4">
+        <% if (locals.user) { %>
+            <% if (locals.user.role === 'ADMIN') { %>
+                <a href="/admin/users" class="text-sm font-semibold text-lime-400 border border-lime-400/20 px-3 py-1.5 rounded-lg hover:bg-lime-400/10 transition">
+                    Admin Panel
+                </a>
+            <% } %>
+            
+            <a href="/profile" class="flex items-center gap-2 hover:text-lime-400 transition">
+                <% if (locals.user.avatar) { %>
+                    <img src="<%= locals.user.avatar %>" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-white/20">
+                <% } else { %>
+                    <div class="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-bold text-lime-400">
+                        <%= locals.user.fullName.charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+                <span class="hidden sm:inline text-sm font-medium"><%= locals.user.fullName %></span>
+            </a>
 
-        <a href="/register" class="px-4 py-2 bg-lime-400 text-black rounded-lg font-semibold">
-            Sign Up
-        </a>
+            <a href="/logout" class="px-4 py-2 border border-white/20 rounded-lg hover:border-lime-400 transition text-sm">
+                Logout
+            </a>
+        <% } else { %>
+            <a href="/login" class="px-4 py-2 border border-white/20 rounded-lg hover:border-lime-400 transition text-sm">
+                Login
+            </a>
+
+            <a href="/register" class="px-4 py-2 bg-lime-400 text-black rounded-lg font-semibold transition text-sm">
+                Sign Up
+            </a>
+        <% } %>
     </div>
 
 </nav>

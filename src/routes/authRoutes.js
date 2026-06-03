@@ -15,7 +15,7 @@ import {
   postResetPassword
 } from "../controllers/authController.js";
 import validate from "../middleware/validate.js";
-import { isGuest, isAuthenticated } from "../middleware/auth.js";
+import { isGuest } from "../middleware/auth.js";
 import {
   registerSchema,
   loginSchema,
