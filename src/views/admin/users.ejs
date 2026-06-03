@@ -1,0 +1,139 @@
+<section class="space-y-5">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.24em] text-lime-400">Users</p>
+            <h2 class="mt-2 text-3xl font-black text-white">User Management</h2>
+            <p class="mt-2 text-sm text-zinc-400"><%= totalUsers %> matching account<%= totalUsers === 1 ? "" : "s" %></p>
+        </div>
+
+        <form method="GET" action="/admin/users" class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+            <input
+                type="search"
+                name="search"
+                value="<%= search %>"
+                placeholder="Search name or email"
+                class="w-full border border-white/10 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-lime-400 sm:w-80"
+            >
+            <button type="submit" class="bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">Search</button>
+            <% if (search) { %>
+                <a href="/admin/users" class="border border-white/10 px-5 py-3 text-center text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Clear</a>
+            <% } %>
+        </form>
+    </div>
+
+    <div id="adminUserAlert" class="hidden border p-4 text-sm"></div>
+
+    <div class="overflow-x-auto border border-white/10 bg-zinc-950">
+        <table class="min-w-full divide-y divide-white/10 text-left text-sm">
+            <thead class="bg-black text-xs uppercase tracking-widest text-zinc-500">
+                <tr>
+                    <th class="px-5 py-4">User</th>
+                    <th class="px-5 py-4">Role</th>
+                    <th class="px-5 py-4">Provider</th>
+                    <th class="px-5 py-4">Status</th>
+                    <th class="px-5 py-4">Joined</th>
+                    <th class="px-5 py-4 text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/10">
+                <% if (users && users.length) { %>
+                    <% users.forEach(user => { %>
+                        <tr id="user-row-<%= user._id %>">
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-3">
+                                    <% if (user.avatar) { %>
+                                        <img src="<%= user.avatar %>" alt="<%= user.fullName %>" class="h-10 w-10 rounded-full object-cover">
+                                    <% } else { %>
+                                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-black text-sm font-black text-lime-400"><%= user.fullName.charAt(0).toUpperCase() %></div>
+                                    <% } %>
+                                    <div>
+                                        <p class="font-bold text-white"><%= user.fullName %></p>
+                                        <p class="text-xs text-zinc-500"><%= user.email %></p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-5 py-4 text-zinc-300"><%= user.role %></td>
+                            <td class="px-5 py-4 text-zinc-300"><%= user.authProvider %></td>
+                            <td class="px-5 py-4">
+                                <% if (user.isActive) { %>
+                                    <span class="inline-flex border border-lime-400/30 bg-lime-400/10 px-3 py-1 text-xs font-bold text-lime-400">ACTIVE</span>
+                                <% } else { %>
+                                    <span class="inline-flex border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-bold text-red-400">BLOCKED</span>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4 text-zinc-400"><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                            <td class="px-5 py-4 text-right">
+                                <% const isCurrentAdmin = locals.user && (locals.user.id || locals.user._id).toString() === user._id.toString(); %>
+                                <% if (isCurrentAdmin) { %>
+                                    <span class="text-xs text-zinc-500">Current admin</span>
+                                <% } else if (user.isActive) { %>
+                                    <button class="status-action border border-red-400/30 px-4 py-2 text-xs font-bold text-red-400 hover:bg-red-400/10" data-id="<%= user._id %>" data-action="block" data-name="<%= user.fullName %>">Block</button>
+                                <% } else { %>
+                                    <button class="status-action border border-lime-400/30 px-4 py-2 text-xs font-bold text-lime-400 hover:bg-lime-400/10" data-id="<%= user._id %>" data-action="unblock" data-name="<%= user.fullName %>">Unblock</button>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="px-5 py-12 text-center text-zinc-500">No users found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-zinc-500">Page <%= page %> of <%= totalPages %></p>
+        <div class="flex gap-2">
+            <% const querySuffix = search ? `&search=${encodeURIComponent(search)}` : ""; %>
+            <% if (page > 1) { %>
+                <a href="/admin/users?page=<%= page - 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Previous</a>
+            <% } %>
+            <% if (page < totalPages) { %>
+                <a href="/admin/users?page=<%= page + 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Next</a>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<script>
+const adminUserAlert = document.getElementById("adminUserAlert");
+
+document.querySelectorAll(".status-action").forEach(button => {
+    button.addEventListener("click", async () => {
+        const action = button.dataset.action;
+        const userId = button.dataset.id;
+        const userName = button.dataset.name;
+        const label = action === "block" ? "block" : "unblock";
+
+        if (!confirm(`Are you sure you want to ${label} ${userName}?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/users/${userId}/${action}`, {
+                method: "POST"
+            });
+            const result = await response.json();
+
+            adminUserAlert.className = "border p-4 text-sm";
+            adminUserAlert.classList.remove("hidden");
+
+            if (response.ok && result.success) {
+                adminUserAlert.classList.add("border-lime-500/30", "bg-lime-500/10", "text-lime-300");
+                adminUserAlert.textContent = result.message || "User updated.";
+                setTimeout(() => window.location.reload(), 900);
+                return;
+            }
+
+            adminUserAlert.classList.add("border-red-500/30", "bg-red-500/10", "text-red-300");
+            adminUserAlert.textContent = result.message || "Action failed.";
+        } catch (error) {
+            adminUserAlert.className = "border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300";
+            adminUserAlert.classList.remove("hidden");
+            adminUserAlert.textContent = "A network error occurred. Please try again.";
+        }
+    });
+});
+</script>

@@ -1,0 +1,58 @@
+<div class="min-h-screen bg-black text-white flex items-center justify-center p-6">
+    <div class="w-full max-w-md border border-white/10 bg-zinc-950 p-8">
+        <div class="mb-8">
+            <p class="text-xs font-bold uppercase tracking-[0.24em] text-lime-400">Veloshop Admin</p>
+            <h1 class="mt-2 text-3xl font-black text-white">Admin Login</h1>
+            <p class="mt-2 text-sm text-zinc-400">Use a verified account with the ADMIN role.</p>
+        </div>
+
+        <div id="admin-login-alert" class="mb-5 hidden border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300"></div>
+
+        <form id="adminLoginForm" class="space-y-4">
+            <div>
+                <label class="mb-2 block text-sm text-zinc-300">Email</label>
+                <input type="email" name="email" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm text-zinc-300">Password</label>
+                <input type="password" name="password" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+            </div>
+
+            <button type="submit" class="w-full bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">Login</button>
+        </form>
+    </div>
+</div>
+
+<script>
+const adminLoginForm = document.getElementById("adminLoginForm");
+const adminLoginAlert = document.getElementById("admin-login-alert");
+
+adminLoginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    adminLoginAlert.classList.add("hidden");
+    adminLoginAlert.textContent = "";
+
+    const data = Object.fromEntries(new FormData(adminLoginForm).entries());
+
+    try {
+        const response = await fetch("/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            window.location.href = "/admin/users";
+            return;
+        }
+
+        adminLoginAlert.classList.remove("hidden");
+        adminLoginAlert.textContent = result.errors ? result.errors.join(" ") : (result.message || "Admin login failed.");
+    } catch (error) {
+        adminLoginAlert.classList.remove("hidden");
+        adminLoginAlert.textContent = "A network error occurred. Please try again.";
+    }
+});
+</script>
