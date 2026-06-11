@@ -364,7 +364,28 @@ const deleteBtns = document.querySelectorAll(".delete-address-btn");
 deleteBtns.forEach(btn => {
     btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-id");
-        if (!confirm("Are you sure you want to delete this address?")) return;
+
+        const confirmResult = await Swal.fire({
+            title: 'Delete Address?',
+            text: 'Are you sure you want to remove this address from your profile?',
+            icon: 'warning',
+            iconColor: '#f87171',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            cancelButtonText: 'Cancel',
+            background: '#09090b',
+            color: '#ffffff',
+            customClass: {
+                popup: 'rounded-3xl border border-white/5 bg-zinc-950 p-6',
+                title: 'text-xl font-bold text-white',
+                htmlContainer: 'text-gray-400 text-sm mt-2',
+                confirmButton: 'px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-xl transition mx-2 focus:outline-none',
+                cancelButton: 'px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-semibold text-sm rounded-xl transition mx-2 focus:outline-none'
+            },
+            buttonsStyling: false
+        });
+
+        if (!confirmResult.isConfirmed) return;
 
         addressAlert.classList.add("hidden");
         addressAlert.className = "rounded-xl p-4 text-sm mb-5 text-center";
@@ -377,22 +398,61 @@ deleteBtns.forEach(btn => {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                addressAlert.classList.remove("hidden");
-                addressAlert.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
-                addressAlert.textContent = result.message || "Address deleted!";
-                document.getElementById(`addr-card-${id}`).remove();
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                const card = document.getElementById(`addr-card-${id}`);
+                if (card) card.remove();
+
+                await Swal.fire({
+                    title: 'Deleted!',
+                    text: result.message || 'Address deleted successfully.',
+                    icon: 'success',
+                    iconColor: '#a3e635',
+                    background: '#09090b',
+                    color: '#ffffff',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    customClass: {
+                        popup: 'rounded-3xl border border-white/5 bg-zinc-950 p-6',
+                        title: 'text-xl font-bold text-white',
+                        htmlContainer: 'text-gray-400 text-sm mt-2'
+                    }
+                });
+
+                window.location.reload();
             } else {
-                addressAlert.classList.remove("hidden");
-                addressAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
-                addressAlert.textContent = result.message || "Failed to delete address.";
+                Swal.fire({
+                    title: 'Failed!',
+                    text: result.message || 'Failed to delete address.',
+                    icon: 'error',
+                    iconColor: '#f87171',
+                    background: '#09090b',
+                    color: '#ffffff',
+                    confirmButtonText: 'Try Again',
+                    customClass: {
+                        popup: 'rounded-3xl border border-white/5 bg-zinc-950 p-6',
+                        title: 'text-xl font-bold text-white',
+                        htmlContainer: 'text-gray-400 text-sm mt-2',
+                        confirmButton: 'px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-semibold text-sm rounded-xl transition focus:outline-none'
+                    },
+                    buttonsStyling: false
+                });
             }
         } catch (err) {
-            addressAlert.classList.remove("hidden");
-            addressAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
-            addressAlert.textContent = "A network error occurred. Please try again.";
+            Swal.fire({
+                title: 'Error!',
+                text: 'A network error occurred. Please try again.',
+                icon: 'error',
+                iconColor: '#f87171',
+                background: '#09090b',
+                color: '#ffffff',
+                confirmButtonText: 'Close',
+                customClass: {
+                    popup: 'rounded-3xl border border-white/5 bg-zinc-950 p-6',
+                    title: 'text-xl font-bold text-white',
+                    htmlContainer: 'text-gray-400 text-sm mt-2',
+                    confirmButton: 'px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-semibold text-sm rounded-xl transition focus:outline-none'
+                },
+                buttonsStyling: false
+            });
         }
     });
 });
