@@ -29,7 +29,7 @@ export const postRegister = async (req, res) => {
       });
     }
 
-    // Check if email already registered
+    
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       if (existingUser.isEmailVerified) {
@@ -38,14 +38,14 @@ export const postRegister = async (req, res) => {
           message: "Email is already registered. Please login."
         });
       } else {
-        // Unverified user: we can update details and send a new OTP
+        
         const hashedPassword = await bcrypt.hash(password, 10);
         existingUser.fullName = fullName;
         existingUser.password = hashedPassword;
         await existingUser.save();
       }
     } else {
-      // Create new user (unverified)
+      
       const hashedPassword = await bcrypt.hash(password, 10);
       const referralId =
         fullName.replace(/\s+/g, "").substring(0, 5).toUpperCase() +
@@ -137,7 +137,7 @@ export const postLogin = async (req, res) => {
 
     // Check verification status
     if (!user.isEmailVerified) {
-      // Re-trigger OTP
+      
       const otpCode = generateOtp();
       const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
@@ -343,8 +343,20 @@ export const resendOtp = async (req, res) => {
 
 export const logout = (req, res) => {
   req.logout((err) => {
+    if (err) {
+      console.error("Passport logout error:", err);
+      return next(err); 
+    }
+    res.clearCookie("connect.sid", { path: "/" }); 
+    if (!req.session) {
+      return res.redirect("/login");
+    }
     req.session.destroy((destroyErr) => {
-      res.redirect("/login");
+      if (destroyErr) {
+        console.error("Session destruction error:", destroyErr);
+        return next(destroyErr);
+      }
+      return res.redirect("/login");
     });
   });
 };
