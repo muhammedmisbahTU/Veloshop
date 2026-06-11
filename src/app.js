@@ -8,9 +8,11 @@ import expressLayouts from 'express-ejs-layouts';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import { routeNotFound, globalErrorHandler } from "./middleware/errorHandler.js";
 import morgan from 'morgan';
 
 import passport from './config/passport.js';
+import { title } from 'process';
 
 const app = express();
 dotenv.config();
@@ -50,7 +52,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', authRoutes);
 app.use('/', adminRoutes);
 app.use('/', userRoutes);
+app.use((req, res, next) => {
+    const err = new Error(`Not Found: ${req.originalUrl}`);
+    err.status = 404;
+    next(err); // Forwarding the 404 to the global error handler below
+});
 
+app.use(routeNotFound);  
+app.use(globalErrorHandler);
 
 // 5. Start Server listening immediately
 const PORT = process.env.PORT || 5000;
