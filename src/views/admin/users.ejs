@@ -6,19 +6,63 @@
             <p class="mt-2 text-sm text-zinc-400"><%= totalUsers %> matching account<%= totalUsers === 1 ? "" : "s" %></p>
         </div>
 
-        <form method="GET" action="/admin/users" class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+        <form id="filterForm" method="GET" action="/admin/users" class="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto">
             <input
                 type="search"
                 name="search"
                 value="<%= search %>"
                 placeholder="Search name or email"
-                class="w-full border border-white/10 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-lime-400 sm:w-80"
+                class="w-full border border-white/10 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-lime-400 sm:w-64"
             >
             <button type="submit" class="bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">Search</button>
-            <% if (search) { %>
-                <a href="/admin/users" class="border border-white/10 px-5 py-3 text-center text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Clear</a>
+            <% const hasFilters = search || filterStatus !== 'all' || filterRole !== 'all' || filterProvider !== 'all' || sort !== 'desc' || sortBy !== 'createdAt'; %>
+            <% if (hasFilters) { %>
+                <a href="/admin/users" class="border border-white/10 px-5 py-3 text-center text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Reset</a>
             <% } %>
         </form>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="flex flex-wrap items-center gap-3 border border-white/10 bg-zinc-950/60 px-5 py-3.5">
+        <span class="text-xs font-bold uppercase tracking-widest text-zinc-500 mr-1">Filters</span>
+
+        <!-- Status -->
+        <select id="filterStatus" class="border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer">
+            <option value="all" <%= filterStatus === 'all' ? 'selected' : '' %>>All Status</option>
+            <option value="active" <%= filterStatus === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="blocked" <%= filterStatus === 'blocked' ? 'selected' : '' %>>Blocked</option>
+        </select>
+
+        <!-- Role -->
+        <select id="filterRole" class="border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer">
+            <option value="all" <%= filterRole === 'all' ? 'selected' : '' %>>All Roles</option>
+            <option value="user" <%= filterRole === 'user' ? 'selected' : '' %>>User</option>
+            <option value="admin" <%= filterRole === 'admin' ? 'selected' : '' %>>Admin</option>
+        </select>
+
+        <!-- Provider -->
+        <select id="filterProvider" class="border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer">
+            <option value="all" <%= filterProvider === 'all' ? 'selected' : '' %>>All Providers</option>
+            <option value="local" <%= filterProvider === 'local' ? 'selected' : '' %>>Local</option>
+            <option value="google" <%= filterProvider === 'google' ? 'selected' : '' %>>Google</option>
+        </select>
+
+        <!-- Sort By -->
+        <select id="filterSortBy" class="border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer">
+            <option value="createdAt" <%= sortBy === 'createdAt' ? 'selected' : '' %>>Sort: Joined</option>
+            <option value="fullName" <%= sortBy === 'fullName' ? 'selected' : '' %>>Sort: Name</option>
+            <option value="email" <%= sortBy === 'email' ? 'selected' : '' %>>Sort: Email</option>
+            <!-- <option value="role" <%= sortBy === 'role' ? 'selected' : '' %>>Sort: Role</option>
+            <option value="authProvider" <%= sortBy === 'authProvider' ? 'selected' : '' %>>Sort: Provider</option>
+            <option value="isActive" <%= sortBy === 'isActive' ? 'selected' : '' %>>Sort: Status</option> -->
+        </select>
+
+        <!-- Sort Order -->
+        <select id="filterSortOrder" class="border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer">
+            <option value="desc" <%= sort === 'desc' ? 'selected' : '' %>>Descending</option>
+            <option value="asc" <%= sort === 'asc' ? 'selected' : '' %>>Ascending</option>
+        </select>
+
     </div>
 
     <div id="adminUserAlert" class="hidden border p-4 text-sm"></div>
@@ -27,11 +71,47 @@
         <table class="min-w-full divide-y divide-white/10 text-left text-sm">
             <thead class="bg-black text-xs uppercase tracking-widest text-zinc-500">
                 <tr>
-                    <th class="px-5 py-4">User</th>
-                    <th class="px-5 py-4">Role</th>
-                    <th class="px-5 py-4">Provider</th>
-                    <th class="px-5 py-4">Status</th>
-                    <th class="px-5 py-4">Joined</th>
+                    <%
+                        // Helper to build a sort-toggle URL for a column header
+                        function sortUrl(field) {
+                            const newOrder = (sortBy === field && sort === 'asc') ? 'desc' : 'asc';
+                            let qs = `?sortBy=${field}&sort=${newOrder}`;
+                            if (search) qs += `&search=${encodeURIComponent(search)}`;
+                            if (filterStatus !== 'all') qs += `&status=${filterStatus}`;
+                            if (filterRole !== 'all') qs += `&role=${filterRole}`;
+                            if (filterProvider !== 'all') qs += `&provider=${filterProvider}`;
+                            return `/admin/users${qs}`;
+                        }
+                        function sortIcon(field) {
+                            if (sortBy !== field) return '';
+                            return sort === 'asc' ? ' ASC' : ' DESC';
+                        }
+                    %>
+                    <th class="px-5 py-4">
+                        <a href="<%= sortUrl('fullName') %>" class="hover:text-lime-400 inline-flex items-center gap-1 <%= sortBy === 'fullName' ? 'text-lime-400' : '' %>">
+                            User<%= sortIcon('fullName') %>
+                        </a>
+                    </th>
+                    <th class="px-5 py-4">
+                        <a href="<%= sortUrl('role') %>" class="hover:text-lime-400 inline-flex items-center gap-1 <%= sortBy === 'role' ? 'text-lime-400' : '' %>">
+                            Role<%= sortIcon('role') %>
+                        </a>
+                    </th>
+                    <th class="px-5 py-4">
+                        <a href="<%= sortUrl('authProvider') %>" class="hover:text-lime-400 inline-flex items-center gap-1 <%= sortBy === 'authProvider' ? 'text-lime-400' : '' %>">
+                            Provider<%= sortIcon('authProvider') %>
+                        </a>
+                    </th>
+                    <th class="px-5 py-4">
+                        <a href="<%= sortUrl('isActive') %>" class="hover:text-lime-400 inline-flex items-center gap-1 <%= sortBy === 'isActive' ? 'text-lime-400' : '' %>">
+                            Status<%= sortIcon('isActive') %>
+                        </a>
+                    </th>
+                    <th class="px-5 py-4">
+                        <a href="<%= sortUrl('createdAt') %>" class="hover:text-lime-400 inline-flex items-center gap-1 <%= sortBy === 'createdAt' ? 'text-lime-400' : '' %>">
+                            Joined<%= sortIcon('createdAt') %>
+                        </a>
+                    </th>
                     <th class="px-5 py-4 text-right">Action</th>
                 </tr>
             </thead>
@@ -86,7 +166,15 @@
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-zinc-500">Page <%= page %> of <%= totalPages %></p>
         <div class="flex gap-2">
-            <% const querySuffix = search ? `&search=${encodeURIComponent(search)}` : ""; %>
+            <%
+                let querySuffix = '';
+                if (search) querySuffix += `&search=${encodeURIComponent(search)}`;
+                if (sort !== 'desc') querySuffix += `&sort=${encodeURIComponent(sort)}`;
+                if (sortBy !== 'createdAt') querySuffix += `&sortBy=${encodeURIComponent(sortBy)}`;
+                if (filterStatus !== 'all') querySuffix += `&status=${encodeURIComponent(filterStatus)}`;
+                if (filterRole !== 'all') querySuffix += `&role=${encodeURIComponent(filterRole)}`;
+                if (filterProvider !== 'all') querySuffix += `&provider=${encodeURIComponent(filterProvider)}`;
+            %>
             <% if (page > 1) { %>
                 <a href="/admin/users?page=<%= page - 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Previous</a>
             <% } %>
@@ -100,6 +188,39 @@
 <script>
 const adminUserAlert = document.getElementById("adminUserAlert");
 
+// Filter dropdown auto-apply
+function applyFilters() {
+    const params = new URLSearchParams(window.location.search);
+
+    // Read current values from the dropdowns
+    const status = document.getElementById("filterStatus").value;
+    const role = document.getElementById("filterRole").value;
+    const provider = document.getElementById("filterProvider").value;
+    const sortByVal = document.getElementById("filterSortBy").value;
+    const sortOrderVal = document.getElementById("filterSortOrder").value;
+
+    // Preserve the search term
+    const search = params.get("search") || "";
+
+    const qs = new URLSearchParams();
+    if (search) qs.set("search", search);
+    if (status !== "all") qs.set("status", status);
+    if (role !== "all") qs.set("role", role);
+    if (provider !== "all") qs.set("provider", provider);
+    if (sortByVal !== "createdAt") qs.set("sortBy", sortByVal);
+    if (sortOrderVal !== "desc") qs.set("sort", sortOrderVal);
+
+    const qsStr = qs.toString();
+    window.location.href = "/admin/users" + (qsStr ? "?" + qsStr : "");
+}
+
+document.getElementById("filterStatus").addEventListener("change", applyFilters);
+document.getElementById("filterRole").addEventListener("change", applyFilters);
+document.getElementById("filterProvider").addEventListener("change", applyFilters);
+document.getElementById("filterSortBy").addEventListener("change", applyFilters);
+document.getElementById("filterSortOrder").addEventListener("change", applyFilters);
+
+// Block / Unblock
 document.querySelectorAll(".status-action").forEach(button => {
     button.addEventListener("click", async () => {
         const action = button.dataset.action;

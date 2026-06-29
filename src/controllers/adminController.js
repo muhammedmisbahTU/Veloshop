@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 const toSessionUser = (user) => ({
   id: user._id,
@@ -136,18 +136,54 @@ export const getUsers = async (req, res) => {
   try {
     const search = (req.query.search || "").trim();
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const requestedOrder = req.query.sort || "desc";
+    const order = requestedOrder === "asc" ? "asc" : "desc";
+    const sortBy = req.query.sortBy || "createdAt";
+    const filterStatus = req.query.status || "all";
+    const filterRole = req.query.role || "all";
+    const filterProvider = req.query.provider || "all";
 
     const query = {};
+
+    // Text search
     if (search) {
       query.$or = [
         { fullName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } }
       ];
     }
+    
+    // Status filter
+    if (filterStatus === "active") {
+      query.isActive = true;
+    } else if (filterStatus === "blocked") {
+      query.isActive = false;
+    }
+
+    // Role filter
+    if (filterRole === "user") {
+      query.role = "USER";
+    } else if (filterRole === "admin") {
+      query.role = "ADMIN";
+    }
+
+    // Provider filter
+    if (filterProvider === "local") {
+      query.authProvider = "LOCAL";
+    } else if (filterProvider === "google") {
+      query.authProvider = "GOOGLE";
+    }
+
+    // Sort direction
+    const sortDirection = order === "asc" ? 1 : -1;
+
+    // Sort field (whitelist allowed fields)
+    const allowedSortFields = ["createdAt", "fullName", "email", "role", "authProvider", "isActive"];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
 
     const [users, totalUsers] = await Promise.all([
       User.find(query)
-        .sort({ createdAt: -1 })
+        .sort({ [safeSortBy]: sortDirection })
         .skip((page - 1) * PAGE_SIZE)
         .limit(PAGE_SIZE),
       User.countDocuments(query)
@@ -160,9 +196,14 @@ export const getUsers = async (req, res) => {
       title: "User Management - Veloshop",
       users,
       search,
+      sort: order,
+      sortBy: safeSortBy,
+      filterStatus,
+      filterRole,
+      filterProvider,
       page,
       totalPages,
-      totalUsers
+      totalUsers,
     });
   } catch (error) {
     console.error("Admin user list error:", error);
