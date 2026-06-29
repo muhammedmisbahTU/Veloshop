@@ -1,4 +1,5 @@
 node_modules/
 .env
+.vscode/
 src/public/images/*
 src/public/uploads/*
