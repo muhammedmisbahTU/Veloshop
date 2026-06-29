@@ -341,7 +341,7 @@ export const resendOtp = async (req, res) => {
   }
 };
 
-export const logout = (req, res) => {
+export const logout = (req, res, next) => {
   req.logout((err) => {
     if (err) {
       console.error("Passport logout error:", err);
