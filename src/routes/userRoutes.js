@@ -20,7 +20,17 @@ router.get("/", getHome);
 
 router.get("/profile", isAuthenticated, getProfile);
 router.get("/profile/edit", isAuthenticated, getEditProfile);
-router.post("/profile/edit", isAuthenticated, upload.single("avatar"), postEditProfile);
+router.post("/profile/edit", isAuthenticated, (req, res, next) => {
+  upload.single("avatar")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+    next();
+  });
+}, postEditProfile);
 router.post("/profile/change-password", isAuthenticated, postChangePassword);
 router.post("/profile/change-email", isAuthenticated, postChangeEmailRequest);
 router.post("/profile/verify-email", isAuthenticated, postVerifyEmailUpdate);
