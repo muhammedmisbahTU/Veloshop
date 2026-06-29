@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { routeNotFound, globalErrorHandler } from "./middleware/errorHandler.js";
+import { noCache } from "./middleware/cacheControl.js";
 import morgan from 'morgan';
 
 import passport from './config/passport.js';
@@ -48,6 +49,8 @@ app.set('layout', 'layouts/user-layout');
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './views'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(noCache);
 
 app.use('/', authRoutes);
 app.use('/', adminRoutes);
