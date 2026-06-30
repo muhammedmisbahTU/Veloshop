@@ -142,6 +142,8 @@ export const getUsers = async (req, res) => {
     const filterStatus = req.query.status || "all";
     const filterRole = req.query.role || "all";
     const filterProvider = req.query.provider || "all";
+    const startDate = req.query.startDate || ""
+    const endDate = req.query.endDate || ""
 
     const query = {};
 
@@ -180,6 +182,18 @@ export const getUsers = async (req, res) => {
     // Sort field (whitelist allowed fields)
     const allowedSortFields = ["createdAt", "fullName", "email", "role", "authProvider", "isActive"];
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+    
+    // Date filter
+    if(startDate||endDate){
+      query.createdAt={}
+
+      if(startDate){
+        query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z')
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate + "T23:59:59.999Z");
+      }
+    }
 
     const [users, totalUsers] = await Promise.all([
       User.find(query)
@@ -204,6 +218,8 @@ export const getUsers = async (req, res) => {
       page,
       totalPages,
       totalUsers,
+      startDate,
+      endDate,
     });
   } catch (error) {
     console.error("Admin user list error:", error);

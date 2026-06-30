@@ -57,6 +57,11 @@
             <option value="isActive" <%= sortBy === 'isActive' ? 'selected' : '' %>>Sort: Status</option> -->
         </select>
 
+        <label class="text-xs ">From: <input id="startDate" class="[color-scheme:dark]  border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer"
+             type="date" name="startDate" value="<%= startDate || '' %>"></label>
+        <label class="text-xs ">To: <input id="endDate"  class="[color-scheme:dark]  border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer"
+             type="date" name="endDate" value="<%= endDate || '' %>"></label>
+
         <!-- Sort Order -->
         <select id="filterSortOrder" class="border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-lime-400 rounded-none appearance-none cursor-pointer">
             <option value="desc" <%= sort === 'desc' ? 'selected' : '' %>>Descending</option>
@@ -174,6 +179,8 @@
                 if (filterStatus !== 'all') querySuffix += `&status=${encodeURIComponent(filterStatus)}`;
                 if (filterRole !== 'all') querySuffix += `&role=${encodeURIComponent(filterRole)}`;
                 if (filterProvider !== 'all') querySuffix += `&provider=${encodeURIComponent(filterProvider)}`;
+                if (startDate!=="") querySuffix += `&startDate=${encodeURIComponent(startDate)}`;
+                if (endDate!=="") querySuffix += `&endDate=${encodeURIComponent(endDate)}`;
             %>
             <% if (page > 1) { %>
                 <a href="/admin/users?page=<%= page - 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Previous</a>
@@ -191,13 +198,15 @@ const adminUserAlert = document.getElementById("adminUserAlert");
 // Filter dropdown auto-apply
 function applyFilters() {
     const params = new URLSearchParams(window.location.search);
-
+console.log("filere start ")
     // Read current values from the dropdowns
     const status = document.getElementById("filterStatus").value;
     const role = document.getElementById("filterRole").value;
     const provider = document.getElementById("filterProvider").value;
     const sortByVal = document.getElementById("filterSortBy").value;
     const sortOrderVal = document.getElementById("filterSortOrder").value;
+    const startDate = document.getElementById("startDate").value
+    const endDate = document.getElementById("endDate").value
 
     // Preserve the search term
     const search = params.get("search") || "";
@@ -209,6 +218,8 @@ function applyFilters() {
     if (provider !== "all") qs.set("provider", provider);
     if (sortByVal !== "createdAt") qs.set("sortBy", sortByVal);
     if (sortOrderVal !== "desc") qs.set("sort", sortOrderVal);
+    if (startDate !== "") qs.set("startDate",startDate);
+    if (endDate !== "") qs.set("endDate",endDate);
 
     const qsStr = qs.toString();
     window.location.href = "/admin/users" + (qsStr ? "?" + qsStr : "");
@@ -219,6 +230,8 @@ document.getElementById("filterRole").addEventListener("change", applyFilters);
 document.getElementById("filterProvider").addEventListener("change", applyFilters);
 document.getElementById("filterSortBy").addEventListener("change", applyFilters);
 document.getElementById("filterSortOrder").addEventListener("change", applyFilters);
+document.getElementById("startDate").addEventListener("change", applyFilters);
+document.getElementById("endDate").addEventListener("change", applyFilters);
 
 // Block / Unblock
 document.querySelectorAll(".status-action").forEach(button => {
