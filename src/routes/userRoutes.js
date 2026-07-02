@@ -1,5 +1,5 @@
 import express from 'express';
-import { getHome } from '../controllers/homeController.js';
+import { getHome, getShop } from '../controllers/homeController.js';
 import {
   getProfile,
   getEditProfile,
@@ -17,6 +17,7 @@ import { uploadAvatar } from '../config/cloudinaryConfig.js';
 const router = express.Router();
 
 router.get("/", getHome);
+router.get("/shop", getShop);
 
 router.get("/profile", isAuthenticated, getProfile);
 router.get("/profile/edit", isAuthenticated, getEditProfile);

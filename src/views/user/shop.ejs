@@ -1,0 +1,222 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="flex flex-col lg:flex-row gap-8">
+        
+        <!-- Filter Sidebar -->
+        <aside class="w-full lg:w-64 shrink-0 space-y-6">
+            <div class="bg-zinc-950 border border-white/10 rounded-2xl p-6">
+                <h2 class="text-lg font-bold text-white mb-6">Filters</h2>
+
+                <form id="filterForm" action="/shop" method="GET" class="space-y-6">
+                    <!-- Search Input -->
+                    <div class="space-y-2">
+                        <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Search</label>
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                name="search" 
+                                value="<%= searchQuery %>" 
+                                placeholder="Type to search..." 
+                                class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-lime-400 focus:outline-none placeholder-zinc-600"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="space-y-2">
+                        <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Category</label>
+                        <select name="category" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-lime-400 focus:outline-none">
+                            <option value="">All Categories</option>
+                            <% categories.forEach(cat => { %>
+                                <option value="<%= cat.slug %>" <%= selectedCategory === cat.slug ? 'selected' : '' %>><%= cat.name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <!-- Price Filter -->
+                    <div class="space-y-2">
+                        <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Price Range</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input 
+                                type="number" 
+                                name="minPrice" 
+                                value="<%= minPrice %>" 
+                                placeholder="Min" 
+                                min="0"
+                                class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-lime-400 focus:outline-none placeholder-zinc-600"
+                            >
+                            <input 
+                                type="number" 
+                                name="maxPrice" 
+                                value="<%= maxPrice %>" 
+                                placeholder="Max" 
+                                min="0"
+                                class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-lime-400 focus:outline-none placeholder-zinc-600"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Stock Availability -->
+                    <div class="flex items-center gap-3">
+                        <input 
+                            type="checkbox" 
+                            id="stock" 
+                            name="stock" 
+                            value="in-stock" 
+                            <%= stockFilter === 'in-stock' ? 'checked' : '' %>
+                            class="w-4 h-4 rounded border-white/10 bg-black text-lime-400 focus:ring-0 focus:ring-offset-0 accent-lime-400 cursor-pointer"
+                        >
+                        <label for="stock" class="text-sm text-zinc-300 font-semibold cursor-pointer select-none">In Stock Only</label>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="space-y-2">
+                        <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Sort By</label>
+                        <select name="sort" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-lime-400 focus:outline-none">
+                            <option value="newest" <%= sortOption === 'newest' ? 'selected' : '' %>>Newest Arrivals</option>
+                            <option value="price-low-to-high" <%= sortOption === 'price-low-to-high' ? 'selected' : '' %>>Price: Low to High</option>
+                            <option value="price-high-to-low" <%= sortOption === 'price-high-to-low' ? 'selected' : '' %>>Price: High to Low</option>
+                            <option value="rating" <%= sortOption === 'rating' ? 'selected' : '' %>>Customer Rating</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-1 gap-2 pt-2">
+                        <button type="submit" class="w-full py-3 bg-lime-400 hover:bg-lime-300 text-black font-black text-sm rounded-xl transition duration-300">
+                            Apply Filters
+                        </button>
+                        <% if (selectedCategory || searchQuery || minPrice || maxPrice || stockFilter) { %>
+                            <a href="/shop" class="w-full py-3 bg-zinc-900 border border-white/5 hover:border-white/10 text-center text-zinc-300 font-semibold text-sm rounded-xl transition duration-300">
+                                Reset Filters
+                            </a>
+                        <% } %>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Product Grid & Pagination -->
+        <div class="flex-1 space-y-8">
+            
+            <!-- Grid Header -->
+            <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                <p class="text-sm text-zinc-400">
+                    Showing <span class="font-bold text-white"><%= products.length %></span> of <span class="font-bold text-white"><%= totalProducts %></span> products
+                </p>
+            </div>
+
+            <!-- Products Grid -->
+            <% if (products.length > 0) { %>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <% products.forEach(product => { %>
+                        <div class="group relative flex flex-col justify-between bg-zinc-950 border border-white/5 rounded-3xl overflow-hidden hover:border-lime-400/30 transition duration-300">
+                            
+                            <!-- Product Image & Badges -->
+                            <div class="relative aspect-square w-full bg-black overflow-hidden">
+                                <% if (product.displayImage) { %>
+                                    <img src="<%= product.displayImage %>" alt="<%= product.name %>" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                                <% } else { %>
+                                    <div class="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-600">
+                                        No Image Available
+                                    </div>
+                                <% } %>
+
+                                <% if (product.stock === 0) { %>
+                                    <span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full">
+                                        Sold Out
+                                    </span>
+                                <% } %>
+                            </div>
+
+                            <!-- Product Information -->
+                            <div class="p-6 space-y-4">
+                                <div>
+                                    <p class="text-xs uppercase tracking-wider text-lime-400 font-black mb-1"><%= product.brand %></p>
+                                    <h3 class="text-base font-bold text-white group-hover:text-lime-400 transition truncate"><%= product.name %></h3>
+                                </div>
+
+                                <!-- Rating -->
+                                <div class="flex items-center gap-1.5">
+                                    <div class="flex items-center text-amber-400 text-sm">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <svg class="w-4 h-4 <%= i <= Math.round(product.averageRating || 0) ? 'fill-current' : 'text-zinc-700' %>" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                            </svg>
+                                        <% } %>
+                                    </div>
+                                    <span class="text-xs text-zinc-500 font-semibold">(<%= product.totalReviews || 0 %>)</span>
+                                </div>
+
+                                <!-- Price and Action -->
+                                <div class="flex items-center justify-between pt-2">
+                                    <div>
+                                        <% if (product.minPrice === 0) { %>
+                                            <span class="text-xs text-zinc-500 font-bold">Contact Store</span>
+                                        <% } else if (product.minPrice === product.maxPrice) { %>
+                                            <span class="text-lg font-black text-white">$<%= product.minPrice.toFixed(2) %></span>
+                                        <% } else { %>
+                                            <span class="text-xs text-zinc-500 block font-semibold">Starting from</span>
+                                            <span class="text-lg font-black text-white">$<%= product.minPrice.toFixed(2) %></span>
+                                        <% } %>
+                                    </div>
+
+                                    <a href="/products/<%= product.slug %>" class="px-4 py-2 bg-zinc-900 border border-white/5 rounded-xl hover:border-lime-400 hover:text-lime-400 transition text-xs font-bold text-zinc-300">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- Pagination -->
+                <% if (totalPages > 1) { %>
+                    <nav class="flex items-center justify-center gap-2 pt-10 border-t border-white/5">
+                        <!-- Previous Page -->
+                        <% if (currentPage > 1) { %>
+                            <a href="?page=<%= currentPage - 1 %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= searchQuery ? '&search=' + searchQuery : '' %><%= minPrice ? '&minPrice=' + minPrice : '' %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %><%= sortOption ? '&sort=' + sortOption : '' %>" class="p-2 border border-white/5 rounded-xl text-zinc-400 hover:text-lime-400 hover:border-lime-400/30 transition">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </a>
+                        <% } %>
+
+                        <!-- Page Numbers -->
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <a 
+                                href="?page=<%= i %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= searchQuery ? '&search=' + searchQuery : '' %><%= minPrice ? '&minPrice=' + minPrice : '' %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %><%= sortOption ? '&sort=' + sortOption : '' %>" 
+                                class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-semibold border transition <%= currentPage === i ? 'bg-lime-400 text-black border-lime-400' : 'border-white/5 text-zinc-400 hover:text-white hover:border-white/20' %>"
+                            >
+                                <%= i %>
+                            </a>
+                        <% } %>
+
+                        <!-- Next Page -->
+                        <% if (currentPage < totalPages) { %>
+                            <a href="?page=<%= currentPage + 1 %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= searchQuery ? '&search=' + searchQuery : '' %><%= minPrice ? '&minPrice=' + minPrice : '' %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %><%= sortOption ? '&sort=' + sortOption : '' %>" class="p-2 border border-white/5 rounded-xl text-zinc-400 hover:text-lime-400 hover:border-lime-400/30 transition">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        <% } %>
+                    </nav>
+                <% } %>
+
+            <% } else { %>
+                <!-- Empty State -->
+                <div class="text-center py-20 bg-zinc-950 border border-white/5 rounded-3xl">
+                    <svg class="w-16 h-16 text-zinc-700 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <h3 class="text-lg font-bold text-white mb-2">No Products Found</h3>
+                    <p class="text-sm text-zinc-500 max-w-sm mx-auto mb-6">We couldn't find any products matching your active filters. Try adjusting your search query or reset filters.</p>
+                    <a href="/shop" class="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-black font-black text-sm rounded-xl transition duration-300">
+                        Clear All Filters
+                    </a>
+                </div>
+            <% } %>
+
+        </div>
+
+    </div>
+</div>
