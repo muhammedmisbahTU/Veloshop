@@ -1,0 +1,167 @@
+<section class="mx-auto max-w-4xl space-y-6">
+    <div>
+        <a href="/admin/products/<%= product._id %>/variants" class="text-sm font-bold text-lime-400 hover:text-lime-300">Back to Variants</a>
+        <h2 class="mt-3 text-3xl font-black text-white"><%= mode === "edit" ? "Edit Variant" : "Add Variant" %></h2>
+        <p class="mt-2 text-sm text-zinc-400"><%= product.name %> requires at least <%= minImages %> images per variant.</p>
+    </div>
+
+    <% if (formErrors && formErrors.length) { %>
+        <div class="border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+            <% formErrors.forEach(error => { %>
+                <p><%= error %></p>
+            <% }) %>
+        </div>
+    <% } %>
+
+    <form method="POST" enctype="multipart/form-data" action="<%= mode === 'edit' ? `/admin/variants/${variant._id}` : `/admin/products/${product._id}/variants` %>" class="space-y-5 border border-white/10 bg-zinc-950 p-6">
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div>
+                <div class="mb-2 flex items-center justify-between gap-3">
+                    <label class="block text-sm font-semibold text-zinc-300">SKU</label>
+                    <button type="button" id="generateSkuBtn" class="text-xs font-bold text-lime-400 hover:text-lime-300">Generate from attributes</button>
+                </div>
+                <input id="skuInput" type="text" name="sku" value="<%= variant ? variant.sku : '' %>" data-base="<%= skuBase %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
+                <p class="mt-2 text-xs text-zinc-500">Auto-generated from product and variant attributes, but you can edit it manually.</p>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-zinc-300">Stock</label>
+                <input type="number" name="stock" min="0" value="<%= variant ? variant.stock : 0 %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-zinc-300">Regular Price</label>
+                <input type="number" name="regularPrice" min="0" step="0.01" value="<%= variant ? variant.regularPrice : '' %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-zinc-300">Sale Price</label>
+                <input type="number" name="salePrice" min="0" step="0.01" value="<%= variant && variant.salePrice != null ? variant.salePrice : '' %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <label class="block text-sm font-semibold text-zinc-300">Attributes</label>
+                    <p class="mt-1 text-xs text-zinc-500">Add proper variant attributes like Color, Size, Storage, or Material.</p>
+                </div>
+                <button type="button" id="addAttributeBtn" class="border border-lime-400/30 px-4 py-2 text-xs font-bold text-lime-400 hover:bg-lime-400/10">Add Attribute</button>
+            </div>
+
+            <div id="attributeRows" class="space-y-3">
+                <% attributeRows.forEach(attribute => { %>
+                    <div class="attribute-row grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                        <input type="text" name="attributeName" value="<%= attribute.name %>" placeholder="Name, e.g. Color" class="attribute-name w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
+                        <input type="text" name="attributeValue" value="<%= attribute.value %>" placeholder="Value, e.g. Black" class="attribute-value w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
+                        <button type="button" class="remove-attribute border border-red-400/30 px-4 py-3 text-xs font-bold text-red-400 hover:bg-red-400/10">Remove</button>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <% if (mode === "edit" && variant && variant.images && variant.images.length) { %>
+            <div class="space-y-3">
+                <p class="text-sm font-semibold text-zinc-300">Current Images (<%= variant.images.length %>)</p>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                    <% variant.images.forEach(image => { %>
+                        <img src="<%= image %>" alt="<%= variant.sku %>" class="aspect-square w-full border border-white/10 object-cover">
+                    <% }) %>
+                </div>
+                <label class="flex items-center gap-3 border border-white/10 bg-black px-4 py-3">
+                    <input type="checkbox" name="replaceImages" value="on" class="h-4 w-4 accent-lime-400">
+                    <span class="text-sm font-semibold text-zinc-300">Replace all current images with the new uploads</span>
+                </label>
+            </div>
+        <% } %>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-zinc-300">Variant Images</label>
+            <input type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-zinc-300 file:mr-4 file:border-0 file:bg-lime-400 file:px-4 file:py-2 file:text-sm file:font-bold file:text-black" <%= mode === "create" ? "required" : "" %>>
+            <p class="mt-2 text-xs text-zinc-500">Upload at least <%= minImages %> images. Allowed formats: JPG, JPEG, PNG, WEBP. Max 10 files, 5MB each.</p>
+        </div>
+
+        <label class="flex items-center gap-3 border border-white/10 bg-black px-4 py-3">
+            <input type="checkbox" name="isActive" value="on" class="h-4 w-4 accent-lime-400" <%= !variant || variant.isActive ? "checked" : "" %>>
+            <span class="text-sm font-semibold text-zinc-300">Active variant</span>
+        </label>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <a href="/admin/products/<%= product._id %>/variants" class="border border-white/10 px-5 py-3 text-center text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Cancel</a>
+            <button type="submit" class="bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">
+                <%= mode === "edit" ? "Update Variant" : "Create Variant" %>
+            </button>
+        </div>
+    </form>
+</section>
+
+<script>
+const skuInput = document.getElementById("skuInput");
+const addAttributeBtn = document.getElementById("addAttributeBtn");
+const attributeRows = document.getElementById("attributeRows");
+const generateSkuBtn = document.getElementById("generateSkuBtn");
+
+function skuPart(value) {
+    return String(value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function buildSku() {
+    const base = skuPart(skuInput.dataset.base || "PRODUCT");
+    const values = Array.from(document.querySelectorAll(".attribute-value"))
+        .map(input => skuPart(input.value))
+        .filter(Boolean)
+        .join("-");
+
+    return values ? `${base}-${values}`.slice(0, 80) : base.slice(0, 80);
+}
+
+function refreshSkuIfEmpty() {
+    if (!skuInput.value.trim()) {
+        skuInput.value = buildSku();
+    }
+}
+
+function bindAttributeRow(row) {
+    row.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", refreshSkuIfEmpty);
+    });
+
+    row.querySelector(".remove-attribute").addEventListener("click", () => {
+        const rows = document.querySelectorAll(".attribute-row");
+        if (rows.length === 1) {
+            row.querySelectorAll("input").forEach(input => {
+                input.value = "";
+            });
+        } else {
+            row.remove();
+        }
+        refreshSkuIfEmpty();
+    });
+}
+
+document.querySelectorAll(".attribute-row").forEach(bindAttributeRow);
+
+addAttributeBtn.addEventListener("click", () => {
+    const row = document.createElement("div");
+    row.className = "attribute-row grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]";
+    row.innerHTML = `
+        <input type="text" name="attributeName" placeholder="Name, e.g. Color" class="attribute-name w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
+        <input type="text" name="attributeValue" placeholder="Value, e.g. Black" class="attribute-value w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
+        <button type="button" class="remove-attribute border border-red-400/30 px-4 py-3 text-xs font-bold text-red-400 hover:bg-red-400/10">Remove</button>
+    `;
+    attributeRows.appendChild(row);
+    bindAttributeRow(row);
+});
+
+generateSkuBtn.addEventListener("click", () => {
+    skuInput.value = buildSku();
+});
+
+refreshSkuIfEmpty();
+</script>

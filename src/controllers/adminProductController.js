@@ -1,5 +1,6 @@
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
+import Variant from "../models/Variant.js";
 import { productSchema } from "../validators/productValidator.js";
 
 const PAGE_SIZE = 8;
@@ -105,6 +106,7 @@ const ensureUniqueProduct = async ({ slug, excludeId = null }) => {
 
 const renderProductForm = async ({ req, res, mode, product = null, formErrors = [], statusCode = 200 }) => {
   const categories = await getActiveCategories();
+  const variantCount = product?._id ? await Variant.countDocuments({ productId: product._id }) : 0;
 
   return res.status(statusCode).render("admin/product-form", {
     layout: "layouts/admin-layout",
@@ -112,8 +114,39 @@ const renderProductForm = async ({ req, res, mode, product = null, formErrors = 
     mode,
     product,
     categories,
+    variantCount,
     formErrors,
     tagValue: typeof product?.tags === "string" ? product.tags : serializeTags(product)
+  });
+};
+
+const attachVariantImages = async (products) => {
+  const productIds = products.map((product) => product._id);
+  const variants = await Variant.find({ productId: { $in: productIds } })
+    .sort({ createdAt: 1 })
+    .select("productId images");
+
+  const imageByProductId = new Map();
+  const countByProductId = new Map();
+
+  variants.forEach((variant) => {
+    const productId = variant.productId.toString();
+    countByProductId.set(productId, (countByProductId.get(productId) || 0) + 1);
+
+    if (!imageByProductId.has(productId) && variant.images?.length) {
+      imageByProductId.set(productId, variant.images[0]);
+    }
+  });
+
+  return products.map((product) => {
+    const productObject = product.toObject();
+    const productId = product._id.toString();
+
+    return {
+      ...productObject,
+      displayImage: imageByProductId.get(productId) || "",
+      variantCount: countByProductId.get(productId) || 0
+    };
   });
 };
 
@@ -127,7 +160,7 @@ export const getProducts = async (req, res) => {
     const query = buildProductQuery({ search, status, categoryId });
     const sortDirection = sort === "asc" ? 1 : -1;
 
-    const [products, totalProducts, categories] = await Promise.all([
+    const [productDocs, totalProducts, categories] = await Promise.all([
       Product.find(query)
         .populate("categoryId", "name slug")
         .sort({ createdAt: sortDirection })
@@ -136,6 +169,7 @@ export const getProducts = async (req, res) => {
       Product.countDocuments(query),
       Category.find({ isDeleted: false }).sort({ name: 1 })
     ]);
+    const products = await attachVariantImages(productDocs);
 
     const totalPages = Math.max(Math.ceil(totalProducts / PAGE_SIZE), 1);
 
@@ -227,20 +261,19 @@ export const createProduct = async (req, res) => {
       });
     }
 
-    await Product.create({
+    const product = await Product.create({
       name: value.name,
       slug,
       description: value.description,
       brand: value.brand,
       categoryId: value.categoryId,
-      thumbnail: value.thumbnail || "",
       tags: parseTags(value.tags),
       isFeatured: normalizeFeatured(value.isFeatured),
       status: value.status
     });
 
-    setFlash(req, "success", "Product created successfully.");
-    res.redirect("/admin/products");
+    setFlash(req, "success", "Product created. Add at least 3 images to the first variant.");
+    res.redirect(`/admin/products/${product._id}/variants/new`);
   } catch (error) {
     console.error("Create product error:", error);
     setFlash(req, "error", "Failed to create product.");
@@ -340,7 +373,6 @@ export const updateProduct = async (req, res) => {
     product.description = value.description;
     product.brand = value.brand;
     product.categoryId = value.categoryId;
-    product.thumbnail = value.thumbnail || "";
     product.tags = parseTags(value.tags);
     product.isFeatured = normalizeFeatured(value.isFeatured);
     product.status = value.status;

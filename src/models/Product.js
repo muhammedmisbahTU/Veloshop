@@ -27,10 +27,6 @@ const productSchema = new mongoose.Schema(
       ref: "Category",
       required: true
     },
-    thumbnail: {
-      type: String,
-      default: ""
-    },
     tags: [
       {
         type: String,

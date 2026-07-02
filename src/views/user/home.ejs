@@ -85,8 +85,8 @@
             <% featuredProducts.forEach(product => { %>
                 <a href="/products/<%= product.slug %>" class="border border-white/10 bg-zinc-950 transition hover:border-lime-400/60">
                     <div class="aspect-square bg-black">
-                        <% if (product.thumbnail) { %>
-                            <img src="<%= product.thumbnail %>" alt="<%= product.name %>" class="h-full w-full object-cover">
+                        <% if (product.displayImage) { %>
+                            <img src="<%= product.displayImage %>" alt="<%= product.name %>" class="h-full w-full object-cover">
                         <% } else { %>
                             <div class="flex h-full items-center justify-center px-6 text-center text-sm font-bold text-zinc-600">Product image</div>
                         <% } %>

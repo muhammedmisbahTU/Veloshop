@@ -44,11 +44,6 @@ export const productSchema = Joi.object({
       "string.pattern.base": "Please select a valid category."
     }),
 
-  thumbnail: Joi.string()
-    .trim()
-    .allow("")
-    .max(500),
-
   tags: Joi.string()
     .trim()
     .allow("")

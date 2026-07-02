@@ -63,8 +63,8 @@
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="h-14 w-14 flex-shrink-0 border border-white/10 bg-black">
-                                        <% if (product.thumbnail) { %>
-                                            <img src="<%= product.thumbnail %>" alt="<%= product.name %>" class="h-full w-full object-cover">
+                                        <% if (product.displayImage) { %>
+                                            <img src="<%= product.displayImage %>" alt="<%= product.name %>" class="h-full w-full object-cover">
                                         <% } else { %>
                                             <div class="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-600">IMG</div>
                                         <% } %>
@@ -72,6 +72,9 @@
                                     <div>
                                         <p class="font-bold text-white"><%= product.name %></p>
                                         <p class="text-xs text-zinc-500"><%= product.slug %></p>
+                                        <a href="/admin/products/<%= product._id %>/variants" class="mt-1 inline-block text-xs font-bold text-lime-400 hover:text-lime-300">
+                                            <%= product.variantCount %> variant<%= product.variantCount === 1 ? "" : "s" %>
+                                        </a>
                                     </div>
                                 </div>
                             </td>
@@ -100,6 +103,7 @@
                                         <button class="product-action border border-lime-400/30 px-4 py-2 text-xs font-bold text-lime-400 hover:bg-lime-400/10" data-id="<%= product._id %>" data-action="restore" data-name="<%= product.name %>">Restore</button>
                                     <% } else { %>
                                         <a href="/admin/products/<%= product._id %>/edit" class="border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Edit</a>
+                                        <a href="/admin/products/<%= product._id %>/variants" class="border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Variants</a>
                                         <button class="product-action border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-300 hover:bg-yellow-400/10" data-id="<%= product._id %>" data-action="toggle-status" data-name="<%= product.name %>">
                                             <%= product.status === "ACTIVE" ? "Deactivate" : "Activate" %>
                                         </button>

@@ -26,6 +26,15 @@ import {
   toggleProductStatus,
   updateProduct
 } from "../controllers/adminProductController.js";
+import {
+  createVariant,
+  getEditVariant,
+  getNewVariant,
+  getVariants,
+  toggleVariantStatus,
+  updateVariant
+} from "../controllers/adminVariantController.js";
+import { uploadVariantImages } from "../config/cloudinaryConfig.js";
 import { isAdmin } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import { loginSchema } from "../validators/authValidator.js";
@@ -49,10 +58,16 @@ router.post("/admin/categories/:id/toggle-status", isAdmin, toggleCategoryStatus
 router.get("/admin/products", isAdmin, getProducts);
 router.get("/admin/products/new", isAdmin, getNewProduct);
 router.post("/admin/products", isAdmin, createProduct);
+router.get("/admin/products/:productId/variants", isAdmin, getVariants);
+router.get("/admin/products/:productId/variants/new", isAdmin, getNewVariant);
+router.post("/admin/products/:productId/variants", isAdmin, uploadVariantImages.array("images", 10), createVariant);
 router.get("/admin/products/:id/edit", isAdmin, getEditProduct);
 router.post("/admin/products/:id", isAdmin, updateProduct);
 router.post("/admin/products/:id/delete", isAdmin, softDeleteProduct);
 router.post("/admin/products/:id/restore", isAdmin, restoreProduct);
 router.post("/admin/products/:id/toggle-status", isAdmin, toggleProductStatus);
+router.get("/admin/variants/:variantId/edit", isAdmin, getEditVariant);
+router.post("/admin/variants/:variantId", isAdmin, uploadVariantImages.array("images", 10), updateVariant);
+router.post("/admin/variants/:variantId/toggle-status", isAdmin, toggleVariantStatus);
 
 export default router;

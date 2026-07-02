@@ -53,3 +53,9 @@ export const uploadProduct = multer({
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
+
+export const uploadVariantImages = multer({
+  storage: createStorage("ecommerce/variants"),
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per image
+});

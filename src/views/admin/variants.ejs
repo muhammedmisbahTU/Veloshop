@@ -1,0 +1,134 @@
+<section class="space-y-5">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <a href="/admin/products" class="text-sm font-bold text-lime-400 hover:text-lime-300">Back to Products</a>
+            <p class="mt-4 text-xs font-bold uppercase tracking-[0.24em] text-lime-400">Variants</p>
+            <h2 class="mt-2 text-3xl font-black text-white"><%= product.name %></h2>
+            <p class="mt-2 text-sm text-zinc-400">Each variant requires at least <%= minImages %> uploaded images.</p>
+        </div>
+
+        <a href="/admin/products/<%= product._id %>/variants/new" class="bg-lime-400 px-5 py-3 text-center text-sm font-black text-black hover:bg-lime-300">Add Variant</a>
+    </div>
+
+    <div id="variantAlert" class="hidden border p-4 text-sm"></div>
+
+    <div class="overflow-x-auto border border-white/10 bg-zinc-950">
+        <table class="min-w-full divide-y divide-white/10 text-left text-sm">
+            <thead class="bg-black text-xs uppercase tracking-widest text-zinc-500">
+                <tr>
+                    <th class="px-5 py-4">SKU</th>
+                    <th class="px-5 py-4">Images</th>
+                    <th class="px-5 py-4">Stock</th>
+                    <th class="px-5 py-4">Price</th>
+                    <th class="px-5 py-4">Status</th>
+                    <th class="px-5 py-4">Attributes</th>
+                    <th class="px-5 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/10">
+                <% if (variants && variants.length) { %>
+                    <% variants.forEach(variant => { %>
+                        <tr>
+                            <td class="px-5 py-4 font-bold text-white"><%= variant.sku %></td>
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-2">
+                                    <% (variant.images || []).slice(0, 3).forEach(image => { %>
+                                        <img src="<%= image %>" alt="<%= variant.sku %>" class="h-12 w-12 border border-white/10 object-cover">
+                                    <% }) %>
+                                    <span class="text-xs text-zinc-500"><%= variant.images ? variant.images.length : 0 %> image<%= variant.images && variant.images.length === 1 ? "" : "s" %></span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-4 text-zinc-300"><%= variant.stock %></td>
+                            <td class="px-5 py-4 text-zinc-300">
+                                <p>Regular: INR <%= variant.regularPrice %></p>
+                                <% if (variant.salePrice != null) { %>
+                                    <p class="text-lime-400">Sale: INR <%= variant.salePrice %></p>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4">
+                                <% if (variant.isActive) { %>
+                                    <span class="inline-flex border border-lime-400/30 bg-lime-400/10 px-3 py-1 text-xs font-bold text-lime-400">ACTIVE</span>
+                                <% } else { %>
+                                    <span class="inline-flex border border-zinc-500/30 bg-zinc-500/10 px-3 py-1 text-xs font-bold text-zinc-300">INACTIVE</span>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4 text-zinc-400">
+                                <% if (variant.attributes && variant.attributes.length) { %>
+                                    <%= variant.attributes.map(attr => `${attr.name}: ${attr.value}`).join(", ") %>
+                                <% } else { %>
+                                    <span class="text-zinc-600">None</span>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="flex justify-end gap-2">
+                                    <a href="/admin/variants/<%= variant._id %>/edit" class="border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Edit</a>
+                                    <button class="variant-action border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-300 hover:bg-yellow-400/10" data-id="<%= variant._id %>" data-name="<%= variant.sku %>">
+                                        <%= variant.isActive ? "Deactivate" : "Activate" %>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="px-5 py-12 text-center text-zinc-500">No variants found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+const variantAlert = document.getElementById("variantAlert");
+
+document.querySelectorAll(".variant-action").forEach(button => {
+    button.addEventListener("click", async () => {
+        const id = button.dataset.id;
+        const name = button.dataset.name;
+        const label = button.textContent.trim().toLowerCase();
+
+        const confirmResult = await Swal.fire({
+            title: `${label} ${name}`,
+            text: `Are you sure you want to ${label} this variant?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Confirm",
+            cancelButtonText: "Cancel",
+            background: "#09090b",
+            color: "#ffffff",
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: "px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-black font-semibold text-sm rounded-xl transition mx-2 focus:outline-none",
+                cancelButton: "px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-semibold text-sm rounded-xl transition mx-2 focus:outline-none"
+            }
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/variants/${id}/toggle-status`, { method: "POST" });
+            const result = await response.json();
+
+            variantAlert.className = "border p-4 text-sm";
+            variantAlert.classList.remove("hidden");
+
+            if (response.ok && result.success) {
+                variantAlert.classList.add("border-lime-500/30", "bg-lime-500/10", "text-lime-300");
+                variantAlert.textContent = result.message || "Variant updated.";
+                setTimeout(() => window.location.reload(), 800);
+                return;
+            }
+
+            variantAlert.classList.add("border-red-500/30", "bg-red-500/10", "text-red-300");
+            variantAlert.textContent = result.message || "Variant action failed.";
+        } catch (error) {
+            variantAlert.className = "border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300";
+            variantAlert.classList.remove("hidden");
+            variantAlert.textContent = "A network error occurred. Please try again.";
+        }
+    });
+});
+</script>
