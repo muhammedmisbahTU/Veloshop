@@ -12,7 +12,7 @@ import {
   postDeleteAddress
 } from '../controllers/userController.js';
 import { isAuthenticated } from '../middleware/auth.js';
-import upload from '../utils/multer.js';
+import { uploadAvatar } from '../config/cloudinaryConfig.js';
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.get("/", getHome);
 router.get("/profile", isAuthenticated, getProfile);
 router.get("/profile/edit", isAuthenticated, getEditProfile);
 router.post("/profile/edit", isAuthenticated, (req, res, next) => {
-  upload.single("avatar")(req, res, (err) => {
+  uploadAvatar.single("avatar")(req, res, (err) => {
     if (err) {
       return res.status(400).json({
         success: false,

@@ -62,7 +62,7 @@ export const postEditProfile = async (req, res) => {
     }
 
     if (req.file) {
-      user.avatar = `/uploads/${req.file.filename}`;
+      user.avatar = req.file.secure_url;
     }
 
     await user.save();
