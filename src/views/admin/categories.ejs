@@ -1,0 +1,174 @@
+<section class="space-y-5">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.24em] text-lime-400">Catalog</p>
+            <h2 class="mt-2 text-3xl font-black text-white">Category Management</h2>
+            <p class="mt-2 text-sm text-zinc-400"><%= totalCategories %> matching categor<%= totalCategories === 1 ? "y" : "ies" %></p>
+        </div>
+
+        <div class="flex flex-col gap-2 sm:flex-row">
+            <form method="GET" action="/admin/categories" class="flex flex-col gap-2 sm:flex-row">
+                <input
+                    type="search"
+                    name="search"
+                    value="<%= search %>"
+                    placeholder="Search category or slug"
+                    class="w-full border border-white/10 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-lime-400 sm:w-72"
+                >
+                <select name="status" class="border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none focus:border-lime-400">
+                    <option value="active" <%= status === "active" ? "selected" : "" %>>Active</option>
+                    <option value="inactive" <%= status === "inactive" ? "selected" : "" %>>Inactive</option>
+                    <option value="deleted" <%= status === "deleted" ? "selected" : "" %>>Deleted</option>
+                    <option value="all" <%= status === "all" ? "selected" : "" %>>All</option>
+                </select>
+                <select name="sort" class="border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none focus:border-lime-400">
+                    <option value="desc" <%= sort === "desc" ? "selected" : "" %>>Newest</option>
+                    <option value="asc" <%= sort === "asc" ? "selected" : "" %>>Oldest</option>
+                </select>
+                <button type="submit" class="bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">Apply</button>
+                <% if (search || status !== "active" || sort !== "desc") { %>
+                    <a href="/admin/categories" class="border border-white/10 px-5 py-3 text-center text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Reset</a>
+                <% } %>
+            </form>
+
+            <a href="/admin/categories/new" class="bg-lime-400 px-5 py-3 text-center text-sm font-black text-black hover:bg-lime-300">Add Category</a>
+        </div>
+    </div>
+
+    <div id="categoryAlert" class="hidden border p-4 text-sm"></div>
+
+    <div class="overflow-x-auto border border-white/10 bg-zinc-950">
+        <table class="min-w-full divide-y divide-white/10 text-left text-sm">
+            <thead class="bg-black text-xs uppercase tracking-widest text-zinc-500">
+                <tr>
+                    <th class="px-5 py-4">Category</th>
+                    <th class="px-5 py-4">Slug</th>
+                    <th class="px-5 py-4">Status</th>
+                    <th class="px-5 py-4">Deleted</th>
+                    <th class="px-5 py-4">Created</th>
+                    <th class="px-5 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/10">
+                <% if (categories && categories.length) { %>
+                    <% categories.forEach(category => { %>
+                        <tr id="category-row-<%= category._id %>">
+                            <td class="px-5 py-4">
+                                <p class="font-bold text-white"><%= category.name %></p>
+                            </td>
+                            <td class="px-5 py-4 text-zinc-400"><%= category.slug %></td>
+                            <td class="px-5 py-4">
+                                <% if (category.isActive && !category.isDeleted) { %>
+                                    <span class="inline-flex border border-lime-400/30 bg-lime-400/10 px-3 py-1 text-xs font-bold text-lime-400">ACTIVE</span>
+                                <% } else { %>
+                                    <span class="inline-flex border border-zinc-500/30 bg-zinc-500/10 px-3 py-1 text-xs font-bold text-zinc-300">INACTIVE</span>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4">
+                                <% if (category.isDeleted) { %>
+                                    <span class="inline-flex border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-bold text-red-400">DELETED</span>
+                                <% } else { %>
+                                    <span class="text-xs text-zinc-500">No</span>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4 text-zinc-400"><%= new Date(category.createdAt).toLocaleDateString() %></td>
+                            <td class="px-5 py-4">
+                                <div class="flex justify-end gap-2">
+                                    <% if (category.isDeleted) { %>
+                                        <button class="category-action border border-lime-400/30 px-4 py-2 text-xs font-bold text-lime-400 hover:bg-lime-400/10" data-id="<%= category._id %>" data-action="restore" data-name="<%= category.name %>">Restore</button>
+                                    <% } else { %>
+                                        <a href="/admin/categories/<%= category._id %>/edit" class="border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Edit</a>
+                                        <button class="category-action border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-300 hover:bg-yellow-400/10" data-id="<%= category._id %>" data-action="toggle-status" data-name="<%= category.name %>">
+                                            <%= category.isActive ? "Deactivate" : "Activate" %>
+                                        </button>
+                                        <button class="category-action border border-red-400/30 px-4 py-2 text-xs font-bold text-red-400 hover:bg-red-400/10" data-id="<%= category._id %>" data-action="delete" data-name="<%= category.name %>">Delete</button>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="px-5 py-12 text-center text-zinc-500">No categories found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-zinc-500">Page <%= page %> of <%= totalPages %></p>
+        <div class="flex gap-2">
+            <%
+                let querySuffix = "";
+                if (search) querySuffix += `&search=${encodeURIComponent(search)}`;
+                if (status !== "active") querySuffix += `&status=${encodeURIComponent(status)}`;
+                if (sort !== "desc") querySuffix += `&sort=${encodeURIComponent(sort)}`;
+            %>
+            <% if (page > 1) { %>
+                <a href="/admin/categories?page=<%= page - 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Previous</a>
+            <% } %>
+            <% if (page < totalPages) { %>
+                <a href="/admin/categories?page=<%= page + 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Next</a>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<script>
+const categoryAlert = document.getElementById("categoryAlert");
+
+document.querySelectorAll(".category-action").forEach(button => {
+    button.addEventListener("click", async () => {
+        const id = button.dataset.id;
+        const action = button.dataset.action;
+        const name = button.dataset.name;
+        const actionLabel = action === "toggle-status" ? button.textContent.trim().toLowerCase() : action;
+
+        const confirmResult = await Swal.fire({
+            title: `${actionLabel} ${name}`,
+            text: `Are you sure you want to ${actionLabel} this category?`,
+            icon: "warning",
+            iconColor: "#f87171",
+            showCancelButton: true,
+            confirmButtonText: "Confirm",
+            cancelButtonText: "Cancel",
+            background: "#09090b",
+            color: "#ffffff",
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: "px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-black font-semibold text-sm rounded-xl transition mx-2 focus:outline-none",
+                cancelButton: "px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-semibold text-sm rounded-xl transition mx-2 focus:outline-none"
+            }
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/categories/${id}/${action}`, {
+                method: "POST"
+            });
+            const result = await response.json();
+
+            categoryAlert.className = "border p-4 text-sm";
+            categoryAlert.classList.remove("hidden");
+
+            if (response.ok && result.success) {
+                categoryAlert.classList.add("border-lime-500/30", "bg-lime-500/10", "text-lime-300");
+                categoryAlert.textContent = result.message || "Category updated.";
+                setTimeout(() => window.location.reload(), 800);
+                return;
+            }
+
+            categoryAlert.classList.add("border-red-500/30", "bg-red-500/10", "text-red-300");
+            categoryAlert.textContent = result.message || "Category action failed.";
+        } catch (error) {
+            categoryAlert.className = "border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300";
+            categoryAlert.classList.remove("hidden");
+            categoryAlert.textContent = "A network error occurred. Please try again.";
+        }
+    });
+});
+</script>

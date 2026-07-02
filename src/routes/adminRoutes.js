@@ -6,6 +6,16 @@ import {
   postAdminLogin,
   unblockUser
 } from "../controllers/adminController.js";
+import {
+  createCategory,
+  getCategories,
+  getEditCategory,
+  getNewCategory,
+  restoreCategory,
+  softDeleteCategory,
+  toggleCategoryStatus,
+  updateCategory
+} from "../controllers/adminCategoryController.js";
 import { isAdmin } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import { loginSchema } from "../validators/authValidator.js";
@@ -18,5 +28,13 @@ router.get("/admin", isAdmin, (req, res) => res.redirect("/admin/users"));
 router.get("/admin/users", isAdmin, getUsers);
 router.post("/admin/users/:id/block", isAdmin, blockUser);
 router.post("/admin/users/:id/unblock", isAdmin, unblockUser);
+router.get("/admin/categories", isAdmin, getCategories);
+router.get("/admin/categories/new", isAdmin, getNewCategory);
+router.post("/admin/categories", isAdmin, createCategory);
+router.get("/admin/categories/:id/edit", isAdmin, getEditCategory);
+router.post("/admin/categories/:id", isAdmin, updateCategory);
+router.post("/admin/categories/:id/delete", isAdmin, softDeleteCategory);
+router.post("/admin/categories/:id/restore", isAdmin, restoreCategory);
+router.post("/admin/categories/:id/toggle-status", isAdmin, toggleCategoryStatus);
 
 export default router;
