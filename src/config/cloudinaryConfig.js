@@ -1,6 +1,8 @@
 import cloudinaryModule from "cloudinary";
 import pkg from "multer-storage-cloudinary";
 import multer from "multer";
+import sharp from "sharp";
+import { Readable } from "stream";
 import "dotenv/config";
 
 const CloudinaryStorage = pkg.CloudinaryStorage || pkg;
@@ -41,6 +43,75 @@ const createStorage = (folderName) => {
   });
 };
 
+const variantMemoryUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per image
+});
+
+const uploadBufferToCloudinary = (buffer, folderName) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: folderName,
+        resource_type: "image",
+        format: "webp",
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(result);
+      }
+    );
+
+    Readable.from(buffer).pipe(uploadStream);
+  });
+};
+
+const processVariantImages = async (req, res, next) => {
+  try {
+    if (!req.files?.length) {
+      return next();
+    }
+
+    const processedFiles = await Promise.all(
+      req.files.map(async (file) => {
+        const processedBuffer = await sharp(file.buffer)
+          .rotate()
+          .resize({
+            width: 1000,
+            height: 1000,
+            fit: "cover",
+            position: "centre",
+          })
+          .webp({ quality: 86 })
+          .toBuffer();
+
+        const uploaded = await uploadBufferToCloudinary(processedBuffer, "ecommerce/variants");
+
+        return {
+          ...file,
+          buffer: undefined,
+          path: uploaded.secure_url,
+          url: uploaded.secure_url,
+          secure_url: uploaded.secure_url,
+          filename: uploaded.public_id,
+          size: processedBuffer.length,
+          mimetype: "image/webp",
+        };
+      })
+    );
+
+    req.files = processedFiles;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Middleware exports with localized rules
 export const uploadAvatar = multer({
   storage: createStorage("ecommerce/avatars"),
@@ -54,8 +125,9 @@ export const uploadProduct = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-export const uploadVariantImages = multer({
-  storage: createStorage("ecommerce/variants"),
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per image
-});
+export const uploadVariantImages = {
+  array: (fieldName, maxCount) => [
+    variantMemoryUpload.array(fieldName, maxCount),
+    processVariantImages,
+  ],
+};
