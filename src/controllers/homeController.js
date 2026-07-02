@@ -168,10 +168,15 @@ export const getShop = async (req, res) => {
     }
 
     // Sort enriched products
+    const nameCompare = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
     if (sortOption === "price-low-to-high") {
       enrichedProducts.sort((a, b) => a.minPrice - b.minPrice);
     } else if (sortOption === "price-high-to-low") {
       enrichedProducts.sort((a, b) => b.minPrice - a.minPrice);
+    } else if (sortOption === "name-a-z") {
+      enrichedProducts.sort(nameCompare);
+    } else if (sortOption === "name-z-a") {
+      enrichedProducts.sort((a, b) => nameCompare(b, a));
     } else if (sortOption === "rating") {
       enrichedProducts.sort((a, b) => b.averageRating - a.averageRating);
     } else {

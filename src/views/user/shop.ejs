@@ -12,12 +12,23 @@
                         <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Search</label>
                         <div class="relative">
                             <input 
+                                id="searchInput"
                                 type="text" 
                                 name="search" 
                                 value="<%= searchQuery %>" 
                                 placeholder="Type to search..." 
-                                class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-lime-400 focus:outline-none placeholder-zinc-600"
+                                class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 pr-10 text-sm text-white focus:border-lime-400 focus:outline-none placeholder-zinc-600"
                             >
+                            <button
+                                type="button"
+                                id="clearSearchBtn"
+                                aria-label="Clear search"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition <%= searchQuery ? '' : 'hidden' %>"
+                            >
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
 
@@ -75,6 +86,8 @@
                             <option value="newest" <%= sortOption === 'newest' ? 'selected' : '' %>>Newest Arrivals</option>
                             <option value="price-low-to-high" <%= sortOption === 'price-low-to-high' ? 'selected' : '' %>>Price: Low to High</option>
                             <option value="price-high-to-low" <%= sortOption === 'price-high-to-low' ? 'selected' : '' %>>Price: High to Low</option>
+                            <option value="name-a-z" <%= sortOption === 'name-a-z' ? 'selected' : '' %>>Name: A to Z</option>
+                            <option value="name-z-a" <%= sortOption === 'name-z-a' ? 'selected' : '' %>>Name: Z to A</option>
                             <option value="rating" <%= sortOption === 'rating' ? 'selected' : '' %>>Customer Rating</option>
                         </select>
                     </div>
@@ -84,7 +97,7 @@
                         <button type="submit" class="w-full py-3 bg-lime-400 hover:bg-lime-300 text-black font-black text-sm rounded-xl transition duration-300">
                             Apply Filters
                         </button>
-                        <% if (selectedCategory || searchQuery || minPrice || maxPrice || stockFilter) { %>
+                        <% if (selectedCategory || searchQuery || minPrice || maxPrice || stockFilter || (sortOption && sortOption !== 'newest')) { %>
                             <a href="/shop" class="w-full py-3 bg-zinc-900 border border-white/5 hover:border-white/10 text-center text-zinc-300 font-semibold text-sm rounded-xl transition duration-300">
                                 Reset Filters
                             </a>
@@ -220,3 +233,25 @@
 
     </div>
 </div>
+
+<script>
+    (function () {
+        const searchInput = document.getElementById("searchInput");
+        const clearSearchBtn = document.getElementById("clearSearchBtn");
+        const filterForm = document.getElementById("filterForm");
+
+        if (!searchInput || !clearSearchBtn || !filterForm) return;
+
+        const toggleClearButton = () => {
+            clearSearchBtn.classList.toggle("hidden", !searchInput.value.trim());
+        };
+
+        searchInput.addEventListener("input", toggleClearButton);
+
+        clearSearchBtn.addEventListener("click", () => {
+            searchInput.value = "";
+            toggleClearButton();
+            filterForm.submit();
+        });
+    })();
+</script>
