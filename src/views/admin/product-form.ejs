@@ -1,0 +1,116 @@
+<section class="mx-auto max-w-4xl space-y-6">
+    <div>
+        <a href="/admin/products" class="text-sm font-bold text-lime-400 hover:text-lime-300">Back to Products</a>
+        <h2 class="mt-3 text-3xl font-black text-white"><%= mode === "edit" ? "Edit Product" : "Add Product" %></h2>
+        <p class="mt-2 text-sm text-zinc-400">Product slugs are generated automatically from the name.</p>
+    </div>
+
+    <% if (formErrors && formErrors.length) { %>
+        <div class="border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+            <% formErrors.forEach(error => { %>
+                <p><%= error %></p>
+            <% }) %>
+        </div>
+    <% } %>
+
+    <form method="POST" action="<%= mode === 'edit' ? `/admin/products/${product._id}` : '/admin/products' %>" class="space-y-5 border border-white/10 bg-zinc-950 p-6">
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-zinc-300">Product Name</label>
+                <input
+                    type="text"
+                    name="name"
+                    value="<%= product ? product.name : '' %>"
+                    placeholder="Example: VeloStrike Mechanical Keyboard"
+                    class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
+                    required
+                >
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-zinc-300">Brand</label>
+                <input
+                    type="text"
+                    name="brand"
+                    value="<%= product ? product.brand : '' %>"
+                    placeholder="Example: Veloshop"
+                    class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
+                    required
+                >
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-zinc-300">Category</label>
+                <select name="categoryId" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                    <option value="">Select category</option>
+                    <% categories.forEach(category => { %>
+                        <% const selectedCategoryId = product && product.categoryId ? product.categoryId.toString() : ""; %>
+                        <option value="<%= category._id %>" <%= selectedCategoryId === category._id.toString() ? "selected" : "" %>><%= category.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-zinc-300">Status</label>
+                <select name="status" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                    <option value="ACTIVE" <%= !product || product.status === "ACTIVE" ? "selected" : "" %>>Active</option>
+                    <option value="INACTIVE" <%= product && product.status === "INACTIVE" ? "selected" : "" %>>Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-zinc-300">Description</label>
+            <textarea
+                name="description"
+                rows="6"
+                placeholder="Describe the product, use cases, and highlights."
+                class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
+                required
+            ><%= product ? product.description : '' %></textarea>
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-zinc-300">Thumbnail URL</label>
+            <input
+                type="text"
+                name="thumbnail"
+                value="<%= product ? product.thumbnail : '' %>"
+                placeholder="/images/products/product.jpg or https://..."
+                class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
+            >
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-zinc-300">Tags</label>
+            <input
+                type="text"
+                name="tags"
+                value="<%= tagValue || '' %>"
+                placeholder="keyboard, wireless, rgb"
+                class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
+            >
+            <p class="mt-2 text-xs text-zinc-500">Separate tags with commas.</p>
+        </div>
+
+        <label class="flex items-center gap-3 border border-white/10 bg-black px-4 py-3">
+            <input
+                type="checkbox"
+                name="isFeatured"
+                value="on"
+                class="h-4 w-4 accent-lime-400"
+                <%= product && product.isFeatured ? "checked" : "" %>
+            >
+            <span class="text-sm font-semibold text-zinc-300">Feature this product on the storefront</span>
+        </label>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <a href="/admin/products" class="border border-white/10 px-5 py-3 text-center text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Cancel</a>
+            <button type="submit" class="bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">
+                <%= mode === "edit" ? "Update Product" : "Create Product" %>
+            </button>
+        </div>
+    </form>
+</section>

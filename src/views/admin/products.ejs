@@ -1,0 +1,197 @@
+<section class="space-y-5">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.24em] text-lime-400">Catalog</p>
+            <h2 class="mt-2 text-3xl font-black text-white">Product Management</h2>
+            <p class="mt-2 text-sm text-zinc-400"><%= totalProducts %> matching product<%= totalProducts === 1 ? "" : "s" %></p>
+        </div>
+
+        <div class="flex flex-col gap-2 sm:flex-row">
+            <form method="GET" action="/admin/products" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <input
+                    type="search"
+                    name="search"
+                    value="<%= search %>"
+                    placeholder="Search name, brand, slug"
+                    class="w-full border border-white/10 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-lime-400 sm:w-72"
+                >
+                <select name="categoryId" class="border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none focus:border-lime-400">
+                    <option value="all" <%= categoryId === "all" ? "selected" : "" %>>All Categories</option>
+                    <% categories.forEach(category => { %>
+                        <option value="<%= category._id %>" <%= categoryId === category._id.toString() ? "selected" : "" %>><%= category.name %></option>
+                    <% }) %>
+                </select>
+                <select name="status" class="border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none focus:border-lime-400">
+                    <option value="active" <%= status === "active" ? "selected" : "" %>>Active</option>
+                    <option value="inactive" <%= status === "inactive" ? "selected" : "" %>>Inactive</option>
+                    <option value="deleted" <%= status === "deleted" ? "selected" : "" %>>Deleted</option>
+                    <option value="all" <%= status === "all" ? "selected" : "" %>>All</option>
+                </select>
+                <select name="sort" class="border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none focus:border-lime-400">
+                    <option value="desc" <%= sort === "desc" ? "selected" : "" %>>Newest</option>
+                    <option value="asc" <%= sort === "asc" ? "selected" : "" %>>Oldest</option>
+                </select>
+                <button type="submit" class="bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">Apply</button>
+                <% if (search || status !== "active" || categoryId !== "all" || sort !== "desc") { %>
+                    <a href="/admin/products" class="border border-white/10 px-5 py-3 text-center text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Reset</a>
+                <% } %>
+            </form>
+
+            <a href="/admin/products/new" class="bg-lime-400 px-5 py-3 text-center text-sm font-black text-black hover:bg-lime-300">Add Product</a>
+        </div>
+    </div>
+
+    <div id="productAlert" class="hidden border p-4 text-sm"></div>
+
+    <div class="overflow-x-auto border border-white/10 bg-zinc-950">
+        <table class="min-w-full divide-y divide-white/10 text-left text-sm">
+            <thead class="bg-black text-xs uppercase tracking-widest text-zinc-500">
+                <tr>
+                    <th class="px-5 py-4">Product</th>
+                    <th class="px-5 py-4">Brand</th>
+                    <th class="px-5 py-4">Category</th>
+                    <th class="px-5 py-4">Status</th>
+                    <th class="px-5 py-4">Featured</th>
+                    <th class="px-5 py-4">Deleted</th>
+                    <th class="px-5 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/10">
+                <% if (products && products.length) { %>
+                    <% products.forEach(product => { %>
+                        <tr id="product-row-<%= product._id %>">
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-14 w-14 flex-shrink-0 border border-white/10 bg-black">
+                                        <% if (product.thumbnail) { %>
+                                            <img src="<%= product.thumbnail %>" alt="<%= product.name %>" class="h-full w-full object-cover">
+                                        <% } else { %>
+                                            <div class="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-600">IMG</div>
+                                        <% } %>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-white"><%= product.name %></p>
+                                        <p class="text-xs text-zinc-500"><%= product.slug %></p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-5 py-4 text-zinc-300"><%= product.brand %></td>
+                            <td class="px-5 py-4 text-zinc-300"><%= product.categoryId ? product.categoryId.name : "Unassigned" %></td>
+                            <td class="px-5 py-4">
+                                <% if (product.status === "ACTIVE" && !product.isDeleted) { %>
+                                    <span class="inline-flex border border-lime-400/30 bg-lime-400/10 px-3 py-1 text-xs font-bold text-lime-400">ACTIVE</span>
+                                <% } else { %>
+                                    <span class="inline-flex border border-zinc-500/30 bg-zinc-500/10 px-3 py-1 text-xs font-bold text-zinc-300">INACTIVE</span>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4">
+                                <span class="text-xs font-bold <%= product.isFeatured ? 'text-lime-400' : 'text-zinc-500' %>"><%= product.isFeatured ? "YES" : "NO" %></span>
+                            </td>
+                            <td class="px-5 py-4">
+                                <% if (product.isDeleted) { %>
+                                    <span class="inline-flex border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-bold text-red-400">DELETED</span>
+                                <% } else { %>
+                                    <span class="text-xs text-zinc-500">No</span>
+                                <% } %>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="flex justify-end gap-2">
+                                    <% if (product.isDeleted) { %>
+                                        <button class="product-action border border-lime-400/30 px-4 py-2 text-xs font-bold text-lime-400 hover:bg-lime-400/10" data-id="<%= product._id %>" data-action="restore" data-name="<%= product.name %>">Restore</button>
+                                    <% } else { %>
+                                        <a href="/admin/products/<%= product._id %>/edit" class="border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Edit</a>
+                                        <button class="product-action border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-300 hover:bg-yellow-400/10" data-id="<%= product._id %>" data-action="toggle-status" data-name="<%= product.name %>">
+                                            <%= product.status === "ACTIVE" ? "Deactivate" : "Activate" %>
+                                        </button>
+                                        <button class="product-action border border-red-400/30 px-4 py-2 text-xs font-bold text-red-400 hover:bg-red-400/10" data-id="<%= product._id %>" data-action="delete" data-name="<%= product.name %>">Delete</button>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="px-5 py-12 text-center text-zinc-500">No products found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-zinc-500">Page <%= page %> of <%= totalPages %></p>
+        <div class="flex gap-2">
+            <%
+                let querySuffix = "";
+                if (search) querySuffix += `&search=${encodeURIComponent(search)}`;
+                if (status !== "active") querySuffix += `&status=${encodeURIComponent(status)}`;
+                if (categoryId !== "all") querySuffix += `&categoryId=${encodeURIComponent(categoryId)}`;
+                if (sort !== "desc") querySuffix += `&sort=${encodeURIComponent(sort)}`;
+            %>
+            <% if (page > 1) { %>
+                <a href="/admin/products?page=<%= page - 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Previous</a>
+            <% } %>
+            <% if (page < totalPages) { %>
+                <a href="/admin/products?page=<%= page + 1 %><%= querySuffix %>" class="border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300 hover:border-lime-400 hover:text-lime-400">Next</a>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<script>
+const productAlert = document.getElementById("productAlert");
+
+document.querySelectorAll(".product-action").forEach(button => {
+    button.addEventListener("click", async () => {
+        const id = button.dataset.id;
+        const action = button.dataset.action;
+        const name = button.dataset.name;
+        const actionLabel = action === "toggle-status" ? button.textContent.trim().toLowerCase() : action;
+
+        const confirmResult = await Swal.fire({
+            title: `${actionLabel} ${name}`,
+            text: `Are you sure you want to ${actionLabel} this product?`,
+            icon: "warning",
+            iconColor: "#f87171",
+            showCancelButton: true,
+            confirmButtonText: "Confirm",
+            cancelButtonText: "Cancel",
+            background: "#09090b",
+            color: "#ffffff",
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: "px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-black font-semibold text-sm rounded-xl transition mx-2 focus:outline-none",
+                cancelButton: "px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-semibold text-sm rounded-xl transition mx-2 focus:outline-none"
+            }
+        });
+
+        if (!confirmResult.isConfirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/products/${id}/${action}`, {
+                method: "POST"
+            });
+            const result = await response.json();
+
+            productAlert.className = "border p-4 text-sm";
+            productAlert.classList.remove("hidden");
+
+            if (response.ok && result.success) {
+                productAlert.classList.add("border-lime-500/30", "bg-lime-500/10", "text-lime-300");
+                productAlert.textContent = result.message || "Product updated.";
+                setTimeout(() => window.location.reload(), 800);
+                return;
+            }
+
+            productAlert.classList.add("border-red-500/30", "bg-red-500/10", "text-red-300");
+            productAlert.textContent = result.message || "Product action failed.";
+        } catch (error) {
+            productAlert.className = "border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300";
+            productAlert.classList.remove("hidden");
+            productAlert.textContent = "A network error occurred. Please try again.";
+        }
+    });
+});
+</script>
