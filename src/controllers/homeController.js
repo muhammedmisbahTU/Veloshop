@@ -117,24 +117,44 @@ const attachVariantDetails = async (products) => {
   });
 };
 
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value.filter(Boolean) : [value];
+};
+
 export const getShop = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 9; // 9 items per page
     const sortOption = req.query.sort || "newest";
+    const selectedCategories = toArray(req.query.category);
+    const selectedBrands = toArray(req.query.brand);
 
-    // 1. Fetch active categories for filtering sidebar
-    const categories = await Category.find({ isActive: true, isDeleted: false }).sort({ name: 1 });
+    // 1. Fetch active categories and brands for filtering sidebar
+    const [categories, brands] = await Promise.all([
+      Category.find({ isActive: true, isDeleted: false }).sort({ name: 1 }),
+      Product.distinct("brand", { status: "ACTIVE", isDeleted: false })
+    ]);
+    brands.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
     // 2. Build product base query
     const query = { status: "ACTIVE", isDeleted: false };
 
     // Apply category filter
-    if (req.query.category) {
-      const cat = await Category.findOne({ slug: req.query.category, isActive: true, isDeleted: false });
-      if (cat) {
-        query.categoryId = cat._id;
+    if (selectedCategories.length) {
+      const matchedCategories = await Category.find({
+        slug: { $in: selectedCategories },
+        isActive: true,
+        isDeleted: false
+      });
+      if (matchedCategories.length) {
+        query.categoryId = { $in: matchedCategories.map((cat) => cat._id) };
       }
+    }
+
+    // Apply brand filter
+    if (selectedBrands.length) {
+      query.brand = { $in: selectedBrands };
     }
 
     // Apply search filter
@@ -152,19 +172,19 @@ export const getShop = async (req, res) => {
     // Enrich with pricing and display image from active variants
     let enrichedProducts = await attachVariantDetails(productDocs);
 
-    // Apply Price Filters on enriched prices
+    // Apply price range filters on enriched prices
     const minPrice = parseFloat(req.query.minPrice);
     const maxPrice = parseFloat(req.query.maxPrice);
     if (!isNaN(minPrice)) {
-      enrichedProducts = enrichedProducts.filter(p => p.minPrice >= minPrice);
+      enrichedProducts = enrichedProducts.filter((p) => p.minPrice >= minPrice);
     }
     if (!isNaN(maxPrice)) {
-      enrichedProducts = enrichedProducts.filter(p => p.minPrice <= maxPrice);
+      enrichedProducts = enrichedProducts.filter((p) => p.minPrice <= maxPrice);
     }
 
-    // Apply Stock Filters
+    // Apply stock filter
     if (req.query.stock === "in-stock") {
-      enrichedProducts = enrichedProducts.filter(p => p.stock > 0);
+      enrichedProducts = enrichedProducts.filter((p) => p.stock > 0);
     }
 
     // Sort enriched products
@@ -194,7 +214,9 @@ export const getShop = async (req, res) => {
       title: "Shop - Veloshop",
       products: paginatedProducts,
       categories,
-      selectedCategory: req.query.category || "",
+      brands,
+      selectedCategories,
+      selectedBrands,
       searchQuery: req.query.search || "",
       minPrice: req.query.minPrice || "",
       maxPrice: req.query.maxPrice || "",

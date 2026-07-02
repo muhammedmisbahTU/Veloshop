@@ -1,4 +1,21 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <% 
+        function buildFilterQuery(extra = {}) {
+            const params = new URLSearchParams();
+            if (extra.page) params.set("page", extra.page);
+            selectedCategories.forEach((category) => params.append("category", category));
+            selectedBrands.forEach((brand) => params.append("brand", brand));
+            if (searchQuery) params.set("search", searchQuery);
+            if (minPrice) params.set("minPrice", minPrice);
+            if (maxPrice) params.set("maxPrice", maxPrice);
+            if (stockFilter) params.set("stock", stockFilter);
+            if (sortOption && sortOption !== "newest") params.set("sort", sortOption);
+            const queryString = params.toString();
+            return queryString ? "?" + queryString : "";
+        }
+
+        const hasActiveFilters = selectedCategories.length || selectedBrands.length || searchQuery || minPrice || maxPrice || stockFilter || (sortOption && sortOption !== "newest");
+    %>
     <div class="flex flex-col lg:flex-row gap-8">
         
         <!-- Filter Sidebar -->
@@ -35,12 +52,47 @@
                     <!-- Category Filter -->
                     <div class="space-y-2">
                         <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Category</label>
-                        <select name="category" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-lime-400 focus:outline-none">
-                            <option value="">All Categories</option>
-                            <% categories.forEach(cat => { %>
-                                <option value="<%= cat.slug %>" <%= selectedCategory === cat.slug ? 'selected' : '' %>><%= cat.name %></option>
-                            <% }) %>
-                        </select>
+                        <% if (categories.length) { %>
+                            <div class="max-h-40 overflow-y-auto space-y-2 rounded-xl border border-white/10 bg-black p-3">
+                                <% categories.forEach(cat => { %>
+                                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            name="category"
+                                            value="<%= cat.slug %>"
+                                            <%= selectedCategories.includes(cat.slug) ? "checked" : "" %>
+                                            class="w-4 h-4 rounded border-white/10 bg-black text-lime-400 focus:ring-0 focus:ring-offset-0 accent-lime-400 cursor-pointer"
+                                        >
+                                        <span class="text-sm text-zinc-300 font-semibold"><%= cat.name %></span>
+                                    </label>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <p class="text-sm text-zinc-500">No categories available.</p>
+                        <% } %>
+                    </div>
+
+                    <!-- Brand Filter -->
+                    <div class="space-y-2">
+                        <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Brand</label>
+                        <% if (brands.length) { %>
+                            <div class="max-h-40 overflow-y-auto space-y-2 rounded-xl border border-white/10 bg-black p-3">
+                                <% brands.forEach(brand => { %>
+                                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            name="brand"
+                                            value="<%= brand %>"
+                                            <%= selectedBrands.includes(brand) ? "checked" : "" %>
+                                            class="w-4 h-4 rounded border-white/10 bg-black text-lime-400 focus:ring-0 focus:ring-offset-0 accent-lime-400 cursor-pointer"
+                                        >
+                                        <span class="text-sm text-zinc-300 font-semibold"><%= brand %></span>
+                                    </label>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <p class="text-sm text-zinc-500">No brands available.</p>
+                        <% } %>
                     </div>
 
                     <!-- Price Filter -->
@@ -97,7 +149,7 @@
                         <button type="submit" class="w-full py-3 bg-lime-400 hover:bg-lime-300 text-black font-black text-sm rounded-xl transition duration-300">
                             Apply Filters
                         </button>
-                        <% if (selectedCategory || searchQuery || minPrice || maxPrice || stockFilter || (sortOption && sortOption !== 'newest')) { %>
+                        <% if (hasActiveFilters) { %>
                             <a href="/shop" class="w-full py-3 bg-zinc-900 border border-white/5 hover:border-white/10 text-center text-zinc-300 font-semibold text-sm rounded-xl transition duration-300">
                                 Reset Filters
                             </a>
@@ -187,7 +239,7 @@
                     <nav class="flex items-center justify-center gap-2 pt-10 border-t border-white/5">
                         <!-- Previous Page -->
                         <% if (currentPage > 1) { %>
-                            <a href="?page=<%= currentPage - 1 %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= searchQuery ? '&search=' + searchQuery : '' %><%= minPrice ? '&minPrice=' + minPrice : '' %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %><%= sortOption ? '&sort=' + sortOption : '' %>" class="p-2 border border-white/5 rounded-xl text-zinc-400 hover:text-lime-400 hover:border-lime-400/30 transition">
+                            <a href="<%= buildFilterQuery({ page: currentPage - 1 }) %>" class="p-2 border border-white/5 rounded-xl text-zinc-400 hover:text-lime-400 hover:border-lime-400/30 transition">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                 </svg>
@@ -197,7 +249,7 @@
                         <!-- Page Numbers -->
                         <% for (let i = 1; i <= totalPages; i++) { %>
                             <a 
-                                href="?page=<%= i %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= searchQuery ? '&search=' + searchQuery : '' %><%= minPrice ? '&minPrice=' + minPrice : '' %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %><%= sortOption ? '&sort=' + sortOption : '' %>" 
+                                href="<%= buildFilterQuery({ page: i }) %>" 
                                 class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-semibold border transition <%= currentPage === i ? 'bg-lime-400 text-black border-lime-400' : 'border-white/5 text-zinc-400 hover:text-white hover:border-white/20' %>"
                             >
                                 <%= i %>
@@ -206,7 +258,7 @@
 
                         <!-- Next Page -->
                         <% if (currentPage < totalPages) { %>
-                            <a href="?page=<%= currentPage + 1 %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= searchQuery ? '&search=' + searchQuery : '' %><%= minPrice ? '&minPrice=' + minPrice : '' %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %><%= sortOption ? '&sort=' + sortOption : '' %>" class="p-2 border border-white/5 rounded-xl text-zinc-400 hover:text-lime-400 hover:border-lime-400/30 transition">
+                            <a href="<%= buildFilterQuery({ page: currentPage + 1 }) %>" class="p-2 border border-white/5 rounded-xl text-zinc-400 hover:text-lime-400 hover:border-lime-400/30 transition">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
