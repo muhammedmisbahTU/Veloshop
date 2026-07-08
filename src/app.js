@@ -19,6 +19,11 @@ const app = express();
 dotenv.config();
 connectDB();
 
+
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (req, res) => {
+  res.status(204).end();
+});
+
 app.use(morgan("dev"))
 
 app.use(express.json());
