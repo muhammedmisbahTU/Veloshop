@@ -1,0 +1,316 @@
+<div class="max-w-7xl mx-auto px-4 py-12">
+    
+
+    <div class="grid lg:grid-cols-2 gap-12">
+
+        <!-- LEFT -->
+
+        <div>
+
+            <!-- Main Image -->
+
+            <div class="bg-zinc-950 rounded-3xl overflow-hidden border border-white/10">
+
+                <img
+                    id="mainImage"
+                    src="<%= defaultVariant.images[0] %>"
+                    class="w-full aspect-square object-cover">
+
+            </div>
+
+            <!-- Gallery -->
+
+            <div id="gallery" class="grid grid-cols-5 gap-3 mt-4">
+                <% defaultVariant.images.forEach(img => { %>
+                    <button
+                        onclick="changeImage('<%= img %>')"
+                        class="border border-white/10 rounded-xl overflow-hidden">
+
+                        <img src="<%= img %>"
+                            class="w-full h-20 object-cover">
+
+                    </button>
+                <% }) %>
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+
+        <div class="space-y-6">
+
+            <div>
+
+                <p class="text-lime-400 uppercase text-sm font-bold">
+
+                    <%= product.brand %>
+
+                </p>
+
+                <h1 class="text-4xl font-black mt-2">
+
+                    <%= product.name %>
+
+                </h1>
+
+                <p class="text-zinc-400 mt-4">
+
+                    <%= product.description %>
+
+                </p>
+
+            </div>
+
+            <!-- Rating -->
+
+            <div class="flex items-center gap-3">
+
+                <span class="text-yellow-400">
+
+                    ★★★★★
+
+                </span>
+
+                <span class="text-zinc-500">
+
+                    <%= product.averageRating %>
+
+                    (<%= product.totalReviews %> Reviews)
+
+                </span>
+
+            </div>
+
+            <!-- Price -->
+
+            <div>
+
+                <% if(defaultVariant.salePrice){ %>
+
+                    <div class="flex items-center gap-3">
+
+                        <span id="salePrice"
+                            class="text-4xl font-black text-white">
+
+                            ₹<%= defaultVariant.salePrice %>
+
+                        </span>
+
+                        <span id="regularPrice"
+                            class="line-through text-zinc-500">
+
+                            ₹<%= defaultVariant.regularPrice %>
+
+                        </span>
+
+                    </div>
+
+                <% }else{ %>
+
+                    <span id="salePrice"
+                        class="text-4xl font-black">
+
+                        ₹<%= defaultVariant.regularPrice %>
+
+                    </span>
+
+                <% } %>
+
+            </div>
+
+            <!-- Stock -->
+
+            <div>
+
+                <% if(defaultVariant.stock>0){ %>
+
+                    <span
+                        class="text-lime-400 font-bold">
+
+                        In Stock
+
+                    </span>
+
+                <% }else{ %>
+
+                    <span
+                        class="text-red-500 font-bold">
+
+                        Out of Stock
+
+                    </span>
+
+                <% } %>
+
+            </div>
+
+            <!-- Attributes -->
+
+            <div class="space-y-5">
+
+                <% const grouped={}; %>
+
+                <% variants.forEach(v=>{ %>
+
+                    <% v.attributes.forEach(a=>{ %>
+
+                        <% if(!grouped[a.name]) grouped[a.name]=[]; %>
+
+                        <% if(!grouped[a.name].includes(a.value)) grouped[a.name].push(a.value); %>
+
+                    <% }) %>
+
+                <% }) %>
+
+                <% Object.keys(grouped).forEach(key=>{ %>
+
+                    <div>
+
+                        <p class="font-semibold mb-3">
+
+                            <%= key %>
+
+                        </p>
+
+                        <div class="flex gap-3 flex-wrap">
+
+                            <% grouped[key].forEach(value=>{ %>
+
+                                <button
+                                    class="attribute-btn px-4 py-2 rounded-xl border border-white/10 hover:border-lime-400"
+                                    data-name="<%= key %>"
+                                    data-value="<%= value %>">
+
+                                    <%= value %>
+
+                                </button>
+
+                            <% }) %>
+
+                        </div>
+
+                    </div>
+
+                <% }) %>
+
+            </div>
+
+            <!-- Quantity -->
+
+            <div class="flex items-center gap-4">
+
+                <input
+                    type="number"
+                    value="1"
+                    min="1"
+                    class="w-20 bg-zinc-950 border border-white/10 rounded-xl text-center py-3">
+
+                <button
+                    class="flex-1 py-4 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300">
+
+                    Add to Cart
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+    
+
+
+
+</div>
+<script>
+
+const selected = {};
+
+document.querySelectorAll(".attribute-btn").forEach(btn=>{
+
+    btn.addEventListener("click",()=>{
+
+        selected[btn.dataset.name]=btn.dataset.value;
+
+        document.querySelectorAll(
+            `[data-name="${btn.dataset.name}"]`
+        ).forEach(b=>{
+
+            b.classList.remove(
+                "bg-lime-400",
+                "text-black"
+            );
+
+        });
+
+        btn.classList.add(
+            "bg-lime-400",
+            "text-black"
+        );
+
+        findVariant();
+
+    });
+
+});
+
+function findVariant() {
+
+    const variant = variants.find(v => {
+        return Object.entries(selected).every(([k, vl]) => {
+            return v.attributes.some(a => a.name === k && a.value === vl);
+        });
+    });
+
+    if (!variant) return;
+
+    document.getElementById("salePrice").innerHTML =
+        "₹" + (variant.salePrice || variant.regularPrice);
+
+    if (document.getElementById("regularPrice")) {
+        document.getElementById("regularPrice").innerHTML =
+            "₹" + variant.regularPrice;
+    }
+
+    // Change main image
+    document.getElementById("mainImage").src = variant.images[0];
+
+    // Rebuild gallery
+    const gallery = document.getElementById("gallery");
+
+    gallery.innerHTML = variant.images.map(img => `
+        <button
+            onclick="changeImage('${img}')"
+            class="border border-white/10 rounded-xl overflow-hidden">
+
+            <img
+                src="${img}"
+                class="w-full h-20 object-cover">
+
+        </button>
+    `).join("");
+}
+
+function changeImage(src){
+
+    document.getElementById("mainImage").src=src;
+
+}
+
+
+</script>
+<script>
+
+const variants = <%- JSON.stringify(
+    variants.map(v=>({
+        id:v._id,
+        sku:v.sku,
+        stock:v.stock,
+        regularPrice:v.regularPrice,
+        salePrice:v.salePrice,
+        images:v.images,
+        attributes:v.attributes
+    }))
+) %>;
+
+</script>

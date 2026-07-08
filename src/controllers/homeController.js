@@ -234,3 +234,50 @@ export const getShop = async (req, res) => {
     });
   }
 };
+
+
+export const getProductDetails = async (req, res) => {
+  try {
+
+    const product = await Product.findById(req.params.id).populate("categoryId");
+
+    if (!product || product.isDeleted || product.status !== "ACTIVE") {
+      return res.redirect("/shop");
+    }
+
+    const variants = await Variant.find({
+      productId: product._id,
+      isActive: true,
+    });
+
+    if (!variants.length) {
+      return res.redirect("/shop");
+    }
+
+    const defaultVariant = variants[0];
+
+    const relatedProducts = await Product.find({
+      categoryId: product.categoryId._id,
+      _id: { $ne: product._id },
+      status: "ACTIVE",
+      isDeleted: false,
+    }).limit(4);
+
+    console.log(
+      `product : ${product}, variants : ${variants}, defaultVariant : ${defaultVariant}, relatedProducts : ${relatedProducts}`,
+    );
+
+
+    res.render("user/product-details", {
+      title: "Product Details",
+      product,
+      variants,
+      defaultVariant,
+      relatedProducts,
+    });
+  
+  } catch (error) {
+    console.error("Product detail page error:", error);
+    res.redirect("/shop");
+  }
+}

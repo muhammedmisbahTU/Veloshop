@@ -1,5 +1,9 @@
 import express from 'express';
-import { getHome, getShop } from '../controllers/homeController.js';
+import {
+  getHome,
+  getShop,
+  getProductDetails,
+} from "../controllers/homeController.js";
 import {
   getProfile,
   getEditProfile,
@@ -18,6 +22,7 @@ const router = express.Router();
 
 router.get("/", getHome);
 router.get("/shop", getShop);
+router.get("/products/:id", getProductDetails);
 
 router.get("/profile", isAuthenticated, getProfile);
 router.get("/profile/edit", isAuthenticated, getEditProfile);
