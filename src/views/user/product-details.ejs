@@ -9,13 +9,17 @@
 
             <!-- Main Image -->
 
-            <div class="bg-zinc-950 rounded-3xl overflow-hidden border border-white/10">
+            <div id="zoomContainer"
+                class="relative bg-zinc-950 rounded-3xl overflow-hidden border border-white/10">
 
                 <img
                     id="mainImage"
                     src="<%= defaultVariant.images[0] %>"
-                    class="w-full aspect-square object-cover">
-
+                    data-zoom="<%= defaultVariant.images[0] %>"
+                    class="w-full aspect-square object-contain cursor-zoom-in">
+                <div id="zoomPane"
+                    class="absolute z-50 hidden lg:block">
+                </div>
             </div>
 
             <!-- Gallery -->
@@ -27,7 +31,7 @@
                         class="border border-white/10 rounded-xl overflow-hidden">
 
                         <img src="<%= img %>"
-                            class="w-full h-20 object-cover">
+                            class="w-full aspect-square object-contain">
 
                     </button>
                 <% }) %>
@@ -273,7 +277,14 @@ function findVariant() {
     }
 
     // Change main image
-    document.getElementById("mainImage").src = variant.images[0];
+    const main=document.getElementById("mainImage");
+
+    main.src = variant.images[0];
+    main.dataset.zoom = variant.images[0];
+
+    setTimeout(()=>{
+        initZoom();
+    },100);
 
     // Rebuild gallery
     const gallery = document.getElementById("gallery");
@@ -293,7 +304,14 @@ function findVariant() {
 
 function changeImage(src){
 
-    document.getElementById("mainImage").src=src;
+    const img=document.getElementById("mainImage");
+
+    img.src=src;
+    img.dataset.zoom=src;
+
+    setTimeout(()=>{
+        initZoom();
+    },100);
 
 }
 
@@ -312,5 +330,30 @@ const variants = <%- JSON.stringify(
         attributes:v.attributes
     }))
 ) %>;
+
+</script>
+<script src="/js/Drift.min.js"></script>
+<script>
+let drift;
+
+function initZoom(){
+
+    if(drift){
+        drift.destroy();
+    }
+
+    const image = document.getElementById("mainImage");
+
+    drift = new Drift(image, {
+        sourceAttribute: "data-zoom",
+        zoomFactor: 1.3,
+        paneContainer: document.body,
+        inlinePane: false,
+        handleTouch: false
+    });
+
+}
+
+initZoom();
 
 </script>
