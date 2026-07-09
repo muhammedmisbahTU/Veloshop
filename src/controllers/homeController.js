@@ -263,10 +263,6 @@ export const getProductDetails = async (req, res) => {
       isDeleted: false,
     }).limit(4);
 
-    console.log(
-      `product : ${product}, variants : ${variants}, defaultVariant : ${defaultVariant}, relatedProducts : ${relatedProducts}`,
-    );
-
 
     res.render("user/product-details", {
       title: "Product Details",
