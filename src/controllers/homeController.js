@@ -256,6 +256,17 @@ export const getProductDetails = async (req, res) => {
 
     const defaultVariant = variants[0];
 
+    let defaultDiscount = null;
+
+    if (defaultVariant.salePrice) {
+      defaultDiscount = Math.round(
+        ((defaultVariant.regularPrice - defaultVariant.salePrice) /
+          defaultVariant.regularPrice) *
+          100,
+      );
+    }
+
+
     const relatedProducts = await Product.find({
       categoryId: product.categoryId._id,
       _id: { $ne: product._id },
@@ -269,6 +280,7 @@ export const getProductDetails = async (req, res) => {
       product,
       variants,
       defaultVariant,
+      defaultDiscount,
       relatedProducts,
     });
   

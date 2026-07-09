@@ -165,6 +165,12 @@
 
             </div>
 
+            <!-- Discount -->
+            <span id="discount">
+            <% if (defaultDiscount) { %>
+                <%= defaultDiscount %>% OFF
+            <% } %>
+            </span>
             <!-- Stock -->
 
             <div>
@@ -314,6 +320,22 @@ function findVariant() {
 
     if (!variant) return;
 
+    //Discount
+    const discount = document.getElementById("discount");
+
+    if (variant.salePrice) {
+
+        let percent = Math.round(
+            ((variant.regularPrice - variant.salePrice) /
+            variant.regularPrice) * 100
+        );
+
+        discount.innerHTML = percent + "% OFF";
+
+    } else {
+        discount.innerHTML = "";
+    }
+
     const stock=document.getElementById("stockStatus");
 
 
@@ -405,6 +427,10 @@ function changeImage(src){
     },100);
 
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+    findVariant();
+});
 
 
 </script>
