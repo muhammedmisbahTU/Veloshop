@@ -169,25 +169,28 @@
 
             <div>
 
-                <% if(defaultVariant.stock>0){ %>
+            <% if(defaultVariant.stock > 0 && defaultVariant.stock < 10){ %>
 
-                    <span
-                        class="text-lime-400 font-bold">
+                <span id="stockStatus"
+                    class="text-yellow-400 font-bold">
+                    Only <%= defaultVariant.stock %> left
+                </span>
 
-                        In Stock
+            <% } else if(defaultVariant.stock >= 10){ %>
 
-                    </span>
+                <span id="stockStatus"
+                    class="text-lime-400 font-bold">
+                    In Stock
+                </span>
 
-                <% }else{ %>
+            <% } else { %>
 
-                    <span
-                        class="text-red-500 font-bold">
+                <span id="stockStatus"
+                    class="text-red-500 font-bold">
+                    Out of Stock
+                </span>
 
-                        Out of Stock
-
-                    </span>
-
-                <% } %>
+            <% } %>
 
             </div>
 
@@ -310,6 +313,31 @@ function findVariant() {
     });
 
     if (!variant) return;
+
+    const stock=document.getElementById("stockStatus");
+
+
+    if(variant.stock > 10){
+
+        stock.innerHTML="In Stock";
+        stock.className="text-lime-400 font-bold";
+
+    }
+    else if(variant.stock > 0){
+
+        stock.innerHTML=
+        `Only ${variant.stock} left`;
+
+        stock.className="text-yellow-400 font-bold";
+
+    }
+    else{
+
+        stock.innerHTML="Out of Stock";
+
+        stock.className="text-red-500 font-bold";
+
+    }
 
     document.getElementById("salePrice").innerHTML =
         "₹" + (variant.salePrice || variant.regularPrice);
