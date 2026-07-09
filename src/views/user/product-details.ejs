@@ -108,6 +108,29 @@
 
             </div>
 
+            <!-- Highlights -->
+
+            <div>
+
+            <h3 class="text-xl font-bold">
+            Product Highlights
+            </h3>
+
+
+            <ul class="list-disc ml-5 text-zinc-400">
+
+            <li>Premium Quality</li>
+
+            <li>Fast Delivery</li>
+
+            <li>Easy Return</li>
+
+            <li>Warranty Available</li>
+
+            </ul>
+
+            </div>
+
             <!-- Rating -->
 
             <div class="flex items-center gap-3">
@@ -260,7 +283,9 @@
                     value="1"
                     min="1"
                     class="w-20 bg-zinc-950 border border-white/10 rounded-xl text-center py-3">
-
+                <input 
+                    type="hidden"
+                    id="variantId">
                 <button id="addCartBtn" 
                     class="flex-1 py-4 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300">
 
@@ -271,13 +296,88 @@
             </div>
 
         </div>
+</div>
+<% if (relatedProducts.length > 0) { %>
+
+<section class="mt-20">
+
+    <div class="flex items-center justify-between mb-8">
+
+        <h2 class="text-3xl font-bold text-white">
+            Related Products
+        </h2>
+
+        <a
+            href="/shop?category=<%= product.categoryId.slug %>"
+            class="text-lime-400 hover:text-lime-300 font-medium">
+
+            View All →
+
+        </a>
 
     </div>
-    
 
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
+        <% relatedProducts.forEach(p => { %>
 
-</div>
+        <a
+            href="/products/<%= p._id %>"
+            class="group rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 hover:border-lime-400 transition duration-300">
+
+            <div class="aspect-square overflow-hidden bg-zinc-950">
+
+                <img
+                    src="<%= p.variant?.images?.[0] || '/images/no-image.png' %>"
+                    alt="<%= p.name %>"
+                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+
+            </div>
+
+            <div class="p-4">
+
+                <p class="text-sm text-zinc-400 mb-1">
+                    <%= p.brand %>
+                </p>
+
+                <h3 class="font-semibold text-white line-clamp-2 h-12">
+                    <%= p.name %>
+                </h3>
+
+                <div class="mt-3 flex items-center gap-2">
+
+                    <% if(p.variant.salePrice){ %>
+
+                        <span class="text-lime-400 font-bold text-lg">
+                            ₹<%= p.variant.salePrice %>
+                        </span>
+
+                        <span class="text-sm text-zinc-500 line-through">
+                            ₹<%= p.variant.regularPrice %>
+                        </span>
+
+                    <% } else { %>
+
+                        <span class="text-lime-400 font-bold text-lg">
+                            ₹<%= p.variant.regularPrice %>
+                        </span>
+
+                    <% } %>
+
+                </div>
+
+            </div>
+
+        </a>
+
+        <% }) %>
+
+    </div>
+
+</section>
+
+<% } %>
+
 <script>
 
 const selected = {};
@@ -320,6 +420,8 @@ function findVariant() {
 
     if (!variant) return;
 
+    //store selected variant id 
+    document.getElementById("variantId").value = variant.id;
     //Discount
     const discount = document.getElementById("discount");
 

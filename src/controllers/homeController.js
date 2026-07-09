@@ -272,8 +272,16 @@ export const getProductDetails = async (req, res) => {
       _id: { $ne: product._id },
       status: "ACTIVE",
       isDeleted: false,
-    }).limit(4);
+    }).limit(4).lean();
 
+    for (const p of relatedProducts) {
+      const variant = await Variant.findOne({
+        productId: p._id,
+        isActive: true,
+      }).lean();
+
+      p.variant = variant;
+    }
 
     res.render("user/product-details", {
       title: "Product Details",
