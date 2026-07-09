@@ -279,10 +279,15 @@
             <div class="flex items-center gap-4">
 
                 <input
+                    id="quantity"
                     type="number"
                     value="1"
                     min="1"
                     class="w-20 bg-zinc-950 border border-white/10 rounded-xl text-center py-3">
+                <input
+                    type="hidden"
+                    id="productId"
+                    value="<%= product._id %>">
                 <input 
                     type="hidden"
                     id="variantId">
@@ -534,6 +539,82 @@ window.addEventListener("DOMContentLoaded", () => {
     findVariant();
 });
 
+// Add to cart 
+const addCartBtn = document.getElementById("addCartBtn");
+
+addCartBtn.addEventListener("click", addToCart);
+async function addToCart() {
+
+    const productId = document.getElementById("productId").value;
+
+    const variantId = document.getElementById("variantId").value;
+
+    const quantity = Number(
+        document.getElementById("quantity").value
+    );
+
+    try {
+
+        const response = await fetch("/cart", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+        body: JSON.stringify({
+            productId,
+            variantId,
+            quantity
+        })
+        });
+
+        const data = await response.json();
+
+        if (data.redirect) {
+
+            Swal.fire({
+                icon: "warning",
+                title: "Login Required",
+                text: data.message,
+                confirmButtonColor: "#84cc16"
+            }).then(() => {
+
+                window.location.href = data.redirect;
+
+            });
+
+            return;
+        }
+
+        if (!data.success) {
+
+            Swal.fire({
+                icon: "error",
+                title: "Oops!",
+                text: data.message,
+                confirmButtonColor: "#84cc16"
+            });
+
+            return;
+        }
+
+
+        Swal.fire({
+            icon: "success",
+            title: "Added to Cart",
+            text: data.message,
+            confirmButtonColor: "#84cc16",
+            timer: 1500,
+            showConfirmButton: false
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+    }
+
+}
 
 </script>
 <script>

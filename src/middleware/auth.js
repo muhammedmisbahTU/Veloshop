@@ -1,6 +1,14 @@
 export const isAuthenticated = (req, res, next) => {
   const currentUser = req.user || req.session.user;
   if (!currentUser) {
+    // AJAX / fetch request
+    if (req.xhr || req.headers.accept?.includes("application/json")) {
+      return res.status(401).json({
+        success: false,
+        redirect: "/login",
+        message: "Please log in first.",
+      });
+    }
     req.session.errorMessage = "Please log in to access this page.";
     return res.redirect("/login");
   }

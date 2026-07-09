@@ -4,6 +4,7 @@ import {
   getShop,
   getProductDetails,
 } from "../controllers/homeController.js";
+import { addToCart } from "../controllers/cartController.js";
 import {
   getProfile,
   getEditProfile,
@@ -45,5 +46,9 @@ router.post("/profile/verify-email", isAuthenticated, postVerifyEmailUpdate);
 router.post("/addresses", isAuthenticated, postAddAddress);
 router.post("/addresses/edit/:id", isAuthenticated, postEditAddress);
 router.post("/addresses/delete/:id", isAuthenticated, postDeleteAddress);
+
+// Cart
+// router.get("/cart",getCart);
+router.post("/cart", isAuthenticated, addToCart);
 
 export default router;
