@@ -1,5 +1,48 @@
 <div class="max-w-7xl mx-auto px-4 py-12">
-    
+    <!-- Breadcrumbs -->
+
+    <nav class="flex items-center gap-2 text-sm text-zinc-400 mb-8">
+
+        <a href="/" class="hover:text-lime-400">
+            Home
+        </a>
+
+        <span>
+            /
+        </span>
+
+        <a href="/shop" class="hover:text-lime-400">
+            Shop
+        </a>
+
+        <span>
+            /
+        </span>
+
+        <% if(product.category){ %>
+
+            <a 
+                href="/category/<%= product.category.slug %>"
+                class="hover:text-lime-400">
+
+                <%= product.category.name %>
+
+            </a>
+
+            <span>
+                /
+            </span>
+
+        <% } %>
+
+
+        <span class="text-white font-semibold">
+
+            <%= product.name %>
+
+        </span>
+
+    </nav>
 
     <div class="grid lg:grid-cols-2 gap-12">
 
