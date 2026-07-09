@@ -255,7 +255,7 @@
                     min="1"
                     class="w-20 bg-zinc-950 border border-white/10 rounded-xl text-center py-3">
 
-                <button
+                <button id="addCartBtn" 
                     class="flex-1 py-4 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300">
 
                     Add to Cart
@@ -317,6 +317,7 @@ function findVariant() {
     const stock=document.getElementById("stockStatus");
 
 
+    // Product Stock Status Indicator
     if(variant.stock > 10){
 
         stock.innerHTML="In Stock";
@@ -336,6 +337,25 @@ function findVariant() {
         stock.innerHTML="Out of Stock";
 
         stock.className="text-red-500 font-bold";
+
+    }
+
+    //Disable Add To Cart When Out Of Stock
+    const cartBtn=document.getElementById("addCartBtn");
+
+    if(variant.stock<=0){
+
+        cartBtn.disabled=true;
+
+        cartBtn.innerHTML="Out of Stock";
+        cartBtn.className = "flex-1 py-4 rounded-xl bg-red-500 text-white font-bold hover:bg-red-400 cursor-not-allowed";
+    }
+    else{
+
+        cartBtn.disabled=false;
+
+        cartBtn.innerHTML="Add to Cart";
+        cartBtn.className = "flex-1 py-4 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300";
 
     }
 
