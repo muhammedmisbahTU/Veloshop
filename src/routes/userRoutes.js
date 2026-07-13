@@ -4,7 +4,12 @@ import {
   getShop,
   getProductDetails,
 } from "../controllers/homeController.js";
-import { addToCart } from "../controllers/cartController.js";
+import {
+  addToCart,
+  getCart,
+  updateCartQuantity,
+  removeCartItem,
+} from "../controllers/cartController.js";
 import {
   getProfile,
   getEditProfile,
@@ -48,7 +53,9 @@ router.post("/addresses/edit/:id", isAuthenticated, postEditAddress);
 router.post("/addresses/delete/:id", isAuthenticated, postDeleteAddress);
 
 // Cart
-// router.get("/cart",getCart);
+router.get("/cart", isAuthenticated, getCart);
 router.post("/cart", isAuthenticated, addToCart);
+router.patch("/cart", isAuthenticated, updateCartQuantity);
+router.delete("/cart/:variantId", isAuthenticated, removeCartItem);
 
 export default router;

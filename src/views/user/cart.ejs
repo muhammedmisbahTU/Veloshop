@@ -1,0 +1,253 @@
+<div class="max-w-7xl mx-auto px-5 py-10">
+
+
+<h1 class="text-3xl font-bold mb-8">
+Shopping Cart
+</h1>
+
+
+
+<% if(cartItems.length === 0){ %>
+
+
+<div class="text-center">
+
+<h2>
+Your cart is empty
+</h2>
+
+
+<a href="/shop">
+Continue Shopping
+</a>
+
+
+</div>
+
+
+<% } else { %>
+
+
+
+<div class="space-y-5">
+
+
+<% cartItems.forEach(item=>{ %>
+
+
+<div class="flex gap-5 
+bg-zinc-900 p-5 rounded-xl">
+
+
+<img
+src="<%= item.variant.images[0] %>"
+class="w-32 h-32 object-cover rounded-xl">
+
+
+
+<div>
+
+
+<h2 class="text-xl font-bold">
+
+<%= item.product.name %>
+
+</h2>
+
+
+
+<p class="text-zinc-400">
+
+<%= item.product.brand %>
+
+</p>
+
+
+
+<div class="flex items-center gap-3">
+
+<button
+onclick="updateQuantity('<%= item.variant._id %>', -1)"
+class="px-3 py-1 bg-zinc-800 rounded">
+-
+</button>
+
+
+<span id="qty-<%= item.variant._id %>">
+<%= item.quantity %>
+</span>
+
+
+<button
+onclick="updateQuantity('<%= item.variant._id %>', 1)"
+class="px-3 py-1 bg-zinc-800 rounded">
++
+</button>
+
+
+</div>
+
+
+
+<p>
+
+Price:
+₹<%= item.price %>
+
+</p>
+
+
+
+<p>
+
+Subtotal:
+₹<%= item.subtotal %>
+
+</p>
+
+
+
+</div>
+
+
+
+</div>
+
+<button
+onclick="removeItem('<%= item.variant._id %>')"
+class="text-red-500">
+
+Remove
+
+</button>
+
+<% }) %>
+
+</div>
+
+
+
+<div class="mt-10">
+
+
+<h2 class="text-2xl font-bold">
+
+Total:
+₹<%= total %>
+
+</h2>
+
+
+<button
+class="mt-5 bg-lime-400 text-black px-8 py-3 rounded-xl">
+
+Checkout
+
+</button>
+
+
+</div>
+
+
+
+<% } %>
+
+
+</div>
+
+<script>
+    async function updateQuantity(variantId, change){
+
+
+const response = await fetch(
+"/cart",
+{
+
+method:"PATCH",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+variantId,
+
+change
+
+})
+
+});
+
+
+const data = await response.json();
+
+
+
+if(!data.success){
+
+Swal.fire({
+
+icon:"error",
+
+title:"Error",
+
+text:data.message
+
+});
+
+return;
+
+}
+
+
+location.reload();
+
+
+}
+
+async function removeItem(variantId){
+
+
+const result = await Swal.fire({
+
+title:"Remove item?",
+
+icon:"warning",
+
+showCancelButton:true,
+
+confirmButtonText:"Remove"
+
+});
+
+
+if(!result.isConfirmed)
+return;
+
+
+
+const response = await fetch(
+`/cart/${variantId}`,
+{
+
+method:"DELETE"
+
+});
+
+
+
+const data = await response.json();
+
+
+
+if(data.success){
+
+location.reload();
+
+}
+
+
+
+}
+</script>
