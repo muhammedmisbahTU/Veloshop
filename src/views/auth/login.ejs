@@ -145,7 +145,7 @@
                 <div id="error-container" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-4 text-sm mb-5"></div>
 
                 <!-- Form -->
-                <form action="/login" method="POST" class="space-y-5">
+                <form id="loginForm" action="/login" method="POST" class="space-y-5 " novalidate>
 
                     <!-- Email -->
                     <div>
@@ -154,6 +154,7 @@
                         </label>
 
                         <input
+                            id="loginEmail"
                             type="email"
                             name="email"
                             placeholder="Enter your email"
@@ -168,6 +169,7 @@
                         </label>
 
                         <input
+                            id="loginPassword"
                             type="password"
                             name="password"
                             placeholder="Enter your password"
@@ -265,50 +267,75 @@
 </div>
 
 <script>
-const form = document.querySelector('form');
-const errorContainer = document.getElementById('error-container');
+const form = document.getElementById("loginForm");
+const errorContainer = document.getElementById("error-container");
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  errorContainer.classList.add('hidden');
-  errorContainer.innerHTML = '';
+const validation = new JustValidate("#loginForm");
 
-  const formData = new FormData(form);
-  const data = Object.fromEntries(formData.entries());
+validation.addField("#loginEmail", [
+    {
+        rule: "required",
+        errorMessage: "Email is required",
+    },
+    {
+        rule: "email",
+        errorMessage: "Enter a valid email address",
+    },
+])
+.addField("#loginPassword", [
+    {
+      rule: "required",
+      errorMessage: "Password is required",
+    },
+  ])
+  .onSuccess(async (event) => {
+    event.preventDefault();
 
-  try {
-    const response = await fetch('/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
+    errorContainer.classList.add("hidden");
+    errorContainer.innerHTML = "";
 
-    const result = await response.json();
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
-    if (response.ok && result.success) {
-      if (result.role === 'ADMIN') {
-        window.location.href = '/admin/users';
-      } else {
-        window.location.href = '/';
-      }
-    } else {
-      if (result.requiresVerification) {
-        // Redirect to OTP verification
-        window.location.href = `/verify-otp?email=${encodeURIComponent(result.email)}`;
-      } else {
-        errorContainer.classList.remove('hidden');
-        if (result.errors && Array.isArray(result.errors)) {
-          errorContainer.innerHTML = result.errors.join('<br>');
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        if (result.role === "ADMIN") {
+          window.location.href = "/admin/users";
         } else {
-          errorContainer.textContent = result.message || 'Login failed. Please check credentials.';
+          window.location.href = "/";
         }
+        return;
       }
+
+      if (result.requiresVerification) {
+        window.location.href =
+          `/verify-otp?email=${encodeURIComponent(result.email)}`;
+        return;
+      }
+
+      errorContainer.classList.remove("hidden");
+
+      if (result.errors && Array.isArray(result.errors)) {
+        errorContainer.innerHTML = result.errors.join("<br>");
+      } else {
+        errorContainer.textContent =
+          result.message || "Login failed. Please check credentials.";
+      }
+
+    } catch (error) {
+      errorContainer.classList.remove("hidden");
+      errorContainer.textContent =
+        "A network error occurred. Please try again.";
     }
-  } catch (error) {
-    errorContainer.classList.remove('hidden');
-    errorContainer.textContent = 'A network error occurred. Please try again.';
-  }
-});
+  });
 </script>

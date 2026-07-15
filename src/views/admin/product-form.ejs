@@ -23,29 +23,29 @@
         </div>
     <% } %>
 
-    <form method="POST" action="<%= mode === 'edit' ? `/admin/products/${product._id}` : '/admin/products' %>" class="space-y-5 border border-white/10 bg-zinc-950 p-6">
+    <form id="productForm" method="POST" action="<%= mode === 'edit' ? `/admin/products/${product._id}` : '/admin/products' %>" class="space-y-5 border border-white/10 bg-zinc-950 p-6">
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-300">Product Name</label>
                 <input
+                    id="name"
                     type="text"
                     name="name"
                     value="<%= product ? product.name : '' %>"
                     placeholder="Example: VeloStrike Mechanical Keyboard"
                     class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
-                    required
                 >
             </div>
 
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-300">Brand</label>
                 <input
+                    id="brand"
                     type="text"
                     name="brand"
                     value="<%= product ? product.brand : '' %>"
                     placeholder="Example: Veloshop"
                     class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
-                    required
                 >
             </div>
         </div>
@@ -53,7 +53,7 @@
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-300">Category</label>
-                <select name="categoryId" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                <select id="categoryId" name="categoryId" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" >
                     <option value="">Select category</option>
                     <% categories.forEach(category => { %>
                         <% const selectedCategoryId = product && product.categoryId ? product.categoryId.toString() : ""; %>
@@ -64,7 +64,7 @@
 
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-300">Status</label>
-                <select name="status" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                <select id="status" name="status" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" >
                     <option value="ACTIVE" <%= !product || product.status === "ACTIVE" ? "selected" : "" %>>Active</option>
                     <option value="INACTIVE" <%= product && product.status === "INACTIVE" ? "selected" : "" %>>Inactive</option>
                 </select>
@@ -74,11 +74,11 @@
         <div>
             <label class="mb-2 block text-sm font-semibold text-zinc-300">Description</label>
             <textarea
+                id="description"
                 name="description"
                 rows="6"
                 placeholder="Describe the product, use cases, and highlights."
                 class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
-                required
             ><%= product ? product.description : '' %></textarea>
         </div>
 
@@ -112,4 +112,39 @@
             </button>
         </div>
     </form>
+    <script>
+        const validation = new JustValidate("#productForm");
+
+validation
+  .addField("#name", [
+    {
+      rule: "required",
+      errorMessage: "Product Name is required",
+    },
+  ])
+  .addField("#brand", [
+    {
+      rule: "required",
+      errorMessage: "Brand is required",
+    },
+  ])
+  .addField("#categoryId", [
+    {
+      rule: "required",
+      errorMessage: "Category is required",
+    },
+  ])
+  .addField("#status", [
+    {
+      rule: "required",
+      errorMessage: "Status is required",
+    },
+  ])
+  .addField("#description", [
+    {
+      rule: "required",
+      errorMessage: "Description is required",
+    },
+  ]);
+    </script>
 </section>

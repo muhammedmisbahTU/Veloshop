@@ -100,6 +100,7 @@
                         <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Price Range</label>
                         <div class="grid grid-cols-2 gap-2">
                             <input 
+                                id="minPrice"
                                 type="number" 
                                 name="minPrice" 
                                 value="<%= minPrice %>" 
@@ -108,6 +109,7 @@
                                 class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-lime-400 focus:outline-none placeholder-zinc-600"
                             >
                             <input 
+                                id="maxPrice"
                                 type="number" 
                                 name="maxPrice" 
                                 value="<%= maxPrice %>" 
@@ -130,7 +132,7 @@
                         >
                         <label for="stock" class="text-sm text-zinc-300 font-semibold cursor-pointer select-none">In Stock Only</label>
                     </div>
-
+ 
                     <!-- Sort -->
                     <div class="space-y-2">
                         <label class="block text-xs uppercase tracking-wider text-zinc-400 font-bold">Sort By</label>
@@ -287,6 +289,54 @@
 </div>
 
 <script>
+    const filterForm = document.getElementById("filterForm");
+    const filterValidation = new JustValidate("#filterForm");
+
+filterValidation
+
+.addField("#minPrice", [
+    {
+        rule: "number",
+        errorMessage: "Minimum price must be a number",
+    },
+    {
+        rule: "minNumber",
+        value: 0,
+        errorMessage: "Minimum price cannot be negative",
+    },
+])
+
+.addField("#maxPrice", [
+    {
+        rule: "number",
+        errorMessage: "Maximum price must be a number",
+    },
+    {
+        rule: "minNumber",
+        value: 0,
+        errorMessage: "Maximum price cannot be negative",
+    },
+    {
+        validator: (value) => {
+            const minPrice = Number(
+                document.getElementById("minPrice").value
+            );
+
+            const maxPrice = Number(value);
+
+            if (!minPrice || !maxPrice) {
+                return true;
+            }
+
+            return maxPrice >= minPrice;
+        },
+        errorMessage: "Maximum price cannot be less than minimum price",
+    },
+])
+
+.onSuccess(() => {
+    filterForm.submit();
+});
     (function () {
         const searchInput = document.getElementById("searchInput");
         const clearSearchBtn = document.getElementById("clearSearchBtn");

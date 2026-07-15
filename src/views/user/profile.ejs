@@ -68,13 +68,13 @@
                 <div id="address-alert-container" class="hidden rounded-xl p-4 text-sm mb-5 text-center"></div>
 
                 <!-- Add Address Form (Hidden by default) -->
-                <form id="addAddressForm" class="hidden space-y-4 bg-black/40 border border-white/5 p-5 rounded-2xl mb-8">
+                <form id="addAddressForm" class="hidden space-y-4 bg-black/40 border border-white/5 p-5 rounded-2xl mb-8" novalidate>
                     <h3 class="font-bold text-white mb-2">New Address Details</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-xs text-gray-400">Address Line 1</label>
-                            <input type="text" name="addressLine1" placeholder="Street address, P.O. Box" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                            <input id="addressLine1" type="text" name="addressLine1" placeholder="Street address, P.O. Box" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
                         </div>
                         <div>
                             <label class="text-xs text-gray-400">Address Line 2 (Optional)</label>
@@ -85,22 +85,22 @@
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <div class="sm:col-span-2">
                             <label class="text-xs text-gray-400">City</label>
-                            <input type="text" name="city" placeholder="City" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                            <input id="city" type="text" name="city" placeholder="City" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
                         </div>
                         <div>
                             <label class="text-xs text-gray-400">State / Region</label>
-                            <input type="text" name="state" placeholder="State" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                            <input id="state" type="text" name="state" placeholder="State" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
                         </div>
                         <div>
                             <label class="text-xs text-gray-400">PIN / Zip Code</label>
-                            <input type="number" name="pinCode" placeholder="Code" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                            <input id="pinCode" type="number" name="pinCode" placeholder="Code" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-xs text-gray-400">Country</label>
-                            <input type="text" name="country" placeholder="Country" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                            <input id="country" type="text" name="country" placeholder="Country" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
                         </div>
                         <div class="flex items-center gap-2 pt-6">
                             <input type="checkbox" name="IsDefault" value="true" id="isDefaultCheck" class="accent-lime-400 w-4 h-4">
@@ -180,7 +180,7 @@
             <button id="closeEditModalBtn" type="button" class="text-sm font-semibold text-gray-400 hover:text-white">Close</button>
         </div>
 
-        <form id="editAddressForm" class="space-y-4">
+        <form id="editAddressForm" class="space-y-4" novalidate>
             <input type="hidden" name="id" id="editAddressId">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -268,8 +268,59 @@ cancelAddBtn.addEventListener("click", () => {
     addAddressForm.reset();
 });
 
-addAddressForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+const addressValidation = new JustValidate("#addAddressForm");
+
+
+addressValidation
+
+.addField("#addressLine1", [
+    {
+        rule: "required",
+        errorMessage: "Address line 1 is required",
+    },
+    {
+        rule: "minLength",
+        value: 5,
+        errorMessage: "Address is too short",
+    },
+])
+
+.addField("#city", [
+    {
+        rule: "required",
+        errorMessage: "City is required",
+    },
+])
+
+.addField("#state", [
+    {
+        rule: "required",
+        errorMessage: "State is required",
+    },
+])
+
+.addField("#pinCode", [
+    {
+        rule: "required",
+        errorMessage: "PIN code is required",
+    },
+    {
+        rule: "number",
+        errorMessage: "PIN code must be a number",
+    },
+])
+
+.addField("#country", [
+    {
+        rule: "required",
+        errorMessage: "Country is required",
+    },
+])
+
+
+.onSuccess(async (event)=>{
+
+    event.preventDefault();
     addressAlert.classList.add("hidden");
     addressAlert.className = "rounded-xl p-4 text-sm mb-5 text-center";
 
@@ -319,8 +370,59 @@ editAddressModal.addEventListener("click", (e) => {
     }
 });
 
-editAddressForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+const editAddressValidation = new JustValidate("#editAddressForm");
+
+
+editAddressValidation
+
+.addField("#editAddressLine1", [
+    {
+        rule: "required",
+        errorMessage: "Address Line 1 is required",
+    },
+    {
+        rule: "minLength",
+        value: 5,
+        errorMessage: "Address is too short",
+    },
+])
+
+.addField("#editCity", [
+    {
+        rule: "required",
+        errorMessage: "City is required",
+    },
+])
+
+.addField("#editState", [
+    {
+        rule: "required",
+        errorMessage: "State is required",
+    },
+])
+
+.addField("#editPinCode", [
+    {
+        rule: "required",
+        errorMessage: "PIN code is required",
+    },
+    {
+        rule: "number",
+        errorMessage: "PIN code must contain numbers only",
+    },
+])
+
+.addField("#editCountry", [
+    {
+        rule: "required",
+        errorMessage: "Country is required",
+    },
+])
+
+
+.onSuccess(async (event)=>{
+
+    event.preventDefault();
     addressAlert.classList.add("hidden");
     addressAlert.className = "rounded-xl p-4 text-sm mb-5 text-center";
 

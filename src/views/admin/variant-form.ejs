@@ -29,19 +29,19 @@
 
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-300">Stock</label>
-                <input type="number" name="stock" min="0" value="<%= variant ? variant.stock : 0 %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                <input id="stock" type="number" name="stock"  value="<%= variant ? variant.stock : 0 %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" >
             </div>
         </div>
 
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-300">Regular Price</label>
-                <input type="number" name="regularPrice" min="0" step="0.01" value="<%= variant ? variant.regularPrice : '' %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                <input id="regularPrice" type="number" name="regularPrice"  step="0.01" value="<%= variant ? variant.regularPrice : '' %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" >
             </div>
 
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-300">Sale Price</label>
-                <input type="number" name="salePrice" min="0" step="0.01" value="<%= variant && variant.salePrice != null ? variant.salePrice : '' %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
+                <input id="salePrice" type="number" name="salePrice"  step="0.01" value="<%= variant && variant.salePrice != null ? variant.salePrice : '' %>" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400">
             </div>
         </div>
 
@@ -82,7 +82,7 @@
 
         <div>
             <label class="mb-2 block text-sm font-semibold text-zinc-300">Variant Images</label>
-            <input id="variantImagesInput" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-zinc-300 file:mr-4 file:border-0 file:bg-lime-400 file:px-4 file:py-2 file:text-sm file:font-bold file:text-black" <%= mode === "create" ? "required" : "" %>>
+            <input id="variantImagesInput" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-zinc-300 file:mr-4 file:border-0 file:bg-lime-400 file:px-4 file:py-2 file:text-sm file:font-bold file:text-black" >
             <p class="mt-2 text-xs text-zinc-500">Upload at least <%= minImages %> images. Images are automatically auto-cropped to a square initially, but you can click "Crop Image" on any preview card to adjust it manually.</p>
             <p id="imageProcessingStatus" class="mt-2 hidden text-xs font-bold text-lime-400"></p>
             <div id="imagePreviewGrid" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"></div>
@@ -412,13 +412,74 @@ variantImagesInput.addEventListener("change", () => {
     imageProcessingPromise = processSelectedImages();
 });
 
-variantForm.addEventListener("submit", async (event) => {
-    if (imageProcessingPromise) {
-        event.preventDefault();
-        submitButton.disabled = true;
-        await imageProcessingPromise;
-        submitButton.disabled = false;
-        variantForm.submit();
-    }
-});
+const validation = new JustValidate("#variantForm");
+
+validation
+  .addField("#stock", [
+    {
+      rule: "required",
+      errorMessage: "Stock is required",
+    },
+    {
+      rule: "minNumber",
+      value: 0,
+      errorMessage: "Stock cannot be less than 0",
+    },
+  ])
+  .addField("#regularPrice", [
+    {
+      rule: "required",
+      errorMessage: "Regular Price is required",
+    },
+    {
+      rule: "minNumber",
+      value: 0,
+      errorMessage: "Regular Price cannot be less than 0",
+    },
+  ])
+  .addField("#salePrice", [
+    {
+      rule: "minNumber",
+      value: 0,
+      errorMessage: "Sale Price cannot be less than 0",
+    },
+  ])
+  .addField("#variantImagesInput", [
+    {
+      rule: "minFilesCount",
+      value: 3,
+      errorMessage: "Upload at least 3 images",
+    },
+  ])
+  .onSuccess(async (event) => {
+      event.preventDefault();
+
+      if (imageProcessingPromise) {
+          submitButton.disabled = true;
+          await imageProcessingPromise;
+          submitButton.disabled = false;
+      }
+
+      event.currentTarget.submit();
+  });
+
+validation.addField("#attributeRows", [
+    {
+        validator: () => {
+            const rows = document.querySelectorAll(".attribute-row");
+
+            for (const row of rows) {
+                const name = row.querySelector(".attribute-name").value.trim();
+                const value = row.querySelector(".attribute-value").value.trim();
+
+                if ((name && !value) || (!name && value)) {
+                    return false;
+                }
+            }
+
+            return true;
+        },
+        errorMessage: "Each attribute row needs both a name and a value.",
+    },
+]);
 </script>

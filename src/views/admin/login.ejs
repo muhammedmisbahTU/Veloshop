@@ -11,12 +11,12 @@
         <form id="adminLoginForm" class="space-y-4">
             <div>
                 <label class="mb-2 block text-sm text-zinc-300">Email</label>
-                <input type="email" name="email" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                <input id="email" type="email" name="email" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" >
             </div>
 
             <div>
                 <label class="mb-2 block text-sm text-zinc-300">Password</label>
-                <input type="password" name="password" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" required>
+                <input id="password" type="password" name="password" class="w-full border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-lime-400" >
             </div>
 
             <button type="submit" class="w-full bg-lime-400 px-5 py-3 text-sm font-black text-black hover:bg-lime-300">Login</button>
@@ -25,34 +25,61 @@
 </div>
 
 <script>
-const adminLoginForm = document.getElementById("adminLoginForm");
 const adminLoginAlert = document.getElementById("admin-login-alert");
 
-adminLoginForm.addEventListener("submit", async (event) => {
+const validation = new JustValidate("#adminLoginForm");
+
+validation
+  .addField("#email", [
+    {
+      rule: "required",
+      errorMessage: "Email is required",
+    },
+    {
+      rule: "email",
+      errorMessage: "Enter a valid email address",
+    },
+  ])
+  .addField("#password", [
+    {
+      rule: "required",
+      errorMessage: "Password is required",
+    },
+  ])
+  .onSuccess(async (event) => {
     event.preventDefault();
+
     adminLoginAlert.classList.add("hidden");
     adminLoginAlert.textContent = "";
 
-    const data = Object.fromEntries(new FormData(adminLoginForm).entries());
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries());
 
     try {
-        const response = await fetch("/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
+      const response = await fetch("/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-        if (response.ok && result.success) {
-            window.location.href = "/admin/users";
-            return;
-        }
+      const result = await response.json();
 
-        adminLoginAlert.classList.remove("hidden");
-        adminLoginAlert.textContent = result.errors ? result.errors.join(" ") : (result.message || "Admin login failed.");
-    } catch (error) {
-        adminLoginAlert.classList.remove("hidden");
-        adminLoginAlert.textContent = "A network error occurred. Please try again.";
+      if (response.ok && result.success) {
+        window.location.href = "/admin/users";
+        return;
+      }
+
+      adminLoginAlert.classList.remove("hidden");
+      adminLoginAlert.textContent =
+        result.errors?.join(" ") ||
+        result.message ||
+        "Admin login failed.";
+    } catch (err) {
+      adminLoginAlert.classList.remove("hidden");
+      adminLoginAlert.textContent =
+        "A network error occurred. Please try again.";
     }
-});
+  });
 </script>

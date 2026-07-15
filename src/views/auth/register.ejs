@@ -80,21 +80,21 @@
             <div id="error-container" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-4 text-sm mb-5"></div>
 
             <!-- FORM -->
-            <form action="/register" method="POST" class="space-y-4">
+            <form id="registerForm" action="/register" method="POST" class="space-y-4" novalidate>
 
                 <!-- Name + Email -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     <div>
                         <label class="text-sm text-gray-300">Full Name</label>
-                        <input type="text" name="fullName"
+                        <input id="fullName" type="text" name="fullName"
                             class="w-full mt-2 p-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
                             placeholder="Enter your name">
                     </div>
 
                     <div>
                         <label class="text-sm text-gray-300">Email Address</label>
-                        <input type="email" name="email"
+                        <input id="registerEmail" type="email" name="email"
                             class="w-full mt-2 p-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
                             placeholder="Enter your email">
                     </div>
@@ -104,7 +104,7 @@
                 <!-- Password -->
                 <div>
                     <label class="text-sm text-gray-300">Password</label>
-                    <input type="password" name="password"
+                    <input id="password" type="password" name="password"
                         class="w-full mt-2 p-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
                         placeholder="Create password">
                 </div>
@@ -112,14 +112,14 @@
                 <!-- Confirm -->
                 <div>
                     <label class="text-sm text-gray-300">Confirm Password</label>
-                    <input type="password" name="confirmPassword"
+                    <input id="confirmPassword" type="password" name="confirmPassword"
                         class="w-full mt-2 p-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
                         placeholder="Confirm password">
                 </div>
 
                 <!-- Terms -->
                 <div class="flex items-center gap-2 text-sm text-gray-400">
-                    <input type="checkbox" class="accent-lime-400">
+                    <input id="terms" type="checkbox" class="accent-lime-400">
                     <span>I agree to Terms & Privacy Policy</span>
                 </div>
 
@@ -141,8 +141,66 @@
 const form = document.querySelector('form');
 const errorContainer = document.getElementById('error-container');
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+const registerValidation = new JustValidate("#registerForm");
+
+registerValidation
+.addField("#fullName", [
+    {
+        rule: "required",
+        errorMessage: "Full name is required",
+    },
+    {
+        rule: "minLength",
+        value: 3,
+        errorMessage: "Name must be at least 3 characters",
+    },
+])
+
+.addField("#registerEmail", [
+    {
+        rule: "required",
+        errorMessage: "Email is required",
+    },
+    {
+        rule: "email",
+        errorMessage: "Enter a valid email",
+    },
+])
+
+.addField("#password", [
+    {
+        rule: "required",
+        errorMessage: "Password is required",
+    },
+    {
+        rule: "minLength",
+        value: 8,
+        errorMessage: "Password must be at least 8 characters",
+    },
+])
+
+.addField("#confirmPassword", [
+    {
+        rule: "required",
+        errorMessage: "Confirm password is required",
+    },
+    {
+        validator: (value, context) => {
+            return value === document.querySelector("#password").value;
+        },
+        errorMessage: "Passwords do not match",
+    },
+])
+
+.addField("#terms", [
+    {
+        rule: "required",
+        errorMessage: "You must accept terms and privacy policy",
+    },
+])
+
+.onSuccess(async (event) => {
+    event.preventDefault();
   errorContainer.classList.add('hidden');
   errorContainer.innerHTML = '';
 
