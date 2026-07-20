@@ -23,6 +23,7 @@ import {
 } from '../controllers/userController.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { uploadAvatar } from '../config/cloudinaryConfig.js';
+import wishlistController from "../controllers/wishlistController.js";
 
 const router = express.Router();
 
@@ -57,5 +58,10 @@ router.get("/cart", isAuthenticated, getCart);
 router.post("/cart", isAuthenticated, addToCart);
 router.patch("/cart", isAuthenticated, updateCartQuantity);
 router.delete("/cart/:variantId", isAuthenticated, removeCartItem);
+
+// Whishlist
+router.post("/wishlist",isAuthenticated, wishlistController.addToWishlist);
+router.delete("/wishlist/:variantId",isAuthenticated, wishlistController.removeFromWishlist);
+router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
 
 export default router;

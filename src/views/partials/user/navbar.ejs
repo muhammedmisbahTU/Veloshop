@@ -7,8 +7,11 @@
     <div class="hidden md:flex gap-6 text-gray-300">
         <a href="/" class="hover:text-lime-400">Home</a>
         <a href="/shop" class="hover:text-lime-400">Shop</a>
+        <% if (locals.user) { %>
         <a href="/cart" class="hover:text-lime-400">Cart</a>
         <a href="/orders" class="hover:text-lime-400">Orders</a>
+        <a href="/wishlist" class="hover:text-lime-400">Wishlist</a>
+        <% } %>
     </div>
 
     <div class="flex items-center gap-4">

@@ -2,6 +2,7 @@ import Banner from "../models/Banner.js";
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import Variant from "../models/Variant.js";
+import wishlistService from "../services/wishlistService.js";
 
 const attachVariantImages = async (products) => {
   const productIds = products.map((product) => product._id);
@@ -283,6 +284,17 @@ export const getProductDetails = async (req, res) => {
       p.variant = variant;
     }
 
+    const userId = req.session?.user?.id || req.user?._id;
+
+    let isWishlisted = false;
+
+    if (userId) {
+      isWishlisted = await wishlistService.isWishlisted(
+        userId,
+        defaultVariant._id,
+      );
+    }
+
     res.render("user/product-details", {
       title: "Product Details",
       product,
@@ -290,6 +302,7 @@ export const getProductDetails = async (req, res) => {
       defaultVariant,
       defaultDiscount,
       relatedProducts,
+      isWishlisted,
     });
   
   } catch (error) {

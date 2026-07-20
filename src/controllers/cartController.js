@@ -208,13 +208,16 @@ export const removeCartItem = async (req, res) => {
 
     const variantId = req.params.variantId;
 
-    const product = await Variant.find({
-      salePrice:{$gt:100,$le:500},
-    });
-
     const cart = await Cart.findOne({
       userId,
     });
+
+    if (!cart) {
+      return res.json({
+        success: false,
+        message: "Cart not found",
+      });
+    }
 
     cart.items = cart.items.filter(
       (item) => item.variantId.toString() !== variantId,
@@ -227,6 +230,11 @@ export const removeCartItem = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error"
+    });
   }
 };
 

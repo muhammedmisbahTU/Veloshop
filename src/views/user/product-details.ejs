@@ -19,13 +19,13 @@
             /
         </span>
 
-        <% if(product.category){ %>
+        <% if(product.categoryId){ %>
 
             <a 
-                href="/category/<%= product.category.slug %>"
+                href="/category/<%= product.categoryId.slug %>"
                 class="hover:text-lime-400">
 
-                <%= product.category.name %>
+                <%= product.categoryId.name %>
 
             </a>
 
@@ -291,6 +291,19 @@
                 <input 
                     type="hidden"
                     id="variantId">
+
+                <button
+                    id="wishlistBtn"
+                    data-variant-id="<%= defaultVariant._id %>"
+                    class="w-14 h-14 rounded-xl border border-white/10 hover:border-lime-400 flex items-center justify-center">
+
+                    <i class="<%= isWishlisted
+                        ? 'fa-solid fa-heart text-red-500'
+                        : 'fa-regular fa-heart'
+                        %>"></i>
+
+                </button>
+                    
                 <button id="addCartBtn" 
                     class="flex-1 py-4 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300">
 
@@ -427,6 +440,9 @@ function findVariant() {
 
     //store selected variant id 
     document.getElementById("variantId").value = variant.id;
+
+    // Update wishlist button
+    document.getElementById("wishlistBtn").dataset.variantId = variant.id;
     //Discount
     const discount = document.getElementById("discount");
 
@@ -543,7 +559,12 @@ window.addEventListener("DOMContentLoaded", () => {
 const addCartBtn = document.getElementById("addCartBtn");
 
 addCartBtn.addEventListener("click", addToCart);
-async function addToCart() {
+async function addToCart(event) {
+
+    const btn = event.currentTarget; 
+
+    const container = btn.parentElement;
+    const heartIcon = container.querySelector("#wishlistBtn i");
 
     const productId = document.getElementById("productId").value;
 
@@ -598,6 +619,14 @@ async function addToCart() {
             return;
         }
 
+         await fetch(`/wishlist/${variantId}`, {
+            method: "DELETE"
+        });
+
+        if (heartIcon) {
+            heartIcon.className = "fa-regular fa-heart";
+        }
+
 
         Swal.fire({
             icon: "success",
@@ -615,6 +644,80 @@ async function addToCart() {
     }
 
 }
+
+const wishlistBtn = document.getElementById("wishlistBtn");
+
+wishlistBtn.addEventListener("click", async () => {
+
+    const variantId = wishlistBtn.dataset.variantId;
+    const icon = wishlistBtn.querySelector("i");
+
+    const isWishlisted = icon.classList.contains("fa-solid");
+
+    try {
+
+        let response;
+
+        if (!isWishlisted) {
+
+            response = await fetch("/wishlist", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ variantId })
+            });
+
+        } else {
+
+            response = await fetch(`/wishlist/${variantId}`, {
+                method: "DELETE"
+            });
+
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+
+            return Swal.fire({
+                icon: "info",
+                title: data.message
+            });
+
+        }
+
+        if (isWishlisted) {
+
+            icon.classList.remove("fa-solid", "text-red-500");
+            icon.classList.add("fa-regular");
+
+        } else {
+
+            icon.classList.remove("fa-regular");
+            icon.classList.add("fa-solid", "text-red-500");
+
+        }
+
+        Swal.fire({
+            icon: "success",
+            title: data.message,
+            timer: 1200,
+            showConfirmButton: false
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        Swal.fire({
+            icon: "error",
+            title: "Something went wrong"
+        });
+
+    }
+
+});
 
 </script>
 <script>
