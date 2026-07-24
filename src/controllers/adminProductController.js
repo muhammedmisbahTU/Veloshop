@@ -457,3 +457,19 @@ export const toggleProductStatus = async (req, res) => {
     return res.status(500).json({ success: false, message: "Failed to update product status." });
   }
 };
+
+export const bulkdelete = async (req,res)=>{
+  const products = toArray(req.query.products);
+
+   if (products.length) {
+      await Product.updateMany(
+       {
+         _id: { $in: products },
+         isActive: true,
+         isDeleted: false,
+       },
+       { isDeleted :true},
+     );
+     
+   }
+}

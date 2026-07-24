@@ -231,7 +231,7 @@ export const postVerifyEmailUpdate = async (req, res) => {
 export const postAddAddress = async (req, res) => {
   try {
     const currentUser = req.user || req.session.user;
-    const { addressLine1, addressLine2, pinCode, city, state, country, IsDefault } = req.body;
+    const { addressLine1, addressLine2,phone, pinCode, city, state, country, IsDefault } = req.body;
 
     const isDefaultBool = IsDefault === "true" || IsDefault === true;
 
@@ -250,6 +250,7 @@ export const postAddAddress = async (req, res) => {
       userId: currentUser.id || currentUser._id,
       addressLine1,
       addressLine2,
+      phone,
       pinCode,
       city,
       state,
@@ -272,7 +273,7 @@ export const postEditAddress = async (req, res) => {
   try {
     const currentUser = req.user || req.session.user;
     const { id } = req.params;
-    const { addressLine1, addressLine2, pinCode, city, state, country, IsDefault } = req.body;
+    const { addressLine1, addressLine2,phone, pinCode, city, state, country, IsDefault } = req.body;
 
     const isDefaultBool = IsDefault === "true" || IsDefault === true;
     const userId = currentUser.id || currentUser._id;
@@ -294,6 +295,7 @@ export const postEditAddress = async (req, res) => {
       {
         addressLine1,
         addressLine2,
+        phone,
         pinCode,
         city,
         state,

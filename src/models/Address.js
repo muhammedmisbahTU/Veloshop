@@ -16,6 +16,11 @@ const addressSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+      phone: {
+      type: String,
+      required: true,
+      trim: true
+    },
     pinCode: {
       type: Number,
       required: true

@@ -45,7 +45,7 @@ class WishlistController {
       const userId = req.session?.user?.id || req.user?._id;
 
       const wishlist = await wishlistService.getWishlist(userId);
-console.log(JSON.stringify(wishlist, null, 2));
+      
       res.render("user/wishlist", {
         title: "Wishlist",
         wishlist,

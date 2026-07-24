@@ -24,6 +24,7 @@ import {
 import { isAuthenticated } from '../middleware/auth.js';
 import { uploadAvatar } from '../config/cloudinaryConfig.js';
 import wishlistController from "../controllers/wishlistController.js";
+import checkoutController from "../controllers/checkoutController.js";
 
 const router = express.Router();
 
@@ -63,5 +64,11 @@ router.delete("/cart/:variantId", isAuthenticated, removeCartItem);
 router.post("/wishlist",isAuthenticated, wishlistController.addToWishlist);
 router.delete("/wishlist/:variantId",isAuthenticated, wishlistController.removeFromWishlist);
 router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
+
+ router.get("/checkout",isAuthenticated,checkoutController.getCheckout);
+// router.post("/checkout/place-order", isAuthenticated, checkoutController.placeOrder);
+// router.get("/order-success/:id", isAuthenticated, checkoutController.orderSuccess);
+// router.get("/orders/:id", isAuthenticated, checkoutController.orderDetails);
+
 
 export default router;

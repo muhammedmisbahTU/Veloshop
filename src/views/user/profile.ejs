@@ -82,6 +82,19 @@
                         </div>
                     </div>
 
+                    <div>
+                        <label class="text-xs text-gray-400">Phone Number</label>
+                        <input
+                            id="phone"
+                            type="tel"
+                            name="phone"
+                            placeholder="Enter phone number"
+                            class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none"
+                            required
+                        >
+                    </div>
+
+
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <div class="sm:col-span-2">
                             <label class="text-xs text-gray-400">City</label>
@@ -136,6 +149,7 @@
                                     <% if (address.addressLine2) { %>
                                         <p class="text-gray-400"><%= address.addressLine2 %></p>
                                     <% } %>
+                                    <p class="text-gray-400"> Phone: <%= address.phone %> </p>
                                     <p class="text-gray-500 text-xs">PIN: <%= address.pinCode %> | State: <%= address.state %></p>
                                 </div>
                                 <div class="flex gap-2">
@@ -144,6 +158,7 @@
                                         data-id="<%= address._id %>"
                                         data-address-line1="<%= address.addressLine1 %>"
                                         data-address-line2="<%= address.addressLine2 || '' %>"
+                                        data-phone="<%= address.phone %>"
                                         data-city="<%= address.city %>"
                                         data-state="<%= address.state %>"
                                         data-pincode="<%= address.pinCode %>"
@@ -194,6 +209,18 @@
                 </div>
             </div>
 
+            <div>
+                <label class="text-xs text-gray-400">Phone Number</label>
+                <input
+                    type="tel"
+                    name="phone"
+                    id="editPhone"
+                    class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none"
+                    required
+                >
+            </div>
+
+
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div class="sm:col-span-2">
                     <label class="text-xs text-gray-400">City</label>
@@ -242,6 +269,7 @@ function openEditModal(button) {
     document.getElementById("editAddressId").value = button.dataset.id;
     document.getElementById("editAddressLine1").value = button.dataset.addressLine1 || "";
     document.getElementById("editAddressLine2").value = button.dataset.addressLine2 || "";
+    document.getElementById("editPhone").value = button.dataset.phone || "";
     document.getElementById("editCity").value = button.dataset.city || "";
     document.getElementById("editState").value = button.dataset.state || "";
     document.getElementById("editPinCode").value = button.dataset.pincode || "";
@@ -284,6 +312,18 @@ addressValidation
         errorMessage: "Address is too short",
     },
 ])
+
+.addField('#phone', [
+  {
+    rule: 'required',
+    errorMessage: 'Phone number is required',
+  },
+  {
+    validator: (value) => /^[6-9]\d{9}$/.test(value.trim()),
+    errorMessage: 'Enter a valid 10-digit phone number',
+  },
+])
+
 
 .addField("#city", [
     {
@@ -386,6 +426,18 @@ editAddressValidation
         errorMessage: "Address is too short",
     },
 ])
+
+.addField("#editPhone", [
+{
+    rule: "required",
+    errorMessage: "Phone number is required",
+},
+{
+    validator: (value) => /^[6-9]\d{9}$/.test(value),
+    errorMessage: "Enter a valid 10-digit phone number",
+},
+])
+
 
 .addField("#editCity", [
     {

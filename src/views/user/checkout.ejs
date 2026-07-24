@@ -1,0 +1,282 @@
+<div class="max-w-7xl mx-auto px-5 py-10">
+
+    <h1 class="text-3xl font-bold text-white mb-8">
+        Checkout
+    </h1>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+
+        <!-- Left Section -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Shipping Address -->
+            <div class="bg-zinc-900 rounded-2xl p-6">
+
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-semibold text-white">
+                    Shipping Address
+                </h2>
+
+                <a href="/profile/addresses"
+                    class="text-lime-400 hover:underline">
+                    Manage
+                </a>
+            </div>
+
+            <% if(addresses && addresses.length){ %>
+
+                <% addresses.forEach((address,index)=>{ %>
+
+                    <label
+                        class="flex gap-4 items-start bg-zinc-800 rounded-xl p-4 cursor-pointer hover:bg-zinc-700 transition mb-4">
+
+                        <input
+                            type="radio"
+                            name="address"
+                            value="<%= address._id %>"
+                            <%= address.IsDefault || index === 0 ? "checked" : "" %>
+                            class="mt-1 accent-lime-400">
+
+                        <div>
+
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-semibold text-white">
+                                    Address <%= index + 1 %>
+                                </h3>
+
+                                <% if(address.IsDefault){ %>
+                                    <span class="text-xs bg-lime-400 text-black px-2 py-1 rounded">
+                                        Default
+                                    </span>
+                                <% } %>
+                            </div>
+
+                            <p class="text-zinc-400 text-sm mt-1">
+                                <%= address.addressLine1 %>
+                                <% if(address.addressLine2){ %>
+                                    , <%= address.addressLine2 %>
+                                <% } %>,
+                                📞 <%= address.phone %>,
+                                <%= address.city %>,
+                                <%= address.state %>,
+                                <%= address.pinCode %>,
+                                <%= address.country %>
+                            </p>
+
+                        </div>
+
+                    </label>
+
+                <% }) %>
+
+            <% } else { %>
+
+                <div class="text-center py-8">
+
+                    <p class="text-zinc-400 mb-5">
+                        No address found.
+                    </p>
+
+                    <a href="/profile/addresses"
+                        class="bg-lime-400 text-black px-6 py-3 rounded-xl font-semibold">
+                        Add Address
+                    </a>
+
+                </div>
+
+            <% } %>
+
+        </div>
+
+
+            <!-- Payment -->
+            <div class="bg-zinc-900 rounded-2xl p-6">
+
+                <h2 class="text-xl font-semibold text-white mb-5">
+                    Payment Method
+                </h2>
+
+                <div class="space-y-4">
+
+                    <label class="flex items-center gap-4 bg-zinc-800 p-4 rounded-xl cursor-pointer hover:bg-zinc-700">
+
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="COD"
+                            checked
+                            class="accent-lime-400">
+
+                        <span>
+                            Cash on Delivery
+                        </span>
+
+                    </label>
+
+                    <label class="flex items-center gap-4 bg-zinc-800 p-4 rounded-xl cursor-pointer hover:bg-zinc-700">
+
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="Razorpay"
+                            class="accent-lime-400">
+
+                        <span>
+                            Razorpay
+                        </span>
+
+                    </label>
+
+                    <label class="flex items-center gap-4 bg-zinc-800 p-4 rounded-xl cursor-pointer hover:bg-zinc-700">
+
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="Wallet"
+                            class="accent-lime-400">
+
+                        <span>
+                            Wallet
+                        </span>
+
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Order Summary -->
+        <div>
+
+            <div class="bg-zinc-900 rounded-2xl p-6 sticky top-24">
+
+                <h2 class="text-xl font-bold text-white mb-6">
+                    Order Summary
+                </h2>
+
+                <% cartItems.items.forEach(item=>{ %>
+
+                    <div class="flex gap-4 mb-5">
+
+                        <img
+                            src="<%= item.variantId.images[0] %>"
+                            class="w-16 h-16 rounded-lg object-cover">
+
+                        <div class="flex-1">
+
+                            <h3 class="font-medium">
+                                <%= item.productId.name %>
+                            </h3>
+
+                            <p class="text-zinc-400 text-sm">
+                                Qty :
+                                <%= item.quantity %>
+                            </p>
+
+                        </div>
+
+                        <span class="font-semibold">
+                            ₹<%= item.subtotal %>
+                        </span>
+
+                    </div>
+
+                <% }) %>
+
+                <hr class="border-zinc-700 my-5">
+
+                <div class="space-y-3">
+
+                    <div class="flex justify-between">
+
+                        <span class="text-zinc-400">
+                            Subtotal
+                        </span>
+
+                        <span>
+                            ₹<%= total %>
+                        </span>
+
+                    </div>
+
+                    <div class="flex justify-between">
+
+                        <span class="text-zinc-400">
+                            Delivery
+                        </span>
+
+                        <span class="text-lime-400">
+                            Free
+                        </span>
+
+                    </div>
+
+                    <div class="flex justify-between text-xl font-bold pt-3 border-t border-zinc-700">
+
+                        <span>
+                            Total
+                        </span>
+
+                        <span class="text-lime-400">
+                            ₹<%= total %>
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <button
+                    onclick="placeOrder()"
+                    class="w-full mt-8 bg-lime-400 hover:bg-lime-300 transition text-black font-bold py-4 rounded-xl">
+
+                    Place Order
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+async function placeOrder(){
+
+    const address=document.querySelector("input[name='address']:checked")?.value;
+    const payment=document.querySelector("input[name='payment']:checked")?.value;
+
+    if(!address){
+        return Swal.fire({
+            icon:"warning",
+            title:"Select Address"
+        });
+    }
+
+    const response=await fetch("/place-order",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            addressId:address,
+            paymentMethod:payment
+        })
+    });
+
+    const data=await response.json();
+
+    if(data.success){
+        window.location.href="/order-success";
+    }else{
+        Swal.fire({
+            icon:"error",
+            title:"Order Failed",
+            text:data.message
+        });
+    }
+}
+</script>
