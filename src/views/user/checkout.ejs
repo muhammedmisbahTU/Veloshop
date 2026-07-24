@@ -17,11 +17,75 @@
                     Shipping Address
                 </h2>
 
-                <a href="/profile/addresses"
-                    class="text-lime-400 hover:underline">
-                    Manage
-                </a>
+                <button id="showAddFormBtn" class="text-lime-400 text-sm font-semibold hover:underline">
+                        + Add Address
+                    </button>
             </div>
+
+            <div id="address-alert-container" class="hidden rounded-xl p-4 text-sm mb-5 text-center"></div>
+
+            <form id="addAddressForm" class="hidden space-y-4 bg-black/40 border border-white/5 p-5 rounded-2xl mb-8" novalidate>
+                    <h3 class="font-bold text-white mb-2">New Address Details</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-gray-400">Address Line 1</label>
+                            <input id="addressLine1" type="text" name="addressLine1" placeholder="Street address, P.O. Box" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400">Address Line 2 (Optional)</label>
+                            <input type="text" name="addressLine2" placeholder="Apartment, suite, unit, building" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-400">Phone Number</label>
+                        <input
+                            id="phone"
+                            type="tel"
+                            name="phone"
+                            placeholder="Enter phone number"
+                            class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="text-xs text-gray-400">City</label>
+                            <input id="city" type="text" name="city" placeholder="City" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400">State / Region</label>
+                            <input id="state" type="text" name="state" placeholder="State" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400">PIN / Zip Code</label>
+                            <input id="pinCode" type="number" name="pinCode" placeholder="Code" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-gray-400">Country</label>
+                            <input id="country" type="text" name="country" placeholder="Country" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                        </div>
+                        <div class="flex items-center gap-2 pt-6">
+                            <input type="checkbox" name="IsDefault" value="true" id="isDefaultCheck" class="accent-lime-400 w-4 h-4">
+                            <label for="isDefaultCheck" class="text-sm text-gray-300 cursor-pointer">Set as default address</label>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t border-white/5">
+                        <button type="button" id="cancelAddBtn" class="px-4 py-2 border border-white/10 hover:border-white/30 text-gray-300 text-sm rounded-lg">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-lime-400 hover:bg-lime-300 text-black font-semibold text-sm rounded-lg transition">
+                            Save Address
+                        </button>
+                    </div>
+                </form>
 
             <% if(addresses && addresses.length){ %>
 
@@ -64,6 +128,23 @@
                             </p>
 
                         </div>
+                         <button
+                            type="button"
+                            class="edit-address-btn text-lime-400 hover:text-lime-300"
+
+                            data-id="<%= address._id %>"
+                            data-address-line1="<%= address.addressLine1 %>"
+                            data-address-line2="<%= address.addressLine2 || '' %>"
+                            data-phone="<%= address.phone %>"
+                            data-city="<%= address.city %>"
+                            data-state="<%= address.state %>"
+                            data-pincode="<%= address.pinCode %>"
+                            data-country="<%= address.country %>"
+                            data-default="<%= address.IsDefault ? 'true' : 'false' %>">
+
+                            Edit
+
+                        </button>
 
                     </label>
 
@@ -243,6 +324,74 @@
 
 </div>
 
+
+<div id="editAddressModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 px-4">
+    <div class="w-full max-w-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl">
+        <div class="mb-5 flex items-center justify-between gap-4">
+            <h3 class="text-xl font-bold text-white">Edit Address</h3>
+            <button id="closeEditModalBtn" type="button" class="text-sm font-semibold text-gray-400 hover:text-white">Close</button>
+        </div>
+
+        <form id="editAddressForm" class="space-y-4" novalidate>
+            <input type="hidden" name="id" id="editAddressId">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-gray-400">Address Line 1</label>
+                    <input type="text" name="addressLine1" id="editAddressLine1" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400">Address Line 2</label>
+                    <input type="text" name="addressLine2" id="editAddressLine2" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs text-gray-400">Phone Number</label>
+                <input
+                    type="tel"
+                    name="phone"
+                    id="editPhone"
+                    class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none"
+                    required
+                >
+            </div>
+
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div class="sm:col-span-2">
+                    <label class="text-xs text-gray-400">City</label>
+                    <input type="text" name="city" id="editCity" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400">State</label>
+                    <input type="text" name="state" id="editState" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400">PIN Code</label>
+                    <input type="number" name="pinCode" id="editPinCode" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-gray-400">Country</label>
+                    <input type="text" name="country" id="editCountry" class="w-full mt-1 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none" required>
+                </div>
+                <div class="flex items-center gap-2 pt-6">
+                    <input type="checkbox" name="IsDefault" value="true" id="editIsDefault" class="accent-lime-400 w-4 h-4">
+                    <label for="editIsDefault" class="text-sm text-gray-300 cursor-pointer">Set as default address</label>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-white/5">
+                <button type="button" id="cancelEditAddressBtn" class="px-4 py-2 border border-white/10 hover:border-white/30 text-gray-300 text-sm rounded-lg">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-lime-400 hover:bg-lime-300 text-black font-semibold text-sm rounded-lg transition">Update Address</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 async function placeOrder(){
 
@@ -279,4 +428,262 @@ async function placeOrder(){
         });
     }
 }
+
+const showAddFormBtn = document.getElementById("showAddFormBtn");
+const cancelAddBtn = document.getElementById("cancelAddBtn");
+const addAddressForm = document.getElementById("addAddressForm");
+const addressAlert = document.getElementById("address-alert-container");
+const editAddressModal = document.getElementById("editAddressModal");
+const editAddressForm = document.getElementById("editAddressForm");
+const closeEditModalBtn = document.getElementById("closeEditModalBtn");
+const cancelEditAddressBtn = document.getElementById("cancelEditAddressBtn");
+
+function openEditModal(button) {
+    document.getElementById("editAddressId").value = button.dataset.id;
+    document.getElementById("editAddressLine1").value = button.dataset.addressLine1 || "";
+    document.getElementById("editAddressLine2").value = button.dataset.addressLine2 || "";
+    document.getElementById("editPhone").value = button.dataset.phone || "";
+    document.getElementById("editCity").value = button.dataset.city || "";
+    document.getElementById("editState").value = button.dataset.state || "";
+    document.getElementById("editPinCode").value = button.dataset.pincode || "";
+    document.getElementById("editCountry").value = button.dataset.country || "";
+    document.getElementById("editIsDefault").checked = button.dataset.default === "true";
+    editAddressModal.classList.remove("hidden");
+    editAddressModal.classList.add("flex");
+}
+
+function closeEditModal() {
+    editAddressModal.classList.add("hidden");
+    editAddressModal.classList.remove("flex");
+    editAddressForm.reset();
+}
+
+showAddFormBtn.addEventListener("click", () => {
+    addAddressForm.classList.remove("hidden");
+    showAddFormBtn.classList.add("hidden");
+});
+
+cancelAddBtn.addEventListener("click", () => {
+    addAddressForm.classList.add("hidden");
+    showAddFormBtn.classList.remove("hidden");
+    addAddressForm.reset();
+});
+
+const addressValidation = new JustValidate("#addAddressForm");
+
+
+addressValidation
+
+.addField("#addressLine1", [
+    {
+        rule: "required",
+        errorMessage: "Address line 1 is required",
+    },
+    {
+        rule: "minLength",
+        value: 5,
+        errorMessage: "Address is too short",
+    },
+])
+
+.addField('#phone', [
+  {
+    rule: 'required',
+    errorMessage: 'Phone number is required',
+  },
+  {
+    validator: (value) => /^[6-9]\d{9}$/.test(value.trim()),
+    errorMessage: 'Enter a valid 10-digit phone number',
+  },
+])
+
+
+.addField("#city", [
+    {
+        rule: "required",
+        errorMessage: "City is required",
+    },
+])
+
+.addField("#state", [
+    {
+        rule: "required",
+        errorMessage: "State is required",
+    },
+])
+
+.addField("#pinCode", [
+    {
+        rule: "required",
+        errorMessage: "PIN code is required",
+    },
+    {
+        rule: "number",
+        errorMessage: "PIN code must be a number",
+    },
+])
+
+.addField("#country", [
+    {
+        rule: "required",
+        errorMessage: "Country is required",
+    },
+])
+
+
+.onSuccess(async (event)=>{
+
+    event.preventDefault();
+    addressAlert.classList.add("hidden");
+    addressAlert.className = "rounded-xl p-4 text-sm mb-5 text-center";
+
+    const formData = new FormData(addAddressForm);
+    const data = Object.fromEntries(formData.entries());
+    // checkbox handling
+    data.IsDefault = formData.get("IsDefault") === "true";
+
+    try {
+        const response = await fetch("/addresses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            addressAlert.classList.remove("hidden");
+            addressAlert.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+            addressAlert.textContent = result.message || "Address added successfully!";
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            addressAlert.classList.remove("hidden");
+            addressAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            addressAlert.textContent = result.message || "Failed to add address.";
+        }
+    } catch (err) {
+        addressAlert.classList.remove("hidden");
+        addressAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+        addressAlert.textContent = "A network error occurred. Please try again.";
+    }
+});
+
+document.querySelectorAll(".edit-address-btn").forEach(btn => {
+    btn.addEventListener("click", () => openEditModal(btn));
+});
+
+closeEditModalBtn.addEventListener("click", closeEditModal);
+cancelEditAddressBtn.addEventListener("click", closeEditModal);
+
+editAddressModal.addEventListener("click", (e) => {
+    if (e.target === editAddressModal) {
+        closeEditModal();
+    }
+});
+
+const editAddressValidation = new JustValidate("#editAddressForm");
+
+
+editAddressValidation
+
+.addField("#editAddressLine1", [
+    {
+        rule: "required",
+        errorMessage: "Address Line 1 is required",
+    },
+    {
+        rule: "minLength",
+        value: 5,
+        errorMessage: "Address is too short",
+    },
+])
+
+.addField("#editPhone", [
+{
+    rule: "required",
+    errorMessage: "Phone number is required",
+},
+{
+    validator: (value) => /^[6-9]\d{9}$/.test(value),
+    errorMessage: "Enter a valid 10-digit phone number",
+},
+])
+
+
+.addField("#editCity", [
+    {
+        rule: "required",
+        errorMessage: "City is required",
+    },
+])
+
+.addField("#editState", [
+    {
+        rule: "required",
+        errorMessage: "State is required",
+    },
+])
+
+.addField("#editPinCode", [
+    {
+        rule: "required",
+        errorMessage: "PIN code is required",
+    },
+    {
+        rule: "number",
+        errorMessage: "PIN code must contain numbers only",
+    },
+])
+
+.addField("#editCountry", [
+    {
+        rule: "required",
+        errorMessage: "Country is required",
+    },
+])
+
+
+.onSuccess(async (event)=>{
+
+    event.preventDefault();
+    addressAlert.classList.add("hidden");
+    addressAlert.className = "rounded-xl p-4 text-sm mb-5 text-center";
+
+    const id = document.getElementById("editAddressId").value;
+    const formData = new FormData(editAddressForm);
+    const data = Object.fromEntries(formData.entries());
+    data.IsDefault = formData.get("IsDefault") === "true";
+    delete data.id;
+
+    try {
+        const response = await fetch(`/addresses/edit/${id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            addressAlert.classList.remove("hidden");
+            addressAlert.classList.add("bg-lime-500/10", "border", "border-lime-500/30", "text-lime-400");
+            addressAlert.textContent = result.message || "Address updated successfully.";
+            closeEditModal();
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            addressAlert.classList.remove("hidden");
+            addressAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+            addressAlert.textContent = result.message || "Failed to update address.";
+        }
+    } catch (err) {
+        addressAlert.classList.remove("hidden");
+        addressAlert.classList.add("bg-red-500/10", "border", "border-red-500/30", "text-red-400");
+        addressAlert.textContent = "A network error occurred. Please try again.";
+    }
+});
+
 </script>
