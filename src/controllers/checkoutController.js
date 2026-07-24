@@ -14,21 +14,34 @@ class CheckoutController {
         const cartItems = await Cart.findOne({ userId: user._id }).populate('items.variantId').populate('items.productId');
 
         
-        let total = 0;
+        let subtotal = 0;
 
-        if (cartItems && cartItems.items.length) {
-        cartItems.items.forEach((item)=>{
-            item.subtotal = item.quantity * item.variantId.salePrice
-            total = item.subtotal+total
-        })
-        }
+        cartItems.items.forEach(item => {
+            item.subtotal = item.quantity * item.variantId.salePrice;
+            subtotal += item.subtotal;
+        });
+
+        const discount = 0;      // coupon/offer
+        const shipping = 0;       // free delivery
+        const tax = subtotal * 0.18; // example GST
+
+        const grandTotal =
+            subtotal
+            - discount
+            + tax
+            + shipping;
+
 
 
         res.render("user/checkout", {
         title: "Checkout",
         addresses,
         cartItems,
-        total,
+        subtotal,
+        discount,
+        tax,
+        shipping,
+        grandTotal
       });
 
     } catch (error) {

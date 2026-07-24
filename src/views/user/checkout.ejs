@@ -256,11 +256,17 @@
                                 <%= item.quantity %>
                             </p>
 
+                            <p class="text-sm text-zinc-400">
+                                ₹<%= item.variantId.salePrice %> × <%= item.quantity %>
+                            </p>
+
                         </div>
 
                         <span class="font-semibold">
                             ₹<%= item.subtotal %>
                         </span>
+
+                        
 
                     </div>
 
@@ -269,42 +275,39 @@
                 <hr class="border-zinc-700 my-5">
 
                 <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-zinc-400">Subtotal</span>
+                    <span>₹<%= subtotal %></span>
+                </div>
 
-                    <div class="flex justify-between">
+                
 
-                        <span class="text-zinc-400">
-                            Subtotal
-                        </span>
+                <div class="flex justify-between">
+                    <span class="text-zinc-400">Discount</span>
+                    <span class="text-red-400">-₹<%= discount %></span>
+                </div>
 
-                        <span>
-                            ₹<%= total %>
-                        </span>
+                <div class="flex justify-between">
+                    <span class="text-zinc-400">Tax</span>
+                    <span>₹<%= tax %></span>
+                </div>
 
-                    </div>
+                <div class="flex justify-between">
+                    <span class="text-zinc-400">Shipping</span>
 
-                    <div class="flex justify-between">
+                    <% if(shipping === 0){ %>
+                        <span class="text-lime-400">Free</span>
+                    <% } else { %>
+                        <span>₹<%= shipping %></span>
+                    <% } %>
+                </div>
 
-                        <span class="text-zinc-400">
-                            Delivery
-                        </span>
-
-                        <span class="text-lime-400">
-                            Free
-                        </span>
-
-                    </div>
-
-                    <div class="flex justify-between text-xl font-bold pt-3 border-t border-zinc-700">
-
-                        <span>
-                            Total
-                        </span>
-
-                        <span class="text-lime-400">
-                            ₹<%= total %>
-                        </span>
-
-                    </div>
+                <div class="flex justify-between text-xl font-bold border-t border-zinc-700 pt-3">
+                    <span>Total</span>
+                    <span class="text-lime-400">
+                        ₹<%= grandTotal %>
+                    </span>
+                </div>
 
                 </div>
 
