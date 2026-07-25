@@ -70,6 +70,9 @@ router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
  router.get("/checkout",isAuthenticated,checkoutController.getCheckout);
  router.post("/checkout/place-order", isAuthenticated, checkoutController.placeOrder);
  router.get("/order-success/:id", isAuthenticated, checkoutController.orderSuccess);
+
+ router.get( "/orders/search", isAuthenticated, orderController.searchOrders );
+
  router.get("/orders/:id", isAuthenticated, checkoutController.orderDetails);
  
  // Order Management

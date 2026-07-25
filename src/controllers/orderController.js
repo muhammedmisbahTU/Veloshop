@@ -19,7 +19,8 @@ class orderController {
 
         res.render("user/orders", {
             title: "My Orders",
-            orders
+            orders,
+            search:null
         });
 
     } catch (error) {
@@ -682,6 +683,78 @@ res.status(500).send(
 
 }
 
+
+}
+
+async searchOrders(req,res){
+
+try{
+
+
+const userId =
+req.session?.user?.id || req.user?._id;
+
+
+const search = req.query.search || "";
+
+
+const orders = await Order.find({
+
+userId,
+
+$or:[
+
+{
+    orderNumber:{
+        $regex:search,
+        $options:"i"
+    }
+},
+
+{
+    "items.productName":{
+        $regex:search,
+        $options:"i"
+    }
+},
+
+{
+    status:{
+        $regex:search,
+        $options:"i"
+    }
+}
+
+]
+
+})
+.sort({
+createdAt:-1
+});
+
+
+
+res.render(
+"user/orders",
+{
+    orders,
+    search
+}
+);
+
+
+
+}catch(error){
+
+console.log(error);
+
+
+res.status(500).send(
+"Search failed"
+);
+
+
+}
 
 }
 
