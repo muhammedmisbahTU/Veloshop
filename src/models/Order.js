@@ -63,7 +63,24 @@ const orderSchema = new mongoose.Schema(
         cancelReason: {
         type:String,
         default:""
-        }
+        },
+
+        returnStatus:{
+          type:String,
+          enum:[
+              "NONE",
+              "REQUESTED",
+              "APPROVED",
+              "REJECTED",
+              "COMPLETED"
+          ],
+          default:"NONE"
+      },
+
+      returnReason:{
+          type:String,
+          default:""
+      }
       }
     ],
     paymentMethod: {

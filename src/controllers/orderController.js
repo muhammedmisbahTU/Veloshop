@@ -294,6 +294,150 @@ message:"Something went wrong"
 
 }
 
+async returnOrderItem(req,res){
+
+try{
+
+
+const userId =
+req.session?.user?.id || req.user?._id;
+
+
+const {
+orderId,
+itemId
+}=req.params;
+
+
+const {
+reason
+}=req.body;
+
+
+
+if(!reason || reason.trim().length < 3){
+
+return res.json({
+
+success:false,
+
+message:"Return reason is required"
+
+});
+
+}
+
+
+
+const order = await Order.findOne({
+
+_id:orderId,
+
+userId
+
+});
+
+
+
+if(!order){
+
+return res.json({
+
+success:false,
+
+message:"Order not found"
+
+});
+
+}
+
+
+
+if(order.status !== "DELIVERED"){
+
+return res.json({
+
+success:false,
+
+message:"Only delivered orders can be returned"
+
+});
+
+}
+
+
+
+const item = order.items.id(itemId);
+
+
+
+if(!item){
+
+return res.json({
+
+success:false,
+
+message:"Product not found"
+
+});
+
+}
+
+
+
+if(item.returnStatus !== "NONE"){
+
+return res.json({
+
+success:false,
+
+message:"Return already requested"
+
+});
+
+}
+
+
+
+item.returnStatus="REQUESTED";
+
+item.returnReason=reason;
+
+
+
+await order.save();
+
+
+
+return res.json({
+
+success:true,
+
+message:"Return request submitted"
+
+});
+
+
+
+}catch(error){
+
+
+console.log(error);
+
+
+return res.status(500).json({
+
+success:false,
+
+message:"Something went wrong"
+
+});
+
+
+}
+
+}
+
 }
 
 

@@ -66,13 +66,16 @@ router.post("/wishlist",isAuthenticated, wishlistController.addToWishlist);
 router.delete("/wishlist/:variantId",isAuthenticated, wishlistController.removeFromWishlist);
 router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
 
+// Checkout
  router.get("/checkout",isAuthenticated,checkoutController.getCheckout);
  router.post("/checkout/place-order", isAuthenticated, checkoutController.placeOrder);
  router.get("/order-success/:id", isAuthenticated, checkoutController.orderSuccess);
  router.get("/orders/:id", isAuthenticated, checkoutController.orderDetails);
-
+ 
+ // Order Management
  router.get( "/orders", isAuthenticated, orderController.getOrders );
  router.post( "/orders/:id/cancel", isAuthenticated, orderController.cancelOrder );
  router.post( "/orders/:orderId/item/:itemId/cancel", isAuthenticated, orderController.cancelOrderItem );
+ router.post( "/orders/:orderId/item/:itemId/return", isAuthenticated, orderController.returnOrderItem );
 
 export default router;

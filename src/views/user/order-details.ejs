@@ -72,7 +72,7 @@
 
                         <% if (item.itemStatus === "CANCELLED") { %>
 
-                            <span class=" text-red-400 text-sm">
+                            <span class="text-red-400 text-sm">
                                 <%= item.itemStatus %>
                             </span>
 
@@ -92,6 +92,28 @@
                                 Cancel Product
                             </button>
 
+                        <% } else if (
+                            item.itemStatus === "ACTIVE" &&
+                            order.status === "DELIVERED" &&
+                            item.returnStatus === "NONE"
+                        ) { %>
+
+                            <button
+                                onclick="returnItem('<%= order._id %>','<%= item._id %>')"
+                                class="text-sm text-yellow-400 hover:text-yellow-300">
+                                Return Product
+                            </button>
+
+                        <% } else if (item.returnStatus === "REQUESTED") { %>
+
+                            <span class="text-yellow-400 text-sm">
+                                Return Requested
+                            </span>
+
+                            <p class="text-zinc-400 text-sm">
+                                Reason: <%= item.returnReason %>
+                            </p>
+
                         <% } else { %>
 
                             <span class="text-sm text-green-400">
@@ -102,7 +124,7 @@
 
                         </div>
 
-                    </div>
+                        </div>
 
                     
 
@@ -400,6 +422,61 @@ Cancel Product
 </div>
 
 </div>
+
+<div id="returnModal"
+class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50">
+
+
+<div class="bg-zinc-900 rounded-2xl p-6 w-full max-w-md">
+
+
+<h2 class="text-xl font-bold text-white mb-4">
+Return Product
+</h2>
+
+
+<textarea
+
+id="returnReason"
+
+placeholder="Enter return reason"
+
+class="w-full bg-zinc-800 text-white rounded-xl p-3 h-32"
+
+></textarea>
+
+
+
+<div class="flex justify-end gap-3 mt-5">
+
+
+<button
+onclick="closeReturnModal()"
+class="border border-white/20 px-5 py-2 rounded-xl text-gray-300">
+
+Cancel
+
+</button>
+
+
+<button
+
+onclick="submitReturn()"
+
+class="bg-yellow-400 text-black px-5 py-2 rounded-xl font-semibold">
+
+Submit Return
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</div>
 <script>
 
 async function cancelOrder(id){
@@ -572,5 +649,137 @@ title:data.message
 
 }
 
+
+let returnOrderId=null;
+let returnItemId=null;
+
+
+
+function returnItem(orderId,itemId){
+
+
+returnOrderId=orderId;
+returnItemId=itemId;
+
+
+document
+.getElementById("returnModal")
+.classList.remove("hidden");
+
+
+document
+.getElementById("returnModal")
+.classList.add("flex");
+
+
+}
+
+
+
+function closeReturnModal(){
+
+
+document
+.getElementById("returnModal")
+.classList.add("hidden");
+
+
+document
+.getElementById("returnModal")
+.classList.remove("flex");
+
+
+document.getElementById("returnReason").value="";
+
+
+}
+
+
+
+async function submitReturn(){
+
+
+const reason =
+document.getElementById("returnReason").value.trim();
+
+
+
+if(!reason){
+
+return Swal.fire({
+
+icon:"warning",
+
+title:"Reason required"
+
+});
+
+}
+
+
+
+const response = await fetch(
+
+`/orders/${returnOrderId}/item/${returnItemId}/return`,
+
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+reason
+
+})
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(data.success){
+
+
+Swal.fire({
+
+icon:"success",
+
+title:data.message
+
+}).then(()=>{
+
+location.reload();
+
+});
+
+
+}
+
+else{
+
+
+Swal.fire({
+
+icon:"error",
+
+title:data.message
+
+});
+
+
+}
+
+
+}
 
 </script>
