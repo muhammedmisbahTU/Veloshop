@@ -290,12 +290,15 @@
 
                     <% if(order.status==="PENDING" || order.status==="CONFIRMED"){ %>
 
-                    <button
-                        class="w-full bg-red-500 hover:bg-red-600 transition text-white py-3 rounded-xl font-semibold">
 
-                        Cancel Order
+                    <button
+                    onclick="cancelOrder('<%= order._id %>')"
+                    class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-semibold">
+
+                    Cancel Order
 
                     </button>
+
 
                     <% } %>
 
@@ -315,3 +318,72 @@
     </div>
 
 </div>
+<script>
+
+async function cancelOrder(id){
+
+
+const confirmCancel = await Swal.fire({
+
+title:"Cancel Order?",
+
+text:"Stock will be added back to inventory",
+
+icon:"warning",
+
+showCancelButton:true,
+
+confirmButtonText:"Yes, Cancel"
+
+});
+
+
+if(!confirmCancel.isConfirmed)
+return;
+
+
+
+const response = await fetch(
+`/orders/${id}/cancel`,
+{
+method:"POST"
+}
+);
+
+
+const data = await response.json();
+
+
+
+if(data.success){
+
+Swal.fire({
+
+icon:"success",
+title:data.message
+
+}).then(()=>{
+
+location.reload();
+
+});
+
+
+}else{
+
+
+Swal.fire({
+
+icon:"error",
+title:data.message
+
+});
+
+
+}
+
+
+}
+
+
+</script>
