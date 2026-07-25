@@ -1,0 +1,317 @@
+<div class="max-w-7xl mx-auto px-5 py-10">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+
+        <div>
+            <h1 class="text-3xl font-bold text-white">
+                Order Details
+            </h1>
+
+            <p class="text-zinc-400 mt-2">
+                Order #
+                <span class="text-lime-400 font-semibold">
+                    <%= order.orderNumber %>
+                </span>
+            </p>
+        </div>
+
+        <a href="/orders"
+           class="border border-white/10 hover:border-lime-400 hover:text-lime-400 transition px-5 py-3 rounded-xl text-sm">
+            ← Back to Orders
+        </a>
+
+    </div>
+
+
+    <div class="grid lg:grid-cols-3 gap-8">
+
+        <!-- LEFT -->
+
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Order Items -->
+
+            <div class="bg-zinc-900 rounded-2xl p-6">
+
+                <h2 class="text-xl font-semibold text-white mb-6">
+                    Ordered Items
+                </h2>
+
+                <% order.items.forEach(item=>{ %>
+
+                <div class="flex gap-4 py-5 border-b border-zinc-800 last:border-0">
+
+                    <img
+                        src="<%= item.thumbnail %>"
+                        class="w-24 h-24 rounded-xl object-cover">
+
+                    <div class="flex-1">
+
+                        <h3 class="text-lg font-semibold text-white">
+                            <%= item.productName %>
+                        </h3>
+
+                        <p class="text-zinc-400 text-sm mt-2">
+                            SKU :
+                            <%= item.sku %>
+                        </p>
+
+                        <p class="text-zinc-400 text-sm">
+                            Quantity :
+                            <%= item.quantity %>
+                        </p>
+
+                        <p class="text-zinc-400 text-sm">
+                            Price :
+                            ₹<%= item.price %>
+                        </p>
+
+                    </div>
+
+                    <div class="font-bold text-lime-400 text-lg">
+
+                        ₹<%= (item.price * item.quantity).toFixed(2) %>
+
+                    </div>
+
+                </div>
+
+                <% }) %>
+
+            </div>
+
+
+            <!-- Shipping -->
+
+            <div class="bg-zinc-900 rounded-2xl p-6">
+
+                <h2 class="text-xl font-semibold text-white mb-5">
+                    Delivery Address
+                </h2>
+
+                <div class="space-y-2 text-zinc-300">
+
+                    <p class="font-semibold text-white">
+                        <%= order.addressSnapshot.fullName %>
+                    </p>
+
+                    <p>
+                        <%= order.addressSnapshot.addressLine1 %>
+                    </p>
+
+                    <% if(order.addressSnapshot.addressLine2){ %>
+
+                    <p>
+                        <%= order.addressSnapshot.addressLine2 %>
+                    </p>
+
+                    <% } %>
+
+                    <p>
+                        <%= order.addressSnapshot.city %>,
+                        <%= order.addressSnapshot.state %>
+                    </p>
+
+                    <p>
+                        <%= order.addressSnapshot.pinCode %>
+                    </p>
+
+                    <p>
+                        <%= order.addressSnapshot.country %>
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT -->
+
+        <div>
+
+            <div class="bg-zinc-900 rounded-2xl p-6 sticky top-24">
+
+                <h2 class="text-xl font-bold text-white mb-6">
+                    Order Summary
+                </h2>
+
+
+                <div class="space-y-4">
+
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">
+                            Order Status
+                        </span>
+
+                        <span class="bg-lime-400/20 text-lime-400 px-3 py-1 rounded-full text-sm">
+                            <%= order.status %>
+                        </span>
+                    </div>
+
+
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">
+                            Payment
+                        </span>
+
+                        <span class="text-white">
+                            <%= order.paymentMethod %>
+                        </span>
+                    </div>
+
+
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">
+                            Payment Status
+                        </span>
+
+                        <span class="<%= order.paymentStatus === 'SUCCESS'
+                            ? 'text-lime-400'
+                            : order.paymentStatus === 'FAILED'
+                            ? 'text-red-400'
+                            : 'text-yellow-400' %>">
+
+                            <%= order.paymentStatus %>
+
+                        </span>
+                    </div>
+
+
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">
+                            Ordered On
+                        </span>
+
+                        <span>
+                            <%= new Date(order.createdAt).toLocaleDateString() %>
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <hr class="border-zinc-700 my-6">
+
+
+                <div class="space-y-3">
+
+                    <div class="flex justify-between">
+                        <span class="text-zinc-400">
+                            Subtotal
+                        </span>
+
+                        <span>
+                            ₹<%= order.subtotal.toFixed(2) %>
+                        </span>
+                    </div>
+
+
+                    <div class="flex justify-between">
+
+                        <span class="text-zinc-400">
+                            Coupon Discount
+                        </span>
+
+                        <span class="text-red-400">
+                            -₹<%= order.couponDiscount.toFixed(2) %>
+                        </span>
+
+                    </div>
+
+
+                    <div class="flex justify-between">
+
+                        <span class="text-zinc-400">
+                            Offer Discount
+                        </span>
+
+                        <span class="text-red-400">
+                            -₹<%= order.offerDiscount.toFixed(2) %>
+                        </span>
+
+                    </div>
+
+
+                    <div class="flex justify-between">
+
+                        <span class="text-zinc-400">
+                            Tax
+                        </span>
+
+                        <span>
+                            ₹<%= order.taxAmount.toFixed(2) %>
+                        </span>
+
+                    </div>
+
+
+                    <div class="flex justify-between">
+
+                        <span class="text-zinc-400">
+                            Shipping
+                        </span>
+
+                        <% if(order.shippingCost===0){ %>
+
+                        <span class="text-lime-400">
+                            Free
+                        </span>
+
+                        <% }else{ %>
+
+                        <span>
+                            ₹<%= order.shippingCost.toFixed(2) %>
+                        </span>
+
+                        <% } %>
+
+                    </div>
+
+
+                    <div class="border-t border-zinc-700 pt-4 flex justify-between text-xl font-bold">
+
+                        <span>
+                            Grand Total
+                        </span>
+
+                        <span class="text-lime-400">
+                            ₹<%= order.grandTotal.toFixed(2) %>
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mt-8 space-y-3">
+
+                    <% if(order.status==="PENDING" || order.status==="CONFIRMED"){ %>
+
+                    <button
+                        class="w-full bg-red-500 hover:bg-red-600 transition text-white py-3 rounded-xl font-semibold">
+
+                        Cancel Order
+
+                    </button>
+
+                    <% } %>
+
+                    <a href="/shop"
+                       class="block w-full text-center border border-white/10 hover:border-lime-400 hover:text-lime-400 transition py-3 rounded-xl">
+
+                        Continue Shopping
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

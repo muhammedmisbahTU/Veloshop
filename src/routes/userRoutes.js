@@ -66,9 +66,9 @@ router.delete("/wishlist/:variantId",isAuthenticated, wishlistController.removeF
 router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
 
  router.get("/checkout",isAuthenticated,checkoutController.getCheckout);
-// router.post("/checkout/place-order", isAuthenticated, checkoutController.placeOrder);
-// router.get("/order-success/:id", isAuthenticated, checkoutController.orderSuccess);
-// router.get("/orders/:id", isAuthenticated, checkoutController.orderDetails);
+ router.post("/checkout/place-order", isAuthenticated, checkoutController.placeOrder);
+ router.get("/order-success/:id", isAuthenticated, checkoutController.orderSuccess);
+ router.get("/orders/:id", isAuthenticated, checkoutController.orderDetails);
 
 
 export default router;

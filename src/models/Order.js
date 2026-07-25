@@ -117,7 +117,6 @@ const orderSchema = new mongoose.Schema(
       type: String
     },
     addressSnapshot: {
-      fullName: { type: String, required: true },
       addressLine1: { type: String, required: true },
       addressLine2: { type: String },
       city: { type: String, required: true },

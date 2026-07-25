@@ -199,11 +199,11 @@
                         <input
                             type="radio"
                             name="payment"
-                            value="Razorpay"
+                            value="ONLINE"
                             class="accent-lime-400">
 
                         <span>
-                            Razorpay
+                            ONLINE
                         </span>
 
                     </label>
@@ -213,7 +213,7 @@
                         <input
                             type="radio"
                             name="payment"
-                            value="Wallet"
+                            value="WALLET"
                             class="accent-lime-400">
 
                         <span>
@@ -408,7 +408,7 @@ async function placeOrder(){
         });
     }
 
-    const response=await fetch("/place-order",{
+    const response=await fetch("/checkout/place-order",{
         method:"POST",
         headers:{
             "Content-Type":"application/json"
@@ -421,8 +421,8 @@ async function placeOrder(){
 
     const data=await response.json();
 
-    if(data.success){
-        window.location.href="/order-success";
+    if (data.success) {
+        window.location.href = `/order-success/${data.orderId}`;
     }else{
         Swal.fire({
             icon:"error",
