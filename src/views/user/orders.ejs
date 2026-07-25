@@ -1,0 +1,290 @@
+<div class="max-w-7xl mx-auto px-5 py-10">
+
+    <!-- Header -->
+    <div class="mb-8">
+
+        <h1 class="text-3xl font-bold text-white">
+            My Orders
+        </h1>
+
+        <p class="text-zinc-400 mt-2">
+            Track and manage your recent purchases
+        </p>
+
+    </div>
+
+
+    <% if(orders && orders.length > 0){ %>
+
+
+    <div class="space-y-6">
+
+
+        <% orders.forEach(order => { %>
+
+
+        <div class="bg-zinc-900 border border-white/10 rounded-2xl p-6">
+
+
+            <!-- Top Section -->
+
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+
+
+                <div>
+
+                    <p class="text-sm text-zinc-400">
+                        Order ID
+                    </p>
+
+                    <h2 class="text-lg font-semibold text-white">
+                        <%= order.orderNumber %>
+                    </h2>
+
+
+                    <p class="text-sm text-zinc-500 mt-2">
+
+                        Placed on
+                        <%= new Date(order.createdAt).toLocaleDateString("en-US", {
+                            day:"2-digit",
+                            month:"short",
+                            year:"numeric"
+                        }) %>
+
+                    </p>
+
+
+                </div>
+
+
+
+                <!-- Status -->
+
+                <div>
+
+
+                    <% 
+                    let statusColor = "bg-yellow-400/20 text-yellow-400";
+
+                    if(order.status === "CONFIRMED"){
+                        statusColor = "bg-lime-400/20 text-lime-400";
+                    }
+
+                    if(order.status === "PROCESSING"){
+                        statusColor = "bg-blue-400/20 text-blue-400";
+                    }
+
+                    if(order.status === "SHIPPED"){
+                        statusColor = "bg-purple-400/20 text-purple-400";
+                    }
+
+                    if(order.status === "DELIVERED"){
+                        statusColor = "bg-green-400/20 text-green-400";
+                    }
+
+                    if(order.status === "CANCELLED"){
+                        statusColor = "bg-red-400/20 text-red-400";
+                    }
+
+                    if(order.status === "RETURNED"){
+                        statusColor = "bg-zinc-400/20 text-zinc-400";
+                    }
+
+                    %>
+
+
+                    <span class="px-4 py-2 rounded-full text-sm font-semibold <%= statusColor %>">
+
+                        <%= order.status %>
+
+                    </span>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <hr class="border-zinc-800 my-6">
+
+
+
+            <!-- Order Content -->
+
+
+            <div class="flex flex-col lg:flex-row gap-6">
+
+
+                <!-- Product Preview -->
+
+
+                <div class="flex-1">
+
+
+                    <div class="flex gap-4">
+
+
+                        <% if(order.items.length){ %>
+
+
+                        <img
+                            src="<%= order.items[0].thumbnail %>"
+                            class="w-20 h-20 rounded-xl object-cover border border-white/10">
+
+
+                        <% } %>
+
+
+                        <div>
+
+
+                            <h3 class="text-white font-semibold">
+
+                                <%= order.items[0].productName %>
+
+                            </h3>
+
+
+                            <p class="text-zinc-400 text-sm mt-1">
+
+                                <%= order.items.length %> item(s)
+
+                            </p>
+
+
+                            <p class="text-zinc-400 text-sm">
+
+                                Payment :
+                                <span class="text-white">
+                                    <%= order.paymentMethod %>
+                                </span>
+
+                            </p>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- Price -->
+
+
+                <div class="flex flex-col justify-center">
+
+
+                    <p class="text-sm text-zinc-400">
+                        Total Amount
+                    </p>
+
+
+                    <p class="text-2xl font-bold text-lime-400">
+
+                        ₹<%= order.grandTotal.toFixed(2) %>
+
+                    </p>
+
+
+                </div>
+
+
+
+                <!-- Button -->
+
+
+                <div class="flex items-center">
+
+
+                    <a
+                        href="/orders/<%= order._id %>"
+                        class="bg-lime-400 hover:bg-lime-300 transition text-black font-semibold px-6 py-3 rounded-xl">
+
+                        View Details
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+
+        </div>
+
+
+        <% }) %>
+
+
+    </div>
+
+
+    <% } else { %>
+
+
+
+    <!-- Empty State -->
+
+
+    <div class="bg-zinc-900 border border-white/10 rounded-2xl p-10 text-center">
+
+
+        <div class="w-20 h-20 mx-auto rounded-full bg-zinc-800 flex items-center justify-center mb-5">
+
+            <svg 
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-10 h-10 text-zinc-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+
+                <path 
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 3h18v18H3V3z"/>
+
+            </svg>
+
+        </div>
+
+
+        <h2 class="text-xl font-semibold text-white mb-2">
+
+            No Orders Found
+
+        </h2>
+
+
+        <p class="text-zinc-400 mb-6">
+
+            You haven't placed any orders yet.
+
+        </p>
+
+
+        <a
+            href="/shop"
+            class="inline-block bg-lime-400 hover:bg-lime-300 text-black font-semibold px-8 py-3 rounded-xl">
+
+            Start Shopping
+
+        </a>
+
+
+    </div>
+
+
+
+    <% } %>
+
+
+</div>

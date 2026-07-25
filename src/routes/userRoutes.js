@@ -25,6 +25,7 @@ import { isAuthenticated } from '../middleware/auth.js';
 import { uploadAvatar } from '../config/cloudinaryConfig.js';
 import wishlistController from "../controllers/wishlistController.js";
 import checkoutController from "../controllers/checkoutController.js";
+import orderController from "../controllers/orderController.js";
 
 const router = express.Router();
 
@@ -70,5 +71,6 @@ router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
  router.get("/order-success/:id", isAuthenticated, checkoutController.orderSuccess);
  router.get("/orders/:id", isAuthenticated, checkoutController.orderDetails);
 
+ router.get( "/orders", isAuthenticated, orderController.getOrders );
 
 export default router;
