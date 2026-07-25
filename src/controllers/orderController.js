@@ -3,6 +3,7 @@ import Address from "../models/Address.js";
 import Cart from "../models/Cart.js"; //.js full time 
 import Variant from "../models/Variant.js";
 import Order from "../models/Order.js";
+import PDFDocument from "pdfkit";
 import crypto from "crypto";
 
 
@@ -435,6 +436,252 @@ message:"Something went wrong"
 
 
 }
+
+}
+
+async downloadInvoice(req,res){
+
+try{
+
+
+const userId =
+req.session?.user?.id || req.user?._id;
+
+
+
+const order = await Order.findOne({
+
+_id:req.params.id,
+
+userId
+
+})
+.populate("userId");
+
+
+
+if(!order){
+
+return res.status(404).send(
+"Order not found"
+);
+
+}
+
+
+
+res.setHeader(
+"Content-Type",
+"application/pdf"
+);
+
+
+res.setHeader(
+"Content-Disposition",
+`attachment; filename=invoice-${order.orderNumber}.pdf`
+);
+
+
+
+const doc = new PDFDocument({
+margin:50
+});
+
+
+doc.pipe(res);
+
+
+
+// Header
+
+doc
+.fontSize(22)
+.text("INVOICE",{
+align:"center"
+});
+
+
+doc.moveDown();
+
+
+
+doc
+.fontSize(12)
+.text(
+`Order ID : ${order.orderNumber}`
+);
+
+
+doc.text(
+`Order Date : ${order.createdAt.toDateString()}`
+);
+
+
+doc.text(
+`Payment Method : ${order.paymentMethod}`
+);
+
+
+doc.text(
+`Payment Status : ${order.paymentStatus}`
+);
+
+
+
+doc.moveDown();
+
+
+// Customer Details
+
+doc
+.fontSize(15)
+.text("Billing Details");
+
+
+doc.fontSize(11);
+
+
+doc.text(
+`${order.userId.name}`
+);
+
+
+doc.text(
+`${order.addressSnapshot.addressLine1}`
+);
+
+
+doc.text(
+`${order.addressSnapshot.city}, ${order.addressSnapshot.state}`
+);
+
+
+doc.text(
+`${order.addressSnapshot.country} - ${order.addressSnapshot.pinCode}`
+);
+
+
+
+doc.moveDown();
+
+
+// Products
+
+doc
+.fontSize(15)
+.text("Products");
+
+
+doc.moveDown();
+
+
+
+order.items.forEach((item,index)=>{
+
+
+doc.fontSize(11).text(
+
+`${index+1}. ${item.productName}`
+
+);
+
+
+doc.text(
+
+`Quantity : ${item.quantity}`
+
+);
+
+
+doc.text(
+
+`Price : ₹${item.price}`
+
+);
+
+
+doc.text(
+
+`Status : ${item.itemStatus}`
+
+);
+
+
+doc.moveDown();
+
+
+});
+
+
+
+// Summary
+
+
+doc
+.fontSize(15)
+.text("Payment Summary");
+
+
+doc.fontSize(11);
+
+
+doc.text(
+`Subtotal : ₹${order.subtotal}`
+);
+
+
+doc.text(
+`Discount : ₹${order.couponDiscount + order.offerDiscount}`
+);
+
+
+doc.text(
+`Tax : ₹${order.taxAmount}`
+);
+
+
+doc.text(
+`Shipping : ₹${order.shippingCost}`
+);
+
+
+doc.text(
+`Grand Total : ₹${order.grandTotal}`
+);
+
+
+
+doc.moveDown();
+
+
+doc
+.fontSize(12)
+.text(
+"Thank you for shopping with us!",
+{
+align:"center"
+}
+);
+
+
+
+doc.end();
+
+
+
+}
+catch(error){
+
+console.log(error);
+
+
+res.status(500).send(
+"Invoice generation failed"
+);
+
+
+}
+
 
 }
 
