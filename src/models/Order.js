@@ -56,9 +56,14 @@ const orderSchema = new mongoose.Schema(
             "ACTIVE",
             "CANCELLED",
             "RETURNED"
-        ],
+          ],
         default:"ACTIVE"
-    }
+        },
+
+        cancelReason: {
+        type:String,
+        default:""
+        }
       }
     ],
     paymentMethod: {

@@ -138,7 +138,7 @@ const userId = req.session?.user?.id || req.user?._id;
 
 
 const {orderId,itemId}=req.params;
-
+const {reason}=req.body;
 
 const order = await Order.findOne({
     _id:orderId,
@@ -218,7 +218,7 @@ await variant.save();
 // update item status
 
 item.itemStatus="CANCELLED";
-
+item.cancelReason = reason || "No reason provided";
 
 
 // check remaining active products
