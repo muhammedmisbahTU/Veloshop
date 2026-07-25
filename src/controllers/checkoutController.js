@@ -180,7 +180,7 @@ const addressSnapshot = {
 
     const orderNumber = `ORD-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
-    await Order.create({
+    const order = await Order.create({
     
     orderNumber,
 

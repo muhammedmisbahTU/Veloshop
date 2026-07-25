@@ -67,7 +67,46 @@
                             ₹<%= item.price %>
                         </p>
 
+                        <div class="mt-3">
+
+
+                        <% if(item.itemStatus==="ACTIVE" 
+                        && order.status !== "SHIPPED"
+                        && order.status !== "DELIVERED"){ %>
+
+
+                        <button
+                        onclick="cancelItem('<%= order._id %>','<%= item._id %>')"
+                        class="text-sm text-red-400 hover:text-red-300">
+
+                        Cancel Product
+
+                        </button>
+
+
+                        <% }else{ %>
+
+
+                        <span class="
+                        <%= item.itemStatus==="CANCELLED"
+                        ? 'text-red-400'
+                        : 'text-green-400'
+                        %>
+                        text-sm">
+
+                        <%= item.itemStatus %>
+
+                        </span>
+
+
+                        <% } %>
+
+
+                        </div>
+
                     </div>
+
+                    
 
                     <div class="font-bold text-lime-400 text-lg">
 
@@ -375,6 +414,75 @@ location.reload();
 Swal.fire({
 
 icon:"error",
+title:data.message
+
+});
+
+
+}
+
+
+}
+
+async function cancelItem(orderId,itemId){
+
+
+const result = await Swal.fire({
+
+title:"Cancel this product?",
+
+text:"Stock will be returned to inventory",
+
+icon:"warning",
+
+showCancelButton:true,
+
+confirmButtonText:"Cancel Product"
+
+});
+
+
+if(!result.isConfirmed)
+return;
+
+
+
+const response = await fetch(
+`/orders/${orderId}/item/${itemId}/cancel`,
+{
+method:"POST"
+}
+);
+
+
+
+const data = await response.json();
+
+
+
+if(data.success){
+
+
+Swal.fire({
+
+icon:"success",
+
+title:data.message
+
+}).then(()=>{
+
+location.reload();
+
+});
+
+
+}else{
+
+
+Swal.fire({
+
+icon:"error",
+
 title:data.message
 
 });

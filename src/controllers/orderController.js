@@ -130,6 +130,170 @@ message:"Something went wrong"
 
 }
 
+async cancelOrderItem(req,res){
+
+try{
+
+const userId = req.session?.user?.id || req.user?._id;
+
+
+const {orderId,itemId}=req.params;
+
+
+const order = await Order.findOne({
+    _id:orderId,
+    userId
+});
+
+
+if(!order){
+
+return res.json({
+    success:false,
+    message:"Order not found"
+});
+
+}
+
+
+
+const item = order.items.id(itemId);
+
+
+if(!item){
+
+return res.json({
+    success:false,
+    message:"Product not found"
+});
+
+}
+
+
+
+if(item.itemStatus === "CANCELLED"){
+
+return res.json({
+    success:false,
+    message:"Product already cancelled"
+});
+
+}
+
+
+
+// prevent cancellation after shipping
+
+if(
+order.status === "SHIPPED" ||
+order.status === "DELIVERED"
+){
+
+return res.json({
+    success:false,
+    message:"Product cannot be cancelled now"
+});
+
+}
+
+
+
+// increase stock
+
+const variant = await Variant.findById(
+    item.variantId
+);
+
+
+if(variant){
+
+variant.stock += item.quantity;
+
+await variant.save();
+
+}
+
+
+
+// update item status
+
+item.itemStatus="CANCELLED";
+
+
+
+// check remaining active products
+
+const activeItems = order.items.filter(
+    item=>item.itemStatus==="ACTIVE"
+);
+
+
+
+if(activeItems.length===0){
+
+order.status="CANCELLED";
+
+}
+
+
+
+// recalculate total
+
+let subtotal=0;
+
+
+order.items.forEach(item=>{
+
+if(item.itemStatus==="ACTIVE"){
+
+subtotal += item.price * item.quantity;
+
+}
+
+});
+
+
+order.subtotal=subtotal;
+
+order.grandTotal =
+subtotal +
+order.taxAmount +
+order.shippingCost -
+order.couponDiscount -
+order.offerDiscount;
+
+
+
+await order.save();
+
+
+
+return res.json({
+
+success:true,
+
+message:"Product cancelled successfully"
+
+});
+
+
+
+}catch(error){
+
+console.log(error);
+
+return res.status(500).json({
+
+success:false,
+message:"Something went wrong"
+
+});
+
+}
+
+
+}
+
 }
 
 

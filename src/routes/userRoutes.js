@@ -73,5 +73,6 @@ router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
 
  router.get( "/orders", isAuthenticated, orderController.getOrders );
  router.post( "/orders/:id/cancel", isAuthenticated, orderController.cancelOrder );
+ router.post( "/orders/:orderId/item/:itemId/cancel", isAuthenticated, orderController.cancelOrderItem );
 
 export default router;
