@@ -38,6 +38,7 @@ import { uploadVariantImages } from "../config/cloudinaryConfig.js";
 import { isAdmin } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import { loginSchema } from "../validators/authValidator.js";
+import adminOrderController from "../controllers/adminOrderController.js"
 
 const router = express.Router();
 
@@ -69,5 +70,9 @@ router.post("/admin/products/:id/toggle-status", isAdmin, toggleProductStatus);
 router.get("/admin/variants/:variantId/edit", isAdmin, getEditVariant);
 router.post("/admin/variants/:variantId", isAdmin, uploadVariantImages.array("images", 10), updateVariant);
 router.post("/admin/variants/:variantId/toggle-status", isAdmin, toggleVariantStatus);
+
+router.get( "/admin/orders", isAdmin, adminOrderController.orderList );
+router.get( "/admin/orders/:id", isAdmin, adminOrderController.orderDetails );
+router.post( "/admin/orders/:id/status", isAdmin, adminOrderController.updateOrderStatus );
 
 export default router;

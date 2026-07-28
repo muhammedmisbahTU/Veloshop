@@ -1,0 +1,506 @@
+<div class="max-w-7xl mx-auto px-6 py-10">
+<div class="bg-zinc-900 rounded-2xl p-6 mb-6">
+
+
+<h2 class="text-xl font-bold text-white mb-5">
+Update Order Status
+</h2>
+
+
+
+<select
+id="orderStatus"
+class="bg-zinc-800 text-white rounded-xl p-3 w-full">
+
+
+<option value="PENDING"
+<%= order.status==="PENDING"?"selected":"" %>>
+Pending
+</option>
+
+
+<option value="CONFIRMED"
+<%= order.status==="CONFIRMED"?"selected":"" %>>
+Confirmed
+</option>
+
+
+<option value="PROCESSING"
+<%= order.status==="PROCESSING"?"selected":"" %>>
+Processing
+</option>
+
+
+<option value="SHIPPED"
+<%= order.status==="SHIPPED"?"selected":"" %>>
+Shipped
+</option>
+
+
+<option value="DELIVERED"
+<%= order.status==="DELIVERED"?"selected":"" %>>
+Delivered
+</option>
+
+
+<option value="CANCELLED"
+<%= order.status==="CANCELLED"?"selected":"" %>>
+Cancelled
+</option>
+
+
+</select>
+
+
+
+<button
+
+onclick="updateStatus('<%=order._id%>')"
+
+class="mt-4 bg-lime-400 text-black px-6 py-3 rounded-xl font-semibold">
+
+Update Status
+
+</button>
+
+
+
+</div>
+
+<div class="flex justify-between items-center mb-8">
+
+
+<h1 class="text-3xl font-bold text-white">
+Order Details
+</h1>
+
+
+<a href="/admin/orders"
+class="text-lime-400 hover:text-lime-300">
+
+← Back Orders
+
+</a>
+
+
+</div>
+
+
+
+
+<!-- Order Information -->
+
+<div class="bg-zinc-900 rounded-2xl p-6 mb-6">
+
+
+<div class="grid md:grid-cols-3 gap-6">
+
+
+<div>
+
+<p class="text-zinc-400 text-sm">
+Order ID
+</p>
+
+
+<h2 class="text-white font-semibold">
+<%= order.orderNumber %>
+</h2>
+
+
+</div>
+
+
+
+<div>
+
+<p class="text-zinc-400 text-sm">
+Order Date
+</p>
+
+
+<p class="text-white">
+<%= order.createdAt.toDateString() %>
+</p>
+
+
+</div>
+
+
+
+
+<div>
+
+<p class="text-zinc-400 text-sm">
+Status
+</p>
+
+
+<span class="text-lime-400 font-semibold">
+
+<%= order.status %>
+
+</span>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- Customer -->
+
+<div class="bg-zinc-900 rounded-2xl p-6 mb-6">
+
+
+<h2 class="text-xl font-bold text-white mb-5">
+Customer Details
+</h2>
+
+
+
+<p class="text-white">
+<%= order.userId.name %>
+</p>
+
+
+<p class="text-zinc-400">
+<%= order.userId.email %>
+</p>
+
+
+<p class="text-zinc-400">
+<%= order.userId.phone || "" %>
+</p>
+
+
+
+</div>
+
+
+
+
+
+<!-- Address -->
+
+<div class="bg-zinc-900 rounded-2xl p-6 mb-6">
+
+
+<h2 class="text-xl font-bold text-white mb-5">
+Shipping Address
+</h2>
+
+
+<p class="text-zinc-300">
+
+<%= order.addressSnapshot.addressLine1 %>
+
+<% if(order.addressSnapshot.addressLine2){ %>
+
+, <%= order.addressSnapshot.addressLine2 %>
+
+<% } %>
+
+<br>
+
+
+<%= order.addressSnapshot.city %>,
+
+<%= order.addressSnapshot.state %>
+
+
+<br>
+
+
+<%= order.addressSnapshot.country %>
+
+-
+
+<%= order.addressSnapshot.pinCode %>
+
+
+</p>
+
+
+</div>
+
+
+
+
+
+<!-- Products -->
+
+<div class="bg-zinc-900 rounded-2xl p-6 mb-6">
+
+
+<h2 class="text-xl font-bold text-white mb-5">
+Products
+</h2>
+
+
+
+<% order.items.forEach(item=>{ %>
+
+
+<div class="flex items-center gap-5 
+border-b border-white/10 py-4">
+
+
+
+<img
+
+src="<%= item.thumbnail %>"
+
+class="w-16 h-16 rounded-xl object-cover"
+
+>
+
+
+
+<div class="flex-1">
+
+
+<h3 class="text-white font-semibold">
+
+<%= item.productName %>
+
+</h3>
+
+
+<p class="text-zinc-400">
+
+Qty:
+<%= item.quantity %>
+
+</p>
+
+
+<p class="text-zinc-400">
+
+Price:
+₹<%= item.price %>
+
+</p>
+
+
+</div>
+
+
+
+
+<span class="
+text-sm
+
+<%= item.itemStatus==="CANCELLED"
+?
+"text-red-400"
+:
+"text-green-400"
+
+%>
+">
+
+
+<%= item.itemStatus %>
+
+
+</span>
+
+
+
+</div>
+
+
+<% }) %>
+
+
+</div>
+
+
+
+
+
+
+<!-- Payment Summary -->
+
+<div class="bg-zinc-900 rounded-2xl p-6">
+
+
+<h2 class="text-xl font-bold text-white mb-5">
+Payment Summary
+</h2>
+
+
+
+<div class="space-y-3 text-zinc-300">
+
+
+<div class="flex justify-between">
+
+<span>
+Payment Method
+</span>
+
+<span>
+<%= order.paymentMethod %>
+</span>
+
+</div>
+
+
+
+<div class="flex justify-between">
+
+<span>
+Payment Status
+</span>
+
+<span>
+<%= order.paymentStatus %>
+</span>
+
+</div>
+
+
+
+
+<div class="flex justify-between">
+
+<span>
+Subtotal
+</span>
+
+<span>
+₹<%= order.subtotal %>
+</span>
+
+</div>
+
+
+
+
+<div class="flex justify-between">
+
+<span>
+Tax
+</span>
+
+<span>
+₹<%= order.taxAmount %>
+</span>
+
+</div>
+
+
+
+
+<div class="flex justify-between text-xl font-bold text-lime-400">
+
+
+<span>
+Grand Total
+</span>
+
+
+<span>
+₹<%= order.grandTotal %>
+</span>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+<script>
+
+
+async function updateStatus(id){
+
+
+const status =
+document.getElementById("orderStatus").value;
+
+
+
+const response = await fetch(
+`/admin/orders/${id}/status`,
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+status
+
+})
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(data.success){
+
+
+Swal.fire({
+
+icon:"success",
+
+title:data.message
+
+})
+.then(()=>{
+
+location.reload();
+
+});
+
+
+}else{
+
+
+Swal.fire({
+
+icon:"error",
+
+title:data.message
+
+});
+
+
+}
+
+
+}
+
+
+</script>
