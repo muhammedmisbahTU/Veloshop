@@ -39,6 +39,16 @@ import { isAdmin } from "../middleware/auth.js";
 import validate from "../middleware/validate.js";
 import { loginSchema } from "../validators/authValidator.js";
 import adminOrderController from "../controllers/adminOrderController.js"
+import {
+  getOffers,
+  getNewOffer,
+  createOffer,
+  getEditOffer,
+  updateOffer,
+  toggleOfferStatus,
+  softDeleteOffer,
+  restoreOffer
+} from "../controllers/adminOfferController.js";
 
 const router = express.Router();
 
@@ -74,5 +84,15 @@ router.post("/admin/variants/:variantId/toggle-status", isAdmin, toggleVariantSt
 router.get( "/admin/orders", isAdmin, adminOrderController.orderList );
 router.get( "/admin/orders/:id", isAdmin, adminOrderController.orderDetails );
 router.post( "/admin/orders/:id/status", isAdmin, adminOrderController.updateOrderStatus );
+
+//offer
+router.get("/admin/offers", isAdmin, getOffers);
+router.get("/admin/offers/new", isAdmin, getNewOffer);
+router.post("/admin/offers", isAdmin, createOffer);
+router.get("/admin/offers/:id/edit", isAdmin, getEditOffer);
+router.post("/admin/offers/:id", isAdmin, updateOffer);
+router.post( "/admin/offers/:id/toggle", isAdmin, toggleOfferStatus );
+router.post( "/admin/offers/:id/delete", isAdmin, softDeleteOffer );
+router.post( "/admin/offers/:id/restore", isAdmin, restoreOffer );
 
 export default router;

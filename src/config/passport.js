@@ -21,7 +21,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID || "PLACEHOLDER_ID",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "PLACEHOLDER_SECRET",
       callbackURL: "/auth/google/callback",
-      passReqToCallback: true
+      passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
@@ -56,7 +56,7 @@ passport.use(
         }
 
         // Create new user if not exists
-        const referralId =
+        const referralCode =
           profile.displayName
             .replace(/\s+/g, "")
             .substring(0, 5)
@@ -71,15 +71,15 @@ passport.use(
           avatar: profile.photos[0]?.value || "",
           role: "USER",
           isActive: true,
-          referralId
+          referralCode,
         });
 
         return done(null, newUser);
       } catch (error) {
         return done(error, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 export default passport;

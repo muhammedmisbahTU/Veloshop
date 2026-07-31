@@ -1,0 +1,5 @@
+{
+  "plugins": ["prettier-plugin-ejs"],
+  "singleQuote": true,
+  "semi": true
+}

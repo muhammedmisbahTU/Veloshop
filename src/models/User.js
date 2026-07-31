@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
     fullName: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     email: {
@@ -13,64 +13,61 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-      trim: true
+      trim: true,
     },
 
     password: {
-      type: String
+      type: String,
     },
 
     authProvider: {
       type: String,
       enum: ["LOCAL", "GOOGLE"],
-      default: "LOCAL"
+      default: "LOCAL",
     },
 
     googleId: {
       type: String,
-      default: null
+      default: null,
     },
 
     isEmailVerified: {
       type: Boolean,
-      default: false
+      default: false,
     },
 
     avatar: {
       type: String,
-      default: ""
+      default: "",
     },
 
     role: {
       type: String,
       enum: ["USER", "ADMIN"],
-      default: "USER"
+      default: "USER",
     },
 
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
     },
 
     referredBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null
+      default: null,
     },
 
-    referralId: {
+    referralCode: {
       type: String,
-      unique: true
-    }
+      unique: true,
+    },
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
-const User = mongoose.model(
-  "User",
-  userSchema
-);
+const User = mongoose.model("User", userSchema);
 
 export default User;

@@ -1,0 +1,484 @@
+<section class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-3xl font-black text-white">Offer Management</h1>
+
+    <a
+      href="/admin/offers/new"
+      class="bg-lime-400 px-5 py-3 rounded font-bold text-black hover:bg-lime-300"
+    >
+      + Add Offer
+    </a>
+  </div>
+<div class="flex gap-3 items-center">
+
+  <input
+    id="offer-search"
+    name="search"
+    value="<%= filters.search %>"
+    placeholder="Search offers..."
+    class="bg-zinc-900 text-white px-4 py-2 rounded"
+  />
+
+
+  <select
+    id="offer-status"
+    name="status"
+    class="bg-zinc-900 text-white px-4 py-2 rounded"
+  >
+
+    <option value="all"
+    <%= filters.status === "all" ? "selected" : "" %>>
+      All
+    </option>
+
+
+    <option value="active"
+    <%= filters.status === "active" ? "selected" : "" %>>
+      Active
+    </option>
+
+
+    <option value="disabled"
+    <%= filters.status === "disabled" ? "selected" : "" %>>
+      Disabled
+    </option>
+
+
+    <option value="deleted"
+    <%= filters.status === "deleted" ? "selected" : "" %>>
+      Deleted
+    </option>
+
+
+    <option value="expired"
+    <%= filters.status === "expired" ? "selected" : "" %>>
+      Expired
+    </option>
+
+
+    <option value="upcoming"
+    <%= filters.status === "upcoming" ? "selected" : "" %>>
+      Upcoming
+    </option>
+
+
+  </select>
+
+
+
+  <select
+    id="offer-type"
+    name="type"
+    class="bg-zinc-900 text-white px-4 py-2 rounded"
+  >
+
+    <option value="all"
+    <%= filters.type === "all" ? "selected" : "" %>>
+      All Types
+    </option>
+
+
+    <option value="PRODUCT"
+    <%= filters.type === "PRODUCT" ? "selected" : "" %>>
+      Product
+    </option>
+
+
+    <option value="CATEGORY"
+    <%= filters.type === "CATEGORY" ? "selected" : "" %>>
+      Category
+    </option>
+
+
+    <option value="REFERRAL"
+    <%= filters.type === "REFERRAL" ? "selected" : "" %>>
+      Referral
+    </option>
+
+
+  </select>
+
+  <button
+    id="reset-btn"
+    class="bg-zinc-700 text-white px-5 py-2 rounded font-bold"
+  >
+    Reset
+  </button>
+
+
+</div>
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-zinc-950 p-5 rounded">
+      <p class="text-zinc-400">Active</p>
+
+      <h2 class="text-3xl text-lime-400"><%=stats.activeCount%></h2>
+    </div>
+
+    <div class="bg-zinc-950 p-5 rounded">
+      <p class="text-zinc-400">Disabled</p>
+
+      <h2 class="text-3xl text-yellow-400"><%=stats.disabledCount%></h2>
+    </div>
+
+    <div class="bg-zinc-950 p-5 rounded">
+      <p class="text-zinc-400">Deleted</p>
+
+      <h2 class="text-3xl text-red-400"><%=stats.deletedCount%></h2>
+    </div>
+  </div>
+  <% if(!offers.length){ %>
+
+  <div class="bg-zinc-950 border border-white/10 rounded p-8 text-center">
+    <p class="text-zinc-400">No offers created yet</p>
+  </div>
+
+  <% } %>
+
+  <div id="offers-container" class="space-y-4">
+    <% offers.forEach(offer => { %>
+
+    <div
+      id="offer-<%=offer._id%>"
+      class="offer-card bg-zinc-950 border border-white/10 rounded-lg p-5"
+      data-id="<%=offer._id%>"
+    >
+      <div class="flex justify-between gap-5">
+        <!-- LEFT -->
+
+        <div>
+          <h3 class="text-white text-lg font-bold"><%= offer.title %></h3>
+
+          <p class="text-zinc-400 text-sm mt-2">
+            <%= offer.type %> • <%= offer.discountValue %> <%=
+            offer.discountType === "PERCENTAGE" ? "%" : "₹" %>
+          </p>
+
+          <p class="text-zinc-500 text-xs mt-2">
+            Starts: <%= new Date(offer.startDate) .toLocaleDateString() %> |
+            Ends: <%= new Date(offer.expiryDate) .toLocaleDateString() %>
+          </p>
+        </div>
+
+        <!-- STATUS -->
+
+        <div>
+          <% let expired = new Date() > new Date(offer.expiryDate); let upcoming
+          = new Date() < new Date(offer.startDate); %> <% if(expired){ %>
+
+          <span
+            class="bg-red-500/20 text-red-400 px-3 py-1 rounded text-xs font-bold"
+          >
+            Expired
+          </span>
+
+          <% } else if(upcoming){ %>
+
+          <span
+            class="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded text-xs font-bold"
+          >
+            Upcoming
+          </span>
+
+          <% } else if(offer.isActive){ %>
+
+          <span
+            class="bg-lime-400/20 text-lime-400 px-3 py-1 rounded text-xs font-bold"
+          >
+            Active
+          </span>
+
+          <% } else { %>
+
+          <span
+            class="bg-zinc-700 text-zinc-300 px-3 py-1 rounded text-xs font-bold"
+          >
+            Disabled
+          </span>
+
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+
+      <div class="flex gap-3 mt-5">
+        <a
+          href="/admin/offers/<%=offer._id%>/edit"
+          class="px-4 py-2 bg-blue-500 text-white rounded text-sm font-bold"
+        >
+          Edit
+        </a>
+
+        <button
+          class="toggle-offer px-4 py-2 rounded text-sm font-bold <%= offer.isActive ? 'bg-red-500 text-white' : 'bg-lime-400 text-black' %>"
+          data-id="<%= offer._id %>"
+        >
+          <%= offer.isActive ? "Disable" : "Enable" %>
+        </button>
+
+        <% if(offer.isDeleted){ %>
+
+        <button
+          class="restore-offer px-4 py-2 bg-lime-500 text-black rounded"
+          data-id="<%=offer._id%>"
+        >
+          Restore
+        </button>
+
+        <% } else { %>
+
+        <button
+          class="delete-offer px-4 py-2 bg-zinc-800 text-white rounded"
+          data-id="<%= offer._id %>"
+        >
+          Delete
+        </button>
+
+        <% } %>
+      </div>
+    </div>
+
+    <% }) %>
+  </div>
+  <div class="flex justify-center gap-2 mt-8">
+    <% for(let i=1;i<=pagination.totalPages;i++){ %>
+
+    <a
+      href="?page=<%=i%>&search=<%=filters.search%>&status=<%=filters.status%>&type=<%=filters.type%>"
+      class="px-3 py-2 rounded <%= pagination.page===i ?'bg-lime-400 text-black' :'bg-zinc-800 text-white' %>"
+    >
+      <%=i%>
+    </a>
+
+    <% } %>
+  </div>
+</section>
+<script>
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const resetBtn = document.getElementById("reset-btn");
+
+    resetBtn.onclick = ()=>{
+    window.location.href =
+    "/admin/offers";
+
+
+};
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2500,
+    });
+
+    function removeCard(id) {
+      const card = document.querySelector(`#offer-${id}`);
+
+      if (card) {
+        card.style.opacity = '0';
+
+        setTimeout(() => {
+          card.remove();
+        }, 300);
+      }
+    }
+
+    async function requestAction(url, button) {
+      try {
+        button.disabled = true;
+
+        button.innerHTML = 'Loading...';
+
+        const response = await fetch(url, {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message);
+        }
+
+        Toast.fire({
+          icon: 'success',
+
+          title: data.message,
+        });
+
+        return true;
+      } catch (error) {
+        Toast.fire({
+          icon: 'error',
+
+          title: error.message,
+        });
+
+        return false;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    // ENABLE DISABLE
+
+    document.querySelectorAll('.toggle-offer').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+
+        const result = await Swal.fire({
+          title: 'Change status?',
+
+          text: 'Enable or disable this offer?',
+
+          icon: 'warning',
+
+          showCancelButton: true,
+
+          confirmButtonText: 'Yes',
+        });
+
+        if (!result.isConfirmed) return;
+
+        const success = await requestAction(
+          `/admin/offers/${id}/toggle`,
+          button,
+        );
+
+        if (success) {
+          if (button.innerText.trim() == 'Enable') {
+            button.innerText = 'Disable';
+
+            button.classList.remove('bg-lime-400', 'text-black');
+
+            button.classList.add('bg-red-500', 'text-white');
+          } else {
+            button.innerText = 'Enable';
+
+            button.classList.remove('bg-red-500', 'text-white');
+
+            button.classList.add('bg-lime-400', 'text-black');
+          }
+        }
+      });
+    });
+
+    // DELETE
+
+    document.querySelectorAll('.delete-offer').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+
+        const result = await Swal.fire({
+          title: 'Delete offer?',
+
+          text: 'Offer will move to deleted list',
+
+          icon: 'warning',
+
+          showCancelButton: true,
+
+          confirmButtonColor: '#ef4444',
+
+          confirmButtonText: 'Delete',
+        });
+
+        if (!result.isConfirmed) return;
+
+        const success = await requestAction(
+          `/admin/offers/${id}/delete`,
+          button,
+        );
+
+        if (success) {
+          removeCard(id);
+        }
+      });
+    });
+
+    // RESTORE
+
+    document.querySelectorAll('.restore-offer').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+
+        const result = await Swal.fire({
+          title: 'Restore offer?',
+
+          icon: 'question',
+
+          showCancelButton: true,
+
+          confirmButtonText: 'Restore',
+        });
+
+        if (!result.isConfirmed) return;
+
+        const success = await requestAction(
+          `/admin/offers/${id}/restore`,
+          button,
+        );
+
+        if (success) {
+          removeCard(id);
+        }
+      });
+    });
+
+    // SEARCH FILTER
+
+    let timer;
+
+    const searchInput = document.querySelector('#offer-search');
+    if(searchInput){
+
+        searchInput.focus();
+
+        // put cursor at the end of existing text
+        searchInput.setSelectionRange(
+            searchInput.value.length,
+            searchInput.value.length
+        );
+
+    }
+
+    searchInput?.addEventListener('input', () => {
+      clearTimeout(timer);
+
+      timer = setTimeout(() => {
+        applyFilters();
+      }, 500);
+    });
+
+    document.querySelectorAll('#offer-status,#offer-type').forEach((select) => {
+      select.addEventListener('change', applyFilters);
+    });
+
+    function applyFilters() {
+      const search = document.querySelector('#offer-search').value;
+
+      const status = document.querySelector('#offer-status').value;
+
+      const type = document.querySelector('#offer-type').value;
+
+      window.location.href = `/admin/offers?search=${search}&status=${status}&type=${type}`;
+    }
+
+    // COPY REFERRAL CODE
+
+    document.querySelectorAll('.copy-code').forEach((button) => {
+      button.addEventListener('click', () => {
+        navigator.clipboard.writeText(button.dataset.code);
+
+        Toast.fire({
+          icon: 'success',
+
+          title: 'Referral code copied',
+        });
+      });
+    });
+  });
+</script>

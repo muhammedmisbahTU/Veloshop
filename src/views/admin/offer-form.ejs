@@ -1,0 +1,160 @@
+<section class="max-w-xl mx-auto">
+
+    <h1 class="text-3xl text-white font-black mb-5">
+        Add Offer
+    </h1>
+
+
+    <form method="POST" action="/admin/offers" class="space-y-4 bg-zinc-950 p-6">
+
+
+        <!-- Validation Errors -->
+        <% if (formErrors && formErrors.length) { %>
+
+            <div class="bg-red-500/20 border border-red-500 p-4 rounded">
+
+                <ul class="text-red-400 space-y-1">
+
+                    <% formErrors.forEach(error=> { %>
+
+                        <li>
+                            <%= error %>
+                        </li>
+
+                        <% }) %>
+
+                </ul>
+
+            </div>
+
+            <% } %>
+
+
+
+                <!-- Title -->
+                <input name="title" value="<%= offer?.title || '' %>" placeholder="Offer title"
+                    class="w-full bg-black p-3 text-white" />
+
+
+
+                <!-- Type -->
+                <select name="type" class="w-full bg-black p-3 text-white">
+
+
+                    <option value="PRODUCT" <%=offer?.type==="PRODUCT" ? "selected" : "" %>>
+                        Product Offer
+                    </option>
+
+
+                    <option value="CATEGORY" <%=offer?.type==="CATEGORY" ? "selected" : "" %>>
+                        Category Offer
+                    </option>
+
+
+                    <option value="REFERRAL" <%=offer?.type==="REFERRAL" ? "selected" : "" %>>
+                        Referral Offer
+                    </option>
+
+
+                </select>
+
+
+
+                <!-- Discount Type -->
+                <select name="discountType" class="w-full bg-black p-3 text-white">
+
+
+                    <option value="PERCENTAGE" <%=offer?.discountType==="PERCENTAGE" ? "selected" : "" %>>
+                        PERCENTAGE
+                    </option>
+
+
+                    <option value="FIXED" <%=offer?.discountType==="FIXED" ? "selected" : "" %>>
+                        FIXED
+                    </option>
+
+
+                </select>
+
+
+
+                <!-- Discount Value -->
+                <input name="discountValue" value="<%= offer?.discountValue || '' %>" placeholder="Discount value"
+                    class="w-full bg-black p-3 text-white" />
+
+
+
+                <!-- Product -->
+                <select name="product" class="w-full bg-black p-3 text-white">
+
+
+                    <option value="">
+                        Select Product
+                    </option>
+
+
+                    <% products.forEach(p=>{ %>
+
+                        <option value="<%=p._id%>" <%=offer?.product==p._id ? "selected" : "" %>>
+                            <%=p.name%>
+                        </option>
+
+
+                        <% }) %>
+
+
+                </select>
+
+
+
+                <!-- Category -->
+                <select name="category" class="w-full bg-black p-3 text-white">
+
+
+                    <option value="">
+                        Select Category
+                    </option>
+
+
+                    <% categories.forEach(c=>{ %>
+
+                        <option value="<%=c._id%>" <%=offer?.category==c._id ? "selected" : "" %>>
+                            <%=c.name%>
+                        </option>
+
+
+                        <% }) %>
+
+
+                </select>
+
+
+
+                <!-- Referral -->
+                <input type="text" name="referralCode" value="<%= offer?.referralCode || '' %>"
+                    placeholder="Referral Code" class="w-full bg-black p-3 text-white" />
+
+
+
+                <!-- Dates -->
+                <input type="date" name="startDate"
+                    value="<%= offer?.startDate ? new Date(offer.startDate).toISOString().split('T')[0] : '' %>"
+                    class="w-full bg-black p-3 text-white" />
+
+
+                <input type="date" name="expiryDate"
+                    value="<%= offer?.expiryDate ? new Date(offer.expiryDate).toISOString().split('T')[0] : '' %>"
+                    class="w-full bg-black p-3 text-white" />
+
+
+
+                <button class="bg-lime-400 px-6 py-3 font-black text-black">
+
+                    Create Offer
+
+                </button>
+
+
+    </form>
+
+</section>

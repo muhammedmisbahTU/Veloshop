@@ -3,6 +3,8 @@ import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import Variant from "../models/Variant.js";
 import wishlistService from "../services/wishlistService.js";
+import {getBestOffer} from "../services/offerService.js";
+import { calculateOfferPrice } from "../services/priceService.js";
 
 const attachVariantImages = async (products) => {
   const productIds = products.map((product) => product._id);
@@ -257,6 +259,17 @@ export const getProductDetails = async (req, res) => {
 
     const defaultVariant = variants[0];
 
+    const offer =
+    await getBestOffer(product);
+
+
+    const pricing =
+    calculateOfferPrice(
+    defaultVariant.salePrice ||
+    defaultVariant.regularPrice,
+    offer
+    );
+
     let defaultDiscount = null;
 
     if (defaultVariant.salePrice) {
@@ -303,6 +316,8 @@ export const getProductDetails = async (req, res) => {
       defaultDiscount,
       relatedProducts,
       isWishlisted,
+      offer,
+      pricing
     });
   
   } catch (error) {

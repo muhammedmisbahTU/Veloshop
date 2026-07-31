@@ -14,7 +14,7 @@ const generateOtp = () => {
 export const getRegister = (req, res) => {
   res.render("auth/register", {
     layout: "layouts/auth-layout",
-    title: "Join Veloshop"
+    title: "Join Veloshop",
   });
 };
 
@@ -25,29 +25,26 @@ export const postRegister = async (req, res) => {
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
-        message: "Passwords do not match."
+        message: "Passwords do not match.",
       });
     }
 
-    
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       if (existingUser.isEmailVerified) {
         return res.status(400).json({
           success: false,
-          message: "Email is already registered. Please login."
+          message: "Email is already registered. Please login.",
         });
       } else {
-        
         const hashedPassword = await bcrypt.hash(password, 10);
         existingUser.fullName = fullName;
         existingUser.password = hashedPassword;
         await existingUser.save();
       }
     } else {
-      
       const hashedPassword = await bcrypt.hash(password, 10);
-      const referralId =
+      const referralCode =
         fullName.replace(/\s+/g, "").substring(0, 5).toUpperCase() +
         Math.floor(1000 + Math.random() * 9000);
 
@@ -58,7 +55,7 @@ export const postRegister = async (req, res) => {
         authProvider: "LOCAL",
         isEmailVerified: false,
         isActive: true,
-        referralId
+        referralCode,
       });
     }
 
@@ -67,7 +64,10 @@ export const postRegister = async (req, res) => {
     const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
     // Delete existing verify OTPs for this email
-    await Otp.deleteMany({ email: email.toLowerCase(), purpose: "VERIFY_EMAIL" });
+    await Otp.deleteMany({
+      email: email.toLowerCase(),
+      purpose: "VERIFY_EMAIL",
+    });
 
     await Otp.create({
       email: email.toLowerCase(),
@@ -75,7 +75,7 @@ export const postRegister = async (req, res) => {
       purpose: "VERIFY_EMAIL",
       expiresAt,
       attempts: 0,
-      isUsed: false
+      isUsed: false,
     });
 
     // Send email (async)
@@ -88,13 +88,13 @@ export const postRegister = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Registration successful. OTP sent to email.",
-      email: email.toLowerCase()
+      email: email.toLowerCase(),
     });
   } catch (error) {
     console.error("Registration error:", error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong during registration."
+      message: "Something went wrong during registration.",
     });
   }
 };
@@ -102,7 +102,7 @@ export const postRegister = async (req, res) => {
 export const getLogin = (req, res) => {
   res.render("auth/login", {
     layout: "layouts/auth-layout",
-    title: "Login - Veloshop"
+    title: "Login - Veloshop",
   });
 };
 
@@ -114,7 +114,7 @@ export const postLogin = async (req, res) => {
     if (!user || user.authProvider !== "LOCAL") {
       return res.status(400).json({
         success: false,
-        message: "Invalid email or password."
+        message: "Invalid email or password.",
       });
     }
 
@@ -123,7 +123,7 @@ export const postLogin = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: "Invalid email or password."
+        message: "Invalid email or password.",
       });
     }
 
@@ -131,13 +131,12 @@ export const postLogin = async (req, res) => {
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
-        message: "Your account has been blocked by the Administrator."
+        message: "Your account has been blocked by the Administrator.",
       });
     }
 
     // Check verification status
     if (!user.isEmailVerified) {
-      
       const otpCode = generateOtp();
       const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
@@ -148,7 +147,7 @@ export const postLogin = async (req, res) => {
         purpose: "VERIFY_EMAIL",
         expiresAt,
         attempts: 0,
-        isUsed: false
+        isUsed: false,
       });
 
       try {
@@ -161,7 +160,7 @@ export const postLogin = async (req, res) => {
         success: false,
         requiresVerification: true,
         email: user.email,
-        message: "Account not verified. OTP sent to your email."
+        message: "Account not verified. OTP sent to your email.",
       });
     }
 
@@ -173,19 +172,19 @@ export const postLogin = async (req, res) => {
       role: user.role,
       avatar: user.avatar,
       isEmailVerified: user.isEmailVerified,
-      isActive: user.isActive
+      isActive: user.isActive,
     };
 
     return res.status(200).json({
       success: true,
       message: "Logged in successfully.",
-      role: user.role
+      role: user.role,
     });
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong during login."
+      message: "Something went wrong during login.",
     });
   }
 };
@@ -197,7 +196,7 @@ export const getVerifyOtp = async (req, res) => {
   if (email) {
     const otpRecord = await Otp.findOne({
       email: email.toLowerCase(),
-      purpose: "VERIFY_EMAIL"
+      purpose: "VERIFY_EMAIL",
     });
     if (otpRecord) {
       attemptsLeft = Math.max(0, 5 - otpRecord.attempts);
@@ -208,7 +207,7 @@ export const getVerifyOtp = async (req, res) => {
     email,
     attemptsLeft,
     layout: "layouts/auth-layout",
-    title: "Verify OTP - Veloshop"
+    title: "Verify OTP - Veloshop",
   });
 };
 
@@ -220,34 +219,34 @@ export const verifyOtp = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found."
+        message: "User not found.",
       });
     }
 
     const otpRecord = await Otp.findOne({
       email: email.toLowerCase(),
       purpose: "VERIFY_EMAIL",
-      isUsed: false
+      isUsed: false,
     });
 
     if (!otpRecord) {
       return res.status(400).json({
         success: false,
-        message: "OTP expired or not found. Please request a new code."
+        message: "OTP expired or not found. Please request a new code.",
       });
     }
 
     if (otpRecord.expiresAt < new Date()) {
       return res.status(400).json({
         success: false,
-        message: "OTP expired. Please click Resend."
+        message: "OTP expired. Please click Resend.",
       });
     }
 
     if (otpRecord.attempts >= 5) {
       return res.status(400).json({
         success: false,
-        message: "Maximum OTP attempts exceeded. Please resend a new OTP."
+        message: "Maximum OTP attempts exceeded. Please resend a new OTP.",
       });
     }
 
@@ -258,7 +257,7 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `Invalid OTP. ${left} attempts remaining.`,
-        attemptsLeft: left
+        attemptsLeft: left,
       });
     }
 
@@ -269,7 +268,10 @@ export const verifyOtp = async (req, res) => {
     // Mark OTP as used
     otpRecord.isUsed = true;
     await otpRecord.save();
-    await Otp.deleteMany({ email: email.toLowerCase(), purpose: "VERIFY_EMAIL" });
+    await Otp.deleteMany({
+      email: email.toLowerCase(),
+      purpose: "VERIFY_EMAIL",
+    });
 
     // Establish session
     req.session.user = {
@@ -279,19 +281,19 @@ export const verifyOtp = async (req, res) => {
       role: user.role,
       avatar: user.avatar,
       isEmailVerified: user.isEmailVerified,
-      isActive: user.isActive
+      isActive: user.isActive,
     };
 
     return res.status(200).json({
       success: true,
       message: "Email verified successfully.",
-      role: user.role
+      role: user.role,
     });
   } catch (error) {
     console.error("OTP verification error:", error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong during verification."
+      message: "Something went wrong during verification.",
     });
   }
 };
@@ -304,7 +306,7 @@ export const resendOtp = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found."
+        message: "User not found.",
       });
     }
 
@@ -312,14 +314,17 @@ export const resendOtp = async (req, res) => {
     const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
     // Recreate OTP
-    await Otp.deleteMany({ email: email.toLowerCase(), purpose: "VERIFY_EMAIL" });
+    await Otp.deleteMany({
+      email: email.toLowerCase(),
+      purpose: "VERIFY_EMAIL",
+    });
     await Otp.create({
       email: email.toLowerCase(),
       otp: otpCode,
       purpose: "VERIFY_EMAIL",
       expiresAt,
       attempts: 0,
-      isUsed: false
+      isUsed: false,
     });
 
     try {
@@ -330,13 +335,13 @@ export const resendOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "A new OTP code has been sent to your email."
+      message: "A new OTP code has been sent to your email.",
     });
   } catch (error) {
     console.error("Resend OTP error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to resend OTP. Please try again."
+      message: "Failed to resend OTP. Please try again.",
     });
   }
 };
@@ -345,9 +350,9 @@ export const logout = (req, res, next) => {
   req.logout((err) => {
     if (err) {
       console.error("Passport logout error:", err);
-      return next(err); 
+      return next(err);
     }
-    res.clearCookie("connect.sid", { path: "/" }); 
+    res.clearCookie("connect.sid", { path: "/" });
     if (!req.session) {
       return res.redirect("/login");
     }
@@ -364,19 +369,22 @@ export const logout = (req, res, next) => {
 export const getForgotPassword = (req, res) => {
   res.render("auth/forgot-password", {
     layout: "layouts/auth-layout",
-    title: "Forgot Password - Veloshop"
+    title: "Forgot Password - Veloshop",
   });
 };
 
 export const postForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email: email.toLowerCase(), authProvider: "LOCAL" });
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      authProvider: "LOCAL",
+    });
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "No local user found with this email."
+        message: "No local user found with this email.",
       });
     }
 
@@ -384,14 +392,17 @@ export const postForgotPassword = async (req, res) => {
     const otpCode = generateOtp();
     const expiresAt = new Date(Date.now() + RESET_OTP_TTL_MS);
 
-    await Otp.deleteMany({ email: email.toLowerCase(), purpose: "RESET_PASSWORD" });
+    await Otp.deleteMany({
+      email: email.toLowerCase(),
+      purpose: "RESET_PASSWORD",
+    });
     await Otp.create({
       email: email.toLowerCase(),
       otp: otpCode,
       purpose: "RESET_PASSWORD",
       expiresAt,
       attempts: 0,
-      isUsed: false
+      isUsed: false,
     });
 
     // Send email
@@ -404,13 +415,13 @@ export const postForgotPassword = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Password reset OTP sent to email.",
-      email: email.toLowerCase()
+      email: email.toLowerCase(),
     });
   } catch (error) {
     console.error("Forgot password error:", error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong."
+      message: "Something went wrong.",
     });
   }
 };
@@ -420,7 +431,7 @@ export const getResetPassword = (req, res) => {
   res.render("auth/reset-password", {
     email,
     layout: "layouts/auth-layout",
-    title: "Reset Password - Veloshop"
+    title: "Reset Password - Veloshop",
   });
 };
 
@@ -431,35 +442,38 @@ export const postResetPassword = async (req, res) => {
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
-        message: "Passwords do not match."
+        message: "Passwords do not match.",
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase(), authProvider: "LOCAL" });
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      authProvider: "LOCAL",
+    });
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found."
+        message: "User not found.",
       });
     }
 
     const otpRecord = await Otp.findOne({
       email: email.toLowerCase(),
       purpose: "RESET_PASSWORD",
-      isUsed: false
+      isUsed: false,
     });
 
     if (!otpRecord) {
       return res.status(400).json({
         success: false,
-        message: "OTP expired or invalid."
+        message: "OTP expired or invalid.",
       });
     }
 
     if (otpRecord.expiresAt < new Date()) {
       return res.status(400).json({
         success: false,
-        message: "OTP code expired. Please request another reset."
+        message: "OTP code expired. Please request another reset.",
       });
     }
 
@@ -468,7 +482,7 @@ export const postResetPassword = async (req, res) => {
       await otpRecord.save();
       return res.status(400).json({
         success: false,
-        message: "Invalid OTP code."
+        message: "Invalid OTP code.",
       });
     }
 
@@ -478,17 +492,20 @@ export const postResetPassword = async (req, res) => {
     await user.save();
 
     // Clean up OTPs
-    await Otp.deleteMany({ email: email.toLowerCase(), purpose: "RESET_PASSWORD" });
+    await Otp.deleteMany({
+      email: email.toLowerCase(),
+      purpose: "RESET_PASSWORD",
+    });
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successful! Please log in."
+      message: "Password reset successful! Please log in.",
     });
   } catch (error) {
     console.error("Reset password error:", error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong."
+      message: "Something went wrong.",
     });
   }
 };
