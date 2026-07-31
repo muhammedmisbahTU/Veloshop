@@ -23,7 +23,12 @@ export const registerSchema = Joi.object({
     .required()
     .messages({
       "any.only": "Passwords do not match"
-    })
+    }),
+
+   referralCode: Joi.string()
+    .trim()
+    .optional()
+    .allow("")
 
 });
 

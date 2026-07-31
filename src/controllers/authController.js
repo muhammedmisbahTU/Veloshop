@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import Otp from "../models/Otp.js";
 import sendOtpEmail from "../services/sendOtpEmail.js";
+import { generateReferralCode } from "../utils/referral.js";
 
 const VERIFY_OTP_TTL_MS = 5 * 60 * 1000;
 const RESET_OTP_TTL_MS = 5 * 60 * 1000;
@@ -15,12 +16,13 @@ export const getRegister = (req, res) => {
   res.render("auth/register", {
     layout: "layouts/auth-layout",
     title: "Join Veloshop",
+    referralCode: req.query.ref || ""
   });
 };
 
 export const postRegister = async (req, res) => {
   try {
-    const { fullName, email, password, confirmPassword } = req.body;
+    const { fullName, email, password, confirmPassword, referralCode } = req.body;
 
     if (password !== confirmPassword) {
       return res.status(400).json({
@@ -28,7 +30,6 @@ export const postRegister = async (req, res) => {
         message: "Passwords do not match.",
       });
     }
-
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       if (existingUser.isEmailVerified) {
@@ -44,18 +45,26 @@ export const postRegister = async (req, res) => {
       }
     } else {
       const hashedPassword = await bcrypt.hash(password, 10);
-      const referralCode =
-        fullName.replace(/\s+/g, "").substring(0, 5).toUpperCase() +
-        Math.floor(1000 + Math.random() * 9000);
+      let referredBy = null;
+
+      if(referralCode){
+          const referrer = await User.findOne({ referralCode });
+          if(referrer){
+              referredBy = referrer._id;
+          }
+      }
+
+      const newReferralCode = generateReferralCode();
 
       await User.create({
-        fullName,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        authProvider: "LOCAL",
-        isEmailVerified: false,
-        isActive: true,
-        referralCode,
+          fullName,
+          email: email.toLowerCase(),
+          password: hashedPassword,
+          authProvider:"LOCAL",
+          isEmailVerified:false,
+          isActive:true,
+          referralCode:newReferralCode,
+          referredBy,
       });
     }
 

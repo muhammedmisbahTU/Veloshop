@@ -37,9 +37,22 @@
 
         <div class="flex flex-col gap-3 w-full md:w-auto">
             <!-- Referral Details -->
-            <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center">
-                <p class="text-xs text-gray-500 uppercase font-semibold">Referral Code</p>
-                <p class="text-lg font-mono font-bold text-lime-400 mt-1"><%= profileUser.referralCode || 'N/A' %></p>
+            <div
+                id="referralCard"
+                data-code="<%= profileUser?.referralCode || '' %>"
+                class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center cursor-pointer hover:border-lime-400 hover:bg-black/60 transition duration-300"
+            >
+                <p class="text-xs text-gray-500 uppercase font-semibold">
+                    Referral Code
+                </p>
+
+                <p class="text-lg font-mono font-bold text-lime-400 mt-1">
+                    <%= profileUser?.referralCode || 'N/A' %>
+                </p>
+
+                <p class="text-xs text-gray-500 mt-2">
+                    Click to share or copy
+                </p>
             </div>
             
             <a href="/profile/edit" class="w-full md:w-auto text-center px-6 py-3 bg-lime-400 hover:bg-lime-300 text-black font-bold rounded-xl transition duration-300">
@@ -610,4 +623,64 @@ deleteBtns.forEach(btn => {
         }
     });
 });
+
+const referralCard = document.getElementById("referralCard");
+
+if (referralCard) {
+
+    referralCard.addEventListener("click", async () => {
+
+        const code = referralCard.dataset.code;
+
+        if (!code) return;
+
+        const referralLink =
+            `${window.location.origin}/register?ref=${encodeURIComponent(code)}`;
+
+        if (navigator.share) {
+
+            try {
+
+                await navigator.share({
+                    title: "Join Veloshop",
+                    text: "Use my referral link to join Veloshop!",
+                    url: referralLink,
+                });
+
+            } catch (err) {
+                // User cancelled sharing
+            }
+
+        } else {
+
+            try {
+
+                await navigator.clipboard.writeText(referralLink);
+
+                Swal.fire({
+                    toast: true,
+                    position: "top-end",
+                    icon: "success",
+                    title: "Referral link copied!",
+                    showConfirmButton: false,
+                    timer: 1800,
+                    background: "#09090b",
+                    color: "#fff"
+                });
+
+            } catch (err) {
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Copy failed",
+                    text: "Unable to copy the referral link."
+                });
+
+            }
+
+        }
+
+    });
+
+}
 </script>
