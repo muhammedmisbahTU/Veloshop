@@ -7,44 +7,90 @@ const couponSchema = new mongoose.Schema(
       required: true,
       unique: true,
       uppercase: true,
-      trim: true
+      trim: true,
     },
-    couponType: {
+
+    description: {
+      type: String,
+      trim: true,
+    },
+
+    discountType: {
       type: String,
       enum: ["PERCENTAGE", "FIXED"],
-      required: true
+      required: true,
     },
-    minAmount: {
-      type: Number,
-      default: 0
-    },
-    maxAmount: {
-      type: Number
-    },
+
     discountValue: {
       type: Number,
-      required: true
+      required: true,
+      min: 1,
     },
-    usedCount: {
+
+    minimumPurchase: {
       type: Number,
-      default: 0
+      default: 0,
     },
+
+    maximumDiscount: {
+      type: Number,
+      default: null, // Only for percentage coupons
+    },
+
+    startDate: {
+      type: Date,
+      required: true,
+    },
+
     expiryDate: {
       type: Date,
-      required: true
+      required: true,
     },
+
+    usageLimit: {
+      type: Number,
+      default: null, // null = unlimited
+    },
+
+    usedCount: {
+      type: Number,
+      default: 0,
+    },
+
+    usagePerUser: {
+      type: Number,
+      default: 1,
+    },
+
+    applicableTo: {
+      type: String,
+      enum: ["ALL", "PRODUCT", "CATEGORY"],
+      default: "ALL",
+    },
+
+    products: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+    }],
+
+    categories: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+    }],
+
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
     },
-    usageLimit: {
-      type: Number
-    }
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-const Coupon = mongoose.model("Coupon", couponSchema);
-export default Coupon;
+export default mongoose.model("Coupon", couponSchema);

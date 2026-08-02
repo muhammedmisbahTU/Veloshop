@@ -4,7 +4,9 @@ import Cart from "../models/Cart.js"; //.js full time
 import Variant from "../models/Variant.js";
 import Order from "../models/Order.js";
 import crypto from "crypto";
-
+import { applyCoupon } from "../services/couponService.js";
+import Coupon from "../models/Coupon.js";
+import { calculateCheckout } from "../services/checkoutService.js";
 
 class CheckoutController {
   async getCheckout(req, res) {
@@ -15,35 +17,25 @@ class CheckoutController {
         const addresses = await Address.find({ userId: user._id });
         const cartItems = await Cart.findOne({ userId: user._id }).populate('items.variantId').populate('items.productId');
 
-        
-        let subtotal = 0;
+        if (!cartItems || cartItems.items.length === 0) {
+            return res.redirect("/cart");
+        }
 
-        cartItems.items.forEach(item => {
-            item.subtotal = item.quantity * item.variantId.salePrice;
-            subtotal += item.subtotal;
-        });
+        const couponDiscount = req.session.checkout?.coupon?.discount || 0;
 
-        const discount = 0;      // coupon/offer
-        const shipping = 0;       // free delivery
-        const tax = subtotal * 0.18; // example GST
+        const totals = calculateCheckout(cartItems, couponDiscount);
 
-        const grandTotal =
-            subtotal
-            - discount
-            + tax
-            + shipping;
-
+        req.session.checkout = {
+            ...totals,
+            coupon: req.session.checkout?.coupon || null
+        };
 
 
         res.render("user/checkout", {
         title: "Checkout",
         addresses,
         cartItems,
-        subtotal,
-        discount,
-        tax,
-        shipping,
-        grandTotal
+        ...totals,
       });
 
     } catch (error) {
@@ -127,26 +119,9 @@ class CheckoutController {
 
     }
 
-    let subtotal = 0;
+    const couponDiscount = req.session.checkout?.coupon?.discount || 0;
 
-    cart.items.forEach(item => {
-
-        item.subtotal =
-            item.quantity * item.variantId.salePrice;
-
-        subtotal += item.subtotal;
-
-    });
-
-    const discount = 0;
-    const shipping = 0;
-    const tax = subtotal * 0.18;
-
-    const grandTotal =
-    subtotal
-    -discount
-    +tax
-    +shipping;
+    const totals = calculateCheckout(cart, couponDiscount);
 
     const shippingAddress = {
     addressLine1: address.addressLine1,
@@ -176,6 +151,8 @@ const addressSnapshot = {
     price: item.variantId.salePrice
 }));
 
+    const couponData = req.session.checkout?.coupon || null;
+
     
 
     const orderNumber = `ORD-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
@@ -190,17 +167,15 @@ const addressSnapshot = {
 
     shippingAddress,
 
-    subtotal,
+    subtotal:totals.subtotal,
 
-    couponDiscount: 0,
+    offerDiscount: totals.offerDiscount,
 
-    offerDiscount: 0,
+    taxAmount: totals.tax,
 
-    taxAmount: tax,
+    shippingCost: totals.shipping,
 
-    shippingCost: shipping,
-
-    grandTotal,
+    grandTotal: totals.grandTotal,
 
     paymentMethod,
 
@@ -209,6 +184,10 @@ const addressSnapshot = {
     status: "CONFIRMED",
 
     addressSnapshot,
+
+    couponId: couponData ? couponData.id : null,
+    
+    couponDiscount: totals.couponDiscount,
 
 });
 
@@ -221,6 +200,21 @@ const addressSnapshot = {
     cart.items = [];
 
     await cart.save();
+
+    if (req.session.checkout?.coupon) {
+
+        const coupon = await Coupon.findById(
+            req.session.checkout.coupon.id
+        );
+
+        if (coupon) {
+            coupon.usedCount += 1;
+            coupon.usedBy.push(userId);
+            await coupon.save();
+        }
+    }
+
+    delete req.session.checkout;
 
     return res.json({
     success: true,
@@ -285,6 +279,60 @@ const addressSnapshot = {
         console.log("🚀 ~ orderDetails ~", error);
         res.redirect("/");
     }
+}
+
+  async applyCouponController(req,res) {
+
+    const {code}=req.body;
+
+    if (!req.session.checkout) {
+        return res.status(400).json({
+            success: false,
+            message: "Please refresh the checkout page."
+        });
+    }
+
+    const cart = await Cart.findOne({ userId: req.session.user.id })
+        .populate("items.variantId");
+
+    if (!cart || cart.items.length === 0) {
+        return res.json({
+            success: false,
+            message: "Cart is empty."
+        });
+    }
+
+    const totals = calculateCheckout(cart);
+
+    const result = await applyCoupon(
+        code,
+        totals.subtotal,
+        req.session.user.id
+    );
+
+    if(!result.success){
+        return res.json(result);
+    }
+
+    req.session.checkout.coupon={
+        id:result.coupon._id,
+        code:result.coupon.code,
+        discount:result.discount
+    };
+
+    res.json(result);
+}
+
+  async removeCoupon(req,res) {
+
+    if (req.session.checkout) {
+        delete req.session.checkout.coupon;
+    }
+
+    res.json({
+        success:true
+    });
+
 }
 }
 

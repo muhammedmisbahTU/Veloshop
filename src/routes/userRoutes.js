@@ -26,6 +26,7 @@ import { uploadAvatar } from '../config/cloudinaryConfig.js';
 import wishlistController from "../controllers/wishlistController.js";
 import checkoutController from "../controllers/checkoutController.js";
 import orderController from "../controllers/orderController.js";
+import Coupon from '../models/Coupon.js';
 
 const router = express.Router();
 
@@ -81,5 +82,9 @@ router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
  router.post( "/orders/:orderId/item/:itemId/cancel", isAuthenticated, orderController.cancelOrderItem );
  router.post( "/orders/:orderId/item/:itemId/return", isAuthenticated, orderController.returnOrderItem );
  router.get( "/orders/:id/invoice", isAuthenticated, orderController.downloadInvoice );
+
+ // Coupon
+ router.post("/checkout/apply-coupon", isAuthenticated, checkoutController.applyCouponController );
+ router.post( "/checkout/remove-coupon", isAuthenticated, checkoutController.removeCoupon );
 
 export default router;
