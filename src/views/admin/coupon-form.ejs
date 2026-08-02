@@ -1,0 +1,144 @@
+<section class="max-w-xl mx-auto">
+    <div class="flex items-center justify-between mb-5">
+        <h1 class="text-3xl text-white font-black">
+            <%= mode === 'edit' ? 'Edit Coupon' : 'Add Coupon' %>
+        </h1>
+        <a href="/admin/coupons" class="text-zinc-400 hover:text-white text-sm font-semibold">&larr; Back to Coupons</a>
+    </div>
+
+    <form method="POST" action="<%= mode === 'edit' ? '/admin/coupons/' + coupon._id : '/admin/coupons' %>" class="space-y-4 bg-zinc-950 p-6 border border-white/10 rounded">
+        <!-- Validation Errors -->
+        <% if (formErrors && formErrors.length) { %>
+            <div class="bg-red-500/20 border border-red-500 p-4 rounded">
+                <ul class="text-red-400 space-y-1 text-sm list-disc list-inside">
+                    <% formErrors.forEach(error => { %>
+                        <li><%= error %></li>
+                    <% }) %>
+                </ul>
+            </div>
+        <% } %>
+
+        <!-- Coupon Code -->
+        <div>
+            <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Coupon Code</label>
+            <input type="text" name="code" value="<%= coupon?.code || '' %>" placeholder="e.g., SAVE20"
+                class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400 uppercase" required />
+        </div>
+
+        <!-- Description -->
+        <div>
+            <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Description</label>
+            <textarea name="description" placeholder="Coupon description..." rows="2"
+                class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400"><%= coupon?.description || '' %></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Discount Type -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Discount Type</label>
+                <select name="discountType" id="discountType" class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400">
+                    <option value="PERCENTAGE" <%= coupon?.discountType === "PERCENTAGE" ? "selected" : "" %>>PERCENTAGE</option>
+                    <option value="FIXED" <%= coupon?.discountType === "FIXED" ? "selected" : "" %>>FIXED AMOUNT</option>
+                </select>
+            </div>
+
+            <!-- Discount Value -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Discount Value</label>
+                <input type="number" step="any" name="discountValue" value="<%= coupon?.discountValue || '' %>" placeholder="Value"
+                    class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400" required min="1" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Minimum Purchase -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Min Purchase Amount (₹)</label>
+                <input type="number" step="any" name="minimumPurchase" value="<%= coupon?.minimumPurchase || 0 %>" placeholder="0"
+                    class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400" min="0" />
+            </div>
+
+            <!-- Maximum Discount -->
+            <div id="maxDiscountContainer">
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Max Discount (₹)</label>
+                <input type="number" step="any" id="maximumDiscount" name="maximumDiscount" value="<%= coupon?.maximumDiscount || '' %>" placeholder="Unlimited"
+                    class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400" min="0" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Start Date -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Start Date</label>
+                <input type="date" name="startDate" id="startDate"
+                    value="<%= coupon?.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '' %>"
+                    class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400" required />
+            </div>
+
+            <!-- Expiry Date -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Expiry Date</label>
+                <input type="date" name="expiryDate" id="expiryDate"
+                    value="<%= coupon?.expiryDate ? new Date(coupon.expiryDate).toISOString().split('T')[0] : '' %>"
+                    class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400" required />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Usage Limit -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Total Usage Limit</label>
+                <input type="number" name="usageLimit" value="<%= coupon?.usageLimit || '' %>" placeholder="Unlimited"
+                    class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400" min="1" />
+            </div>
+
+            <!-- Usage Per User -->
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1 font-bold">Limit Per User</label>
+                <input type="number" name="usagePerUser" value="<%= coupon?.usagePerUser || 1 %>" placeholder="1"
+                    class="w-full bg-black border border-white/10 p-3 text-white focus:outline-none focus:border-lime-400" min="1" required />
+            </div>
+        </div>
+
+        <div class="pt-4">
+            <button type="submit" class="w-full bg-lime-400 py-3 rounded font-black text-black hover:bg-lime-300 transition-colors">
+                <%= mode === 'edit' ? 'Update Coupon' : 'Create Coupon' %>
+            </button>
+        </div>
+    </form>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const discountTypeSelect = document.getElementById('discountType');
+        const maxDiscountContainer = document.getElementById('maxDiscountContainer');
+        const maxDiscountInput = document.getElementById('maximumDiscount');
+
+        function toggleMaxDiscount() {
+            if (discountTypeSelect.value === 'PERCENTAGE') {
+                maxDiscountContainer.style.opacity = '1';
+                maxDiscountInput.removeAttribute('disabled');
+            } else {
+                maxDiscountContainer.style.opacity = '0.4';
+                maxDiscountInput.setAttribute('disabled', 'true');
+                maxDiscountInput.value = '';
+            }
+        }
+
+        discountTypeSelect.addEventListener('change', toggleMaxDiscount);
+        toggleMaxDiscount(); // Run once on load
+        
+        // Auto set minimum dates
+        const todayStr = new Date().toISOString().split('T')[0];
+        const startDateInput = document.getElementById('startDate');
+        const expiryDateInput = document.getElementById('expiryDate');
+
+        if (!startDateInput.value) {
+            startDateInput.value = todayStr;
+        }
+        
+        startDateInput.addEventListener('change', function() {
+            expiryDateInput.min = startDateInput.value;
+        });
+    });
+</script>

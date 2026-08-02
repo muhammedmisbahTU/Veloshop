@@ -41,6 +41,7 @@ app.use((req, res, next) => {
   delete req.session.errorMessage;
   delete req.session.successMessage;
   res.locals.user = req.user || req.session.user || null;
+  res.locals.path = req.path;
   next();
 });
 

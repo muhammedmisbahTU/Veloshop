@@ -1,0 +1,350 @@
+<section class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-3xl font-black text-white">Coupon Management</h1>
+    <a
+      href="/admin/coupons/new"
+      class="bg-lime-400 px-5 py-3 rounded font-bold text-black hover:bg-lime-300 transition-colors"
+    >
+      + Add Coupon
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3 items-center">
+    <input
+      id="coupon-search"
+      name="search"
+      value="<%= filters.search %>"
+      placeholder="Search coupon code..."
+      class="bg-zinc-900 text-white px-4 py-2 rounded focus:outline-none focus:ring-1 focus:ring-lime-400"
+    />
+
+    <select
+      id="coupon-status"
+      name="status"
+      class="bg-zinc-900 text-white px-4 py-2 rounded focus:outline-none"
+    >
+      <option value="all" <%= filters.status === "all" ? "selected" : "" %>>All Statuses</option>
+      <option value="active" <%= filters.status === "active" ? "selected" : "" %>>Active</option>
+      <option value="disabled" <%= filters.status === "disabled" ? "selected" : "" %>>Disabled</option>
+      <option value="deleted" <%= filters.status === "deleted" ? "selected" : "" %>>Deleted</option>
+      <option value="expired" <%= filters.status === "expired" ? "selected" : "" %>>Expired</option>
+      <option value="upcoming" <%= filters.status === "upcoming" ? "selected" : "" %>>Upcoming</option>
+    </select>
+
+    <select
+      id="coupon-type"
+      name="type"
+      class="bg-zinc-900 text-white px-4 py-2 rounded focus:outline-none"
+    >
+      <option value="all" <%= filters.type === "all" ? "selected" : "" %>>All Types</option>
+      <option value="PERCENTAGE" <%= filters.type === "PERCENTAGE" ? "selected" : "" %>>Percentage</option>
+      <option value="FIXED" <%= filters.type === "FIXED" ? "selected" : "" %>>Fixed Amount</option>
+    </select>
+
+    <button
+      id="reset-btn"
+      class="bg-zinc-700 hover:bg-zinc-600 text-white px-5 py-2 rounded font-bold transition-colors"
+    >
+      Reset
+    </button>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-zinc-950 p-5 border border-white/10 rounded">
+      <p class="text-zinc-400 text-sm font-semibold uppercase tracking-wider">Active</p>
+      <h2 class="text-3xl text-lime-400 font-bold mt-1"><%= counts.active %></h2>
+    </div>
+
+    <div class="bg-zinc-950 p-5 border border-white/10 rounded">
+      <p class="text-zinc-400 text-sm font-semibold uppercase tracking-wider">Disabled</p>
+      <h2 class="text-3xl text-yellow-400 font-bold mt-1"><%= counts.disabled %></h2>
+    </div>
+
+    <div class="bg-zinc-950 p-5 border border-white/10 rounded">
+      <p class="text-zinc-400 text-sm font-semibold uppercase tracking-wider">Deleted</p>
+      <h2 class="text-3xl text-red-400 font-bold mt-1"><%= counts.deleted %></h2>
+    </div>
+  </div>
+
+  <!-- Coupons List -->
+  <% if (!coupons.length) { %>
+    <div class="bg-zinc-950 border border-white/10 rounded p-8 text-center">
+      <p class="text-zinc-400">No coupons found matching the criteria.</p>
+    </div>
+  <% } else { %>
+    <div id="coupons-container" class="space-y-4">
+      <% coupons.forEach(coupon => { %>
+        <div
+          id="coupon-<%= coupon._id %>"
+          class="coupon-card bg-zinc-950 border border-white/10 rounded-lg p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-white/20 transition-colors"
+        >
+          <!-- Left side details -->
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <span class="text-lime-400 text-xl font-black tracking-wide uppercase"><%= coupon.code %></span>
+              <span class="px-2 py-0.5 text-xs font-semibold rounded bg-zinc-800 text-zinc-300">
+                <%= coupon.discountType === 'PERCENTAGE' ? `${coupon.discountValue}% Off` : `₹${coupon.discountValue} Off` %>
+              </span>
+            </div>
+
+            <% if (coupon.description) { %>
+              <p class="text-zinc-300 text-sm"><%= coupon.description %></p>
+            <% } %>
+
+            <div class="flex flex-wrap gap-y-1 gap-x-4 text-xs text-zinc-500">
+              <span>Min Purchase: <strong>₹<%= coupon.minimumPurchase %></strong></span>
+              <% if (coupon.discountType === 'PERCENTAGE') { %>
+                <span>Max Discount: <strong><%= coupon.maximumDiscount ? `₹${coupon.maximumDiscount}` : 'Unlimited' %></strong></span>
+              <% } %>
+              <span>Usage: <strong><%= coupon.usedCount %> / <%= coupon.usageLimit || '∞' %></strong></span>
+              <span>Per User: <strong><%= coupon.usagePerUser %></strong></span>
+            </div>
+
+            <div class="text-xs text-zinc-500">
+              <span>Valid: <strong><%= new Date(coupon.startDate).toLocaleDateString() %></strong> to <strong><%= new Date(coupon.expiryDate).toLocaleDateString() %></strong></span>
+              <span class="ml-2 text-lime-400 font-semibold"><%= coupon.remainingText %></span>
+            </div>
+          </div>
+
+          <!-- Status badge & Actions -->
+          <div class="flex flex-col items-end gap-3 w-full md:w-auto">
+            <div>
+              <% 
+                let expired = new Date() > new Date(coupon.expiryDate); 
+                let upcoming = new Date() < new Date(coupon.startDate); 
+              %>
+              <% if (coupon.isDeleted) { %>
+                <span class="bg-red-500/20 text-red-400 px-3 py-1 rounded text-xs font-bold border border-red-500/30">Deleted</span>
+              <% } else if (expired) { %>
+                <span class="bg-zinc-800 text-zinc-400 px-3 py-1 rounded text-xs font-bold">Expired</span>
+              <% } else if (upcoming) { %>
+                <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded text-xs font-bold border border-yellow-500/30">Upcoming</span>
+              <% } else if (coupon.isActive) { %>
+                <span class="bg-lime-400/20 text-lime-400 px-3 py-1 rounded text-xs font-bold border border-lime-400/30">Active</span>
+              <% } else { %>
+                <span class="bg-zinc-800 text-zinc-400 px-3 py-1 rounded text-xs font-bold border border-white/5">Disabled</span>
+              <% } %>
+            </div>
+
+            <div class="flex gap-2 w-full md:w-auto justify-end">
+              <!-- Edit Button -->
+              <% if (!coupon.isDeleted) { %>
+                <a
+                  href="/admin/coupons/<%= coupon._id %>/edit"
+                  class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 rounded text-sm font-bold transition-all text-center flex items-center justify-center"
+                >
+                  Edit
+                </a>
+              <% } %>
+
+              <!-- Toggle Button -->
+              <% if (!coupon.isDeleted) { %>
+                <button
+                  class="toggle-coupon px-4 py-2 rounded text-sm font-bold transition-all <%= coupon.isActive ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/20' : 'bg-lime-400 hover:bg-lime-300 text-black' %>"
+                  data-id="<%= coupon._id %>"
+                >
+                  <%= coupon.isActive ? "Disable" : "Enable" %>
+                </button>
+              <% } %>
+
+              <!-- Delete/Restore Button -->
+              <% if (coupon.isDeleted) { %>
+                <button
+                  class="restore-coupon px-4 py-2 bg-lime-400 hover:bg-lime-300 text-black rounded text-sm font-bold transition-colors"
+                  data-id="<%= coupon._id %>"
+                >
+                  Restore
+                </button>
+              <% } else { %>
+                <button
+                  class="delete-coupon px-4 py-2 bg-zinc-905 hover:bg-zinc-800 text-white rounded text-sm font-bold border border-white/10 transition-colors"
+                  data-id="<%= coupon._id %>"
+                >
+                  Delete
+                </button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- Pagination -->
+    <% if (pagination.totalPages > 1) { %>
+      <div class="flex justify-center gap-2 mt-8">
+        <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+          <a
+            href="?page=<%= i %>&search=<%= filters.search %>&status=<%= filters.status %>&type=<%= filters.type %>"
+            class="px-3 py-2 rounded font-bold transition-colors <%= pagination.page === i ? 'bg-lime-400 text-black' : 'bg-zinc-900 text-white hover:bg-zinc-800' %>"
+          >
+            <%= i %>
+          </a>
+        <% } %>
+      </div>
+    <% } %>
+  <% } %>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+
+    function removeCard(id) {
+      const card = document.getElementById(`coupon-${id}`);
+      if (card) {
+        card.style.transition = 'all 0.5s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.remove();
+          // Reload if empty
+          if (document.querySelectorAll('.coupon-card').length === 0) {
+            window.location.reload();
+          }
+        }, 500);
+      }
+    }
+
+    async function requestAction(url, button) {
+      try {
+        button.disabled = true;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message);
+        }
+
+        Toast.fire({
+          icon: 'success',
+          title: data.message,
+        });
+
+        return true;
+      } catch (error) {
+        Toast.fire({
+          icon: 'error',
+          title: error.message,
+        });
+        return false;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    // Toggle Active Status
+    document.querySelectorAll('.toggle-coupon').forEach(button => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+        const result = await Swal.fire({
+          title: 'Change status?',
+          text: 'Enable or disable this coupon?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes',
+          confirmButtonColor: '#a3e635',
+          cancelButtonColor: '#3f3f46',
+        });
+
+        if (!result.isConfirmed) return;
+
+        const success = await requestAction(`/admin/coupons/${id}/toggle`, button);
+        if (success) {
+          // Instead of updating UI manually, reload to show correct filter state and remaining times
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      });
+    });
+
+    // Delete Coupon
+    document.querySelectorAll('.delete-coupon').forEach(button => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+        const result = await Swal.fire({
+          title: 'Delete coupon?',
+          text: 'This coupon will be moved to the deleted list.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#ef4444',
+          cancelButtonColor: '#3f3f46',
+          confirmButtonText: 'Delete',
+        });
+
+        if (!result.isConfirmed) return;
+
+        const success = await requestAction(`/admin/coupons/${id}/delete`, button);
+        if (success) {
+          removeCard(id);
+        }
+      });
+    });
+
+    // Restore Coupon
+    document.querySelectorAll('.restore-coupon').forEach(button => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+        const result = await Swal.fire({
+          title: 'Restore coupon?',
+          text: 'Restore this coupon to the active/inactive list.',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#a3e635',
+          cancelButtonColor: '#3f3f46',
+          confirmButtonText: 'Restore',
+        });
+
+        if (!result.isConfirmed) return;
+
+        const success = await requestAction(`/admin/coupons/${id}/restore`, button);
+        if (success) {
+          removeCard(id);
+        }
+      });
+    });
+
+    // Filter Listeners
+    let searchTimer;
+    const searchInput = document.getElementById('coupon-search');
+    
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applyFilters, 500);
+      });
+    }
+
+    document.querySelectorAll('#coupon-status, #coupon-type').forEach(select => {
+      select.addEventListener('change', applyFilters);
+    });
+
+    document.getElementById('reset-btn')?.addEventListener('click', () => {
+      window.location.href = '/admin/coupons';
+    });
+
+    function applyFilters() {
+      const search = searchInput?.value || '';
+      const status = document.getElementById('coupon-status').value;
+      const type = document.getElementById('coupon-type').value;
+      window.location.href = `/admin/coupons?search=${encodeURIComponent(search)}&status=${status}&type=${type}`;
+    }
+  });
+</script>

@@ -49,6 +49,16 @@ import {
   softDeleteOffer,
   restoreOffer
 } from "../controllers/adminOfferController.js";
+import {
+  getCoupons,
+  getNewCoupon,
+  createCoupon,
+  toggleCouponStatus,
+  softDeleteCoupon,
+  restoreCoupon,
+  getEditCoupon,
+  updateCoupon
+} from "../controllers/adminCouponController.js";
 
 const router = express.Router();
 
@@ -94,5 +104,15 @@ router.post("/admin/offers/:id", isAdmin, updateOffer);
 router.post( "/admin/offers/:id/toggle", isAdmin, toggleOfferStatus );
 router.post( "/admin/offers/:id/delete", isAdmin, softDeleteOffer );
 router.post( "/admin/offers/:id/restore", isAdmin, restoreOffer );
+
+//coupons
+router.get("/admin/coupons", isAdmin, getCoupons);
+router.get("/admin/coupons/new", isAdmin, getNewCoupon);
+router.post("/admin/coupons", isAdmin, createCoupon);
+router.get("/admin/coupons/:id/edit", isAdmin, getEditCoupon);
+router.post("/admin/coupons/:id", isAdmin, updateCoupon);
+router.post("/admin/coupons/:id/toggle", isAdmin, toggleCouponStatus);
+router.post("/admin/coupons/:id/delete", isAdmin, softDeleteCoupon);
+router.post("/admin/coupons/:id/restore", isAdmin, restoreCoupon);
 
 export default router;
