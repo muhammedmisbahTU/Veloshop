@@ -86,6 +86,35 @@ for(const item of order.items){
 order.status="CANCELLED";
 order.cancellationReason = cancellationText;
 
+if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET")) {
+    const Wallet = (await import("../models/Wallet.js")).default;
+    const Transaction = (await import("../models/Transaction.js")).default;
+
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+        wallet = await Wallet.create({ userId, balance: 0 });
+    }
+
+    wallet.balance += order.grandTotal;
+    await wallet.save();
+
+    await Transaction.create({
+        userId,
+        walletId: wallet._id,
+        referenceType: "REFUND",
+        referenceId: order._id,
+        amount: order.grandTotal,
+        balanceAfter: wallet.balance,
+        transactionType: "CREDIT",
+        status: "SUCCESS",
+        description: `Refund for cancelled order ${order.orderNumber}`
+    });
+
+    order.paymentStatus = "REFUNDED";
+    order.refundStatus = "COMPLETED";
+    order.refundAmount = order.grandTotal;
+}
+
 await order.save();
 
 return res.json({

@@ -192,6 +192,44 @@ const addressSnapshot = {
 
 });
 
+    // Wallet payment method logic
+    if (paymentMethod === "WALLET") {
+        const Wallet = (await import("../models/Wallet.js")).default;
+        const Transaction = (await import("../models/Transaction.js")).default;
+
+        let wallet = await Wallet.findOne({ userId });
+        if (!wallet) {
+            wallet = await Wallet.create({ userId, balance: 0 });
+        }
+
+        if (wallet.balance < totals.grandTotal) {
+            return res.status(400).json({
+                success: false,
+                message: "Insufficient wallet balance."
+            });
+        }
+
+        // Debit wallet
+        wallet.balance -= totals.grandTotal;
+        await wallet.save();
+
+        // Create transaction history
+        await Transaction.create({
+            userId,
+            walletId: wallet._id,
+            referenceType: "ORDER",
+            referenceId: order._id,
+            amount: totals.grandTotal,
+            balanceAfter: wallet.balance,
+            transactionType: "DEBIT",
+            status: "SUCCESS",
+            description: `Payment for order ${order.orderNumber}`
+        });
+
+        order.paymentStatus = "SUCCESS";
+        await order.save();
+    }
+
     for (const item of cart.items) {
         item.variantId.stock -= item.quantity;
         await item.variantId.save();

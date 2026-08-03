@@ -1,0 +1,58 @@
+<div class="max-w-4xl mx-auto px-4 py-10">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-white">Wallet History</h1>
+            <p class="text-gray-400 mt-1">Track all your credits, debits, and order refunds</p>
+        </div>
+        <a href="/profile" class="text-lime-400 hover:text-lime-300 font-semibold text-sm">
+            ← Back to Profile
+        </a>
+    </div>
+
+    <!-- Balance Card -->
+    <div class="bg-zinc-950 border border-white/5 rounded-3xl p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 backdrop-blur-xl">
+        <div>
+            <p class="text-sm text-gray-500 uppercase font-semibold">Total Balance</p>
+            <p class="text-4xl font-extrabold text-lime-400 mt-2">₹<%= wallet.balance.toFixed(2) %></p>
+        </div>
+        <div class="text-xs text-gray-500">
+            Account Currency: <%= wallet.currency %>
+        </div>
+    </div>
+
+    <!-- Transaction List -->
+    <div class="bg-zinc-950 border border-white/5 rounded-3xl p-6 sm:p-8 backdrop-blur-xl">
+        <h2 class="text-xl font-bold text-white mb-6">Recent Transactions</h2>
+
+        <div class="space-y-4">
+            <% if (transactions && transactions.length > 0) { %>
+                <% transactions.forEach(tx => { %>
+                    <div class="bg-black/20 border border-white/5 hover:border-zinc-800 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 text-3xs font-bold rounded-full <%= tx.transactionType === 'CREDIT' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20' %>">
+                                    <%= tx.transactionType %>
+                                </span>
+                                <span class="text-xs text-zinc-500">
+                                    <%= new Date(tx.createdAt).toLocaleString() %>
+                                </span>
+                            </div>
+                            <p class="text-white text-sm font-semibold mt-2"><%= tx.description || 'No description' %></p>
+                            <p class="text-xs text-zinc-500 mt-1">Ref ID: <%= tx._id %></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold <%= tx.transactionType === 'CREDIT' ? 'text-green-400' : 'text-red-400' %>">
+                                <%= tx.transactionType === 'CREDIT' ? '+' : '-' %>₹<%= tx.amount.toFixed(2) %>
+                            </p>
+                            <p class="text-xs text-zinc-500 mt-1">Balance: ₹<%= tx.balanceAfter.toFixed(2) %></p>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="text-center py-12 border border-dashed border-zinc-800 rounded-2xl bg-black/10">
+                    <p class="text-gray-500 text-sm">No transactions found yet.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>

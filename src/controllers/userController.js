@@ -15,11 +15,18 @@ export const getProfile = async (req, res) => {
     const user = await User.findById(currentUser.id || currentUser._id);
     const addresses = await Address.find({ userId: user._id });
 
+    const Wallet = (await import("../models/Wallet.js")).default;
+    let wallet = await Wallet.findOne({ userId: user._id });
+    if (!wallet) {
+      wallet = await Wallet.create({ userId: user._id, balance: 0 });
+    }
+
     res.render("user/profile", {
       layout: "layouts/user-layout",
       title: "My Profile - Veloshop",
       profileUser: user,
-      addresses
+      addresses,
+      walletBalance: wallet.balance
     });
   } catch (error) {
     console.error("Profile view error:", error);

@@ -105,4 +105,30 @@ router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
  router.post("/checkout/apply-coupon", isAuthenticated, checkoutController.applyCouponController );
  router.post( "/checkout/remove-coupon", isAuthenticated, checkoutController.removeCoupon );
 
+ // Wallet
+  router.get("/wallet/history", isAuthenticated, async (req, res) => {
+      try {
+          const Wallet = (await import("../models/Wallet.js")).default;
+          const Transaction = (await import("../models/Transaction.js")).default;
+          const userId = req.session?.user?.id || req.user?._id;
+
+          let wallet = await Wallet.findOne({ userId });
+          if (!wallet) {
+              wallet = await Wallet.create({ userId, balance: 0 });
+          }
+
+          const transactions = await Transaction.find({ userId }).sort({ createdAt: -1 });
+
+          res.render("user/wallet-history", {
+              layout: "layouts/user-layout",
+              title: "Wallet Transaction History",
+              wallet,
+              transactions
+          });
+      } catch (err) {
+          console.error("Wallet history error:", err);
+          res.redirect("/profile");
+      }
+  });
+
 export default router;

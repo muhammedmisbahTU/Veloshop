@@ -314,6 +314,39 @@ message:"Something went wrong"
           order.status = "RETURNED";
         }
         order.refundStatus = "COMPLETED";
+
+        // Process refund for returned item if paid
+        if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET")) {
+          const Wallet = (await import("../models/Wallet.js")).default;
+          const Transaction = (await import("../models/Transaction.js")).default;
+
+          let wallet = await Wallet.findOne({ userId: order.userId });
+          if (!wallet) {
+            wallet = await Wallet.create({ userId: order.userId, balance: 0 });
+          }
+
+          const itemTotal = item.price * item.quantity;
+          wallet.balance += itemTotal;
+          await wallet.save();
+
+          await Transaction.create({
+            userId: order.userId,
+            walletId: wallet._id,
+            referenceType: "REFUND",
+            referenceId: order._id,
+            amount: itemTotal,
+            balanceAfter: wallet.balance,
+            transactionType: "CREDIT",
+            status: "SUCCESS",
+            description: `Refund for returned item (${item.productName}) in order ${order.orderNumber}`
+          });
+
+          order.refundAmount = (order.refundAmount || 0) + itemTotal;
+          // If all items are returned/cancelled, mark overall order as REFUNDED
+          if (activeItems.length === 0) {
+             order.paymentStatus = "REFUNDED";
+          }
+        }
       } else if (status === "REJECTED") {
         order.returnRejectedReason = rejectedReason || "Rejected by administrator";
       }
