@@ -417,6 +417,49 @@ export const getDashboard = async (req, res) => {
       { $limit: 10 }
     ]);
 
+    // Aggregate top 10 best-selling categories (completed / DELIVERED orders)
+    const bestCategoriesAgg = await Order.aggregate([
+      { $match: { status: "DELIVERED" } },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "variants",
+          localField: "items.variantId",
+          foreignField: "_id",
+          as: "variantInfo"
+        }
+      },
+      { $unwind: "$variantInfo" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "variantInfo.productId",
+          foreignField: "_id",
+          as: "productInfo"
+        }
+      },
+      { $unwind: "$productInfo" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "productInfo.categoryId",
+          foreignField: "_id",
+          as: "categoryInfo"
+        }
+      },
+      { $unwind: "$categoryInfo" },
+      {
+        $group: {
+          _id: "$categoryInfo._id",
+          categoryName: { $first: "$categoryInfo.name" },
+          totalQuantity: { $sum: "$items.quantity" },
+          totalRevenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+        }
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: 10 }
+    ]);
+
     res.render("admin/dashboard", {
       layout: "layouts/admin-layout",
       title: "Control Center Dashboard",
@@ -436,7 +479,8 @@ export const getDashboard = async (req, res) => {
       chartLabels: JSON.stringify(chartLabels),
       salesTrends: JSON.stringify(salesTrends),
       orderTrends: JSON.stringify(orderTrends),
-      bestSellers: bestSellersAgg
+      bestSellers: bestSellersAgg,
+      bestCategories: bestCategoriesAgg
     });
   } catch (err) {
     console.error("Admin dashboard calculation failed:", err);
