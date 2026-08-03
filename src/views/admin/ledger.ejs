@@ -1,0 +1,81 @@
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold text-white">General Ledger Book</h2>
+        <p class="text-zinc-500 text-sm mt-1">Chronological account of store revenues, wallet interactions, refunds, and discount adjustments</p>
+    </div>
+
+    <!-- Ledger Totals Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl">
+            <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Total Funds Received (IN)</p>
+            <h3 class="text-3xl font-black text-lime-400 mt-2">₹<%= summary.totalIncoming.toFixed(2) %></h3>
+            <p class="text-xs text-zinc-500 mt-1">Order payments + wallet credits</p>
+        </div>
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl">
+            <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Total Funds Outward (OUT)</p>
+            <h3 class="text-3xl font-black text-red-400 mt-2">₹<%= summary.totalOutgoing.toFixed(2) %></h3>
+            <p class="text-xs text-zinc-500 mt-1">Refunds + wallet debits + discounts</p>
+        </div>
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl">
+            <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Net Cash Flow Balance</p>
+            <h3 class="text-3xl font-black mt-2 <%= summary.netCashFlow >= 0 ? 'text-lime-400' : 'text-red-400' %>">
+                ₹<%= summary.netCashFlow.toFixed(2) %>
+            </h3>
+            <p class="text-xs text-zinc-500 mt-1">Net store balance</p>
+        </div>
+    </div>
+
+    <!-- Ledger Entries Table -->
+    <div class="bg-zinc-950 border border-white/5 rounded-3xl overflow-hidden">
+        <div class="p-6 border-b border-white/5">
+            <h3 class="text-xl font-bold text-white">Chronological Transaction Log</h3>
+        </div>
+        <table class="w-full text-left text-sm">
+            <thead class="bg-zinc-900 text-zinc-400">
+                <tr>
+                    <th class="p-5">Transaction Timestamp</th>
+                    <th class="p-5">Action Type</th>
+                    <th class="p-5">Reference ID</th>
+                    <th class="p-5">Customer Account</th>
+                    <th class="p-5">Details</th>
+                    <th class="p-5 text-right">Debit (OUT)</th>
+                    <th class="p-5 text-right">Credit (IN)</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5 text-white">
+                <% if (entries && entries.length > 0) { %>
+                    <% entries.forEach(entry => { %>
+                        <tr class="hover:bg-white/5 transition">
+                            <td class="p-5 text-zinc-400">
+                                <%= new Date(entry.date).toLocaleString() %>
+                            </td>
+                            <td class="p-5">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold 
+                                    <%= entry.type === 'Order Payment' ? 'bg-green-500/10 text-green-400' : 
+                                       entry.type === 'Refund' ? 'bg-red-500/10 text-red-400' : 
+                                       entry.type === 'Wallet Credit' ? 'bg-blue-500/10 text-blue-400' : 
+                                       entry.type === 'Wallet Debit' ? 'bg-orange-500/10 text-orange-400' : 
+                                       'bg-yellow-500/10 text-yellow-400' %>">
+                                    <%= entry.type %>
+                                </span>
+                            </td>
+                            <td class="p-5 font-mono text-xs"><%= entry.reference %></td>
+                            <td class="p-5 text-zinc-400"><%= entry.user %></td>
+                            <td class="p-5"><%= entry.details %></td>
+                            <td class="p-5 text-right font-semibold text-red-400">
+                                <%= entry.outgoing > 0 ? '₹' + entry.outgoing.toFixed(2) : '-' %>
+                            </td>
+                            <td class="p-5 text-right font-semibold text-lime-400">
+                                <%= entry.incoming > 0 ? '₹' + entry.incoming.toFixed(2) : '-' %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="text-center py-12 text-zinc-500">No general ledger actions logged yet.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>

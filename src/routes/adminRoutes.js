@@ -108,6 +108,10 @@ router.get("/admin/reports/download", isAdmin, async (req, res, next) => {
     const { downloadSalesReport } = await import("../controllers/adminController.js");
     downloadSalesReport(req, res, next);
 });
+router.get("/admin/ledger", isAdmin, async (req, res, next) => {
+    const { getLedgerBook } = await import("../controllers/adminController.js");
+    getLedgerBook(req, res, next);
+});
 
 //offer
 router.get("/admin/offers", isAdmin, getOffers);

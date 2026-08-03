@@ -740,3 +740,139 @@ export const downloadSalesReport = async (req, res) => {
     res.status(500).send("Report download failed.");
   }
 };
+
+export const getLedgerBook = async (req, res) => {
+  try {
+    const Order = (await import("../models/Order.js")).default;
+    const Transaction = (await import("../models/Transaction.js")).default;
+
+    // Fetch all successful/paid orders to track payments, discounts, coupons, refunds
+    const orders = await Order.find({}).populate("userId").sort({ createdAt: -1 });
+
+    // Fetch wallet transactions to track wallet credits and debits
+    const walletTransactions = await Transaction.find({}).populate("userId").sort({ createdAt: -1 });
+
+    const ledgerEntries = [];
+
+    // Map orders to ledger entries
+    orders.forEach(order => {
+      const userEmail = order.userId?.email || "Unknown User";
+
+      // 1. Order Payments (Revenue)
+      if (order.paymentStatus === "SUCCESS") {
+        ledgerEntries.push({
+          date: order.createdAt,
+          type: "Order Payment",
+          reference: order.orderNumber,
+          user: userEmail,
+          incoming: order.grandTotal,
+          outgoing: 0,
+          details: `Paid via ${order.paymentMethod}`
+        });
+      }
+
+      // 2. Refunds (outgoing money for cancelled/returned orders)
+      if (order.status === "CANCELLED" && order.refundStatus === "REFUNDED") {
+        ledgerEntries.push({
+          date: order.updatedAt,
+          type: "Refund",
+          reference: order.orderNumber,
+          user: userEmail,
+          incoming: 0,
+          outgoing: order.grandTotal,
+          details: "Refunded to wallet (Cancelled Order)"
+        });
+      } else if (order.status === "RETURNED" && order.refundStatus === "REFUNDED") {
+        ledgerEntries.push({
+          date: order.updatedAt,
+          type: "Refund",
+          reference: order.orderNumber,
+          user: userEmail,
+          incoming: 0,
+          outgoing: order.grandTotal,
+          details: "Refunded to wallet (Approved Return)"
+        });
+      }
+
+      // 3. Discounts (Offer discount value tracked as deduction/loss)
+      if (order.offerDiscount > 0) {
+        ledgerEntries.push({
+          date: order.createdAt,
+          type: "Discount Adjustment",
+          reference: order.orderNumber,
+          user: userEmail,
+          incoming: 0,
+          outgoing: order.offerDiscount,
+          details: "Offer discount applied to order"
+        });
+      }
+
+      // 4. Coupon Deductions
+      if (order.couponDiscount > 0) {
+        ledgerEntries.push({
+          date: order.createdAt,
+          type: "Coupon Deduction",
+          reference: order.orderNumber,
+          user: userEmail,
+          incoming: 0,
+          outgoing: order.couponDiscount,
+          details: `Promo coupon applied to order`
+        });
+      }
+    });
+
+    // Map wallet transactions to ledger entries
+    walletTransactions.forEach(tx => {
+      const userEmail = tx.userId?.email || "Unknown User";
+
+      if (tx.transactionType === "CREDIT") {
+        ledgerEntries.push({
+          date: tx.createdAt,
+          type: "Wallet Credit",
+          reference: tx.referenceId || "Wallet",
+          user: userEmail,
+          incoming: tx.amount,
+          outgoing: 0,
+          details: tx.description || "Credit adjustment"
+        });
+      } else if (tx.transactionType === "DEBIT") {
+        ledgerEntries.push({
+          date: tx.createdAt,
+          type: "Wallet Debit",
+          reference: tx.referenceId || "Wallet",
+          user: userEmail,
+          incoming: 0,
+          outgoing: tx.amount,
+          details: tx.description || "Debit payment"
+        });
+      }
+    });
+
+    // Sort combined entries chronologically (most recent first)
+    ledgerEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Calculate dynamic ledger running balance totals
+    let totalIncoming = 0;
+    let totalOutgoing = 0;
+    ledgerEntries.forEach(entry => {
+      totalIncoming += entry.incoming;
+      totalOutgoing += entry.outgoing;
+    });
+
+    res.render("admin/ledger", {
+      layout: "layouts/admin-layout",
+      title: "Veloshop Ledger Book",
+      path: "/admin/ledger",
+      entries: ledgerEntries,
+      summary: {
+        totalIncoming,
+        totalOutgoing,
+        netCashFlow: totalIncoming - totalOutgoing
+      }
+    });
+  } catch (error) {
+    console.error("Get ledger book failed:", error);
+    req.session.errorMessage = "Failed to load ledger book.";
+    res.redirect("/admin/dashboard");
+  }
+};
