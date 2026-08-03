@@ -281,25 +281,38 @@
                         Have a coupon?
                     </label>
 
-                    <div class="flex gap-2">
-
-                        <input
-                            type="text"
-                            id="couponCode"
-                            placeholder="Enter coupon code"
-                            class="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-lime-400 placeholder:text-zinc-500"
-                        >
-
-                        <button
-                            id="applyCoupon"
-                            type="button"
-                            class="px-5 py-3 bg-lime-400 hover:bg-lime-300 text-black font-bold rounded-xl transition"
-                        >
-                            Apply
-                        </button>
-
-                    </div>
-
+                    <% if (typeof coupon !== 'undefined' && coupon && coupon.code) { %>
+                        <div class="bg-lime-400/10 border border-lime-400/30 rounded-xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Applied Coupon</p>
+                                <p class="text-lg font-bold text-lime-400"><%= coupon.code %></p>
+                                <p class="text-xs text-zinc-300">Discount of ₹<%= coupon.discount %> applied</p>
+                            </div>
+                            <button
+                                id="removeCouponBtn"
+                                type="button"
+                                class="px-3 py-1.5 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-xs transition"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    <% } else { %>
+                        <div class="flex gap-2">
+                            <input
+                                type="text"
+                                id="couponCode"
+                                placeholder="Enter coupon code"
+                                class="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-lime-400 placeholder:text-zinc-500"
+                            >
+                            <button
+                                id="applyCoupon"
+                                type="button"
+                                class="px-5 py-3 bg-lime-400 hover:bg-lime-300 text-black font-bold rounded-xl transition"
+                            >
+                                Apply
+                            </button>
+                        </div>
+                    <% } %>
 
                     <p 
                         id="couponMessage"
@@ -768,11 +781,10 @@ editAddressValidation
     }
 });
 
-document
-.getElementById("applyCoupon")
-.addEventListener("click", async()=>{
-
-    const code = document
+const applyBtn = document.getElementById("applyCoupon");
+if (applyBtn) {
+    applyBtn.addEventListener("click", async()=>{
+        const code = document
         .getElementById("couponCode")
         .value
         .trim();
@@ -859,7 +871,26 @@ document
         message.classList.remove("hidden");
 
     }
-
 });
+}
 
+const removeBtn = document.getElementById("removeCouponBtn");
+if (removeBtn) {
+    removeBtn.addEventListener("click", async () => {
+        try {
+            const res = await fetch("/checkout/remove-coupon", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+            const data = await res.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                Swal.fire({ icon: "error", title: "Error", text: data.message || "Failed to remove coupon." });
+            }
+        } catch (e) {
+            Swal.fire({ icon: "error", title: "Error", text: "Something went wrong. Please try again." });
+        }
+    });
+}
 </script>

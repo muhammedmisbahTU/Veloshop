@@ -85,6 +85,10 @@ router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
    const { default: paymentController } = await import("../controllers/paymentController.js");
    paymentController.getPaymentFailure(req, res, next);
  });
+ router.post("/payment/retry/:id", isAuthenticated, async (req, res, next) => {
+   const { default: paymentController } = await import("../controllers/paymentController.js");
+   paymentController.retryPaymentOrder(req, res, next);
+ });
 
  router.get( "/orders/search", isAuthenticated, orderController.searchOrders );
 

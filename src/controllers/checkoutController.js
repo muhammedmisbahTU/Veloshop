@@ -35,6 +35,7 @@ class CheckoutController {
         title: "Checkout",
         addresses,
         cartItems,
+        coupon: req.session.checkout?.coupon || null,
         ...totals,
       });
 

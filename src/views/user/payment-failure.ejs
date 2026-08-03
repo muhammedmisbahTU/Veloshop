@@ -34,13 +34,9 @@
 <script>
 async function retryPayment() {
     try {
-        const response = await fetch("/checkout/place-order", {
+        const response = await fetch("/payment/retry/<%= order ? order._id : '' %>", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                addressId: "<%= order ? order.addressSnapshot._id || '' : '' %>", // Place order takes addressId
-                paymentMethod: "ONLINE"
-            })
+            headers: { "Content-Type": "application/json" }
         });
         const data = await response.json();
         if (data.success && data.paymentRequired) {

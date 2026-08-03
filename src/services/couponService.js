@@ -43,7 +43,7 @@ export const applyCoupon = async (code, subtotal, userId) => {
     };
   }
 
-  if (coupon.usedCount >= coupon.usageLimit) {
+  if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
     return {
       success: false,
       message: "Coupon limit reached",

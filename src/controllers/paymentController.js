@@ -66,6 +66,29 @@ class PaymentController {
       res.redirect("/");
     }
   }
+
+  // POST /payment/retry/:id
+  async retryPaymentOrder(req, res) {
+    try {
+      const order = await Order.findById(req.params.id);
+      if (!order) {
+        return res.status(404).json({ success: false, message: "Order not found" });
+      }
+
+      const { initPayment } = await import("../services/paymentService.js");
+      const rzpData = await initPayment(order);
+
+      return res.json({
+        success: true,
+        paymentRequired: true,
+        orderId: order._id,
+        ...rzpData
+      });
+    } catch (error) {
+      console.error("Payment retry error:", error);
+      return res.status(500).json({ success: false, message: "Failed to regenerate payment transaction." });
+    }
+  }
 }
 
 export default new PaymentController();
