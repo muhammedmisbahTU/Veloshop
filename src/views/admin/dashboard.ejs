@@ -57,29 +57,85 @@
         </div>
     </div>
 
-    <!-- Chart Section -->
-    <div class="bg-zinc-950 border border-white/5 p-6 sm:p-8 rounded-3xl backdrop-blur-xl">
-        <h3 class="text-xl font-bold text-white mb-6">Sales Analytics (Last 7 Days)</h3>
-        <div class="relative w-full h-80">
-            <canvas id="salesChart"></canvas>
+    <!-- Filter Bar -->
+    <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl mb-8 backdrop-blur-xl">
+        <form method="GET" action="/admin/dashboard" class="flex flex-wrap items-end gap-6">
+            <div class="flex-1 min-w-[200px]">
+                <label class="text-xs text-zinc-400 block mb-2 font-semibold">Analytical Period</label>
+                <select name="filter" id="reportFilter" onchange="checkCustomRange()" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none text-white">
+                    <option value="weekly" <%= filter === 'weekly' ? 'selected' : '' %>>Weekly Trends</option>
+                    <option value="monthly" <%= filter === 'monthly' ? 'selected' : '' %>>Monthly Trends</option>
+                    <option value="yearly" <%= filter === 'yearly' ? 'selected' : '' %>>Yearly Trends</option>
+                    <option value="custom" <%= filter === 'custom' ? 'selected' : '' %>>Custom Date Range</option>
+                </select>
+            </div>
+
+            <div class="flex-1 min-w-[150px] <%= filter === 'custom' ? '' : 'hidden' %>" id="startDateGroup">
+                <label class="text-xs text-zinc-400 block mb-2 font-semibold">Start Date</label>
+                <input type="date" name="startDate" value="<%= startDate %>" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none text-white">
+            </div>
+
+            <div class="flex-1 min-w-[150px] <%= filter === 'custom' ? '' : 'hidden' %>" id="endDateGroup">
+                <label class="text-xs text-zinc-400 block mb-2 font-semibold">End Date</label>
+                <input type="date" name="endDate" value="<%= endDate %>" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none text-white">
+            </div>
+
+            <button type="submit" class="bg-lime-400 hover:bg-lime-300 text-black font-bold text-sm px-6 py-3 rounded-xl transition">
+                Apply Analytics Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <!-- Revenue Trend -->
+        <div class="bg-zinc-950 border border-white/5 p-6 sm:p-8 rounded-3xl backdrop-blur-xl">
+            <h3 class="text-xl font-bold text-white mb-6">Revenue Trend (INR)</h3>
+            <div class="relative w-full h-80">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Orders Trend -->
+        <div class="bg-zinc-950 border border-white/5 p-6 sm:p-8 rounded-3xl backdrop-blur-xl">
+            <h3 class="text-xl font-bold text-white mb-6">Order Volume Trend</h3>
+            <div class="relative w-full h-80">
+                <canvas id="ordersChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    function checkCustomRange() {
+        const filter = document.getElementById("reportFilter").value;
+        const start = document.getElementById("startDateGroup");
+        const end = document.getElementById("endDateGroup");
+
+        if (filter === "custom") {
+            start.classList.remove("hidden");
+            end.classList.remove("hidden");
+        } else {
+            start.classList.add("hidden");
+            end.classList.add("hidden");
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         const labels = <%- chartLabels %>;
-        const data = <%- chartData %>;
+        const salesData = <%- salesTrends %>;
+        const orderData = <%- orderTrends %>;
 
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        new Chart(ctx, {
+        // Revenue Line Chart
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revCtx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Revenue (₹)',
-                    data: data,
+                    data: salesData,
                     borderColor: '#a3e635',
                     backgroundColor: 'rgba(163, 230, 53, 0.1)',
                     borderWidth: 3,
@@ -92,31 +148,36 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
-                        },
-                        ticks: {
-                            color: '#71717a'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
-                        },
-                        ticks: {
-                            color: '#71717a',
-                            callback: function(value) {
-                                return '₹' + value;
-                            }
-                        }
-                    }
+                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#71717a' } },
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#71717a', callback: function(value) { return '₹' + value; } } }
+                }
+            }
+        });
+
+        // Orders Bar Chart
+        const orderCtx = document.getElementById('ordersChart').getContext('2d');
+        new Chart(orderCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Orders Volume',
+                    data: orderData,
+                    backgroundColor: '#818cf8',
+                    borderColor: '#4f46e5',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#71717a' } },
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#71717a', stepSize: 1 } }
                 }
             }
         });

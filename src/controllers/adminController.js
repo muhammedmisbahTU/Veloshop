@@ -294,12 +294,14 @@ export const getDashboard = async (req, res) => {
     const Order = (await import("../models/Order.js")).default;
     const User = (await import("../models/User.js")).default;
 
+    const filter = req.query.filter || "weekly"; // weekly, monthly, yearly, custom
+    const startDateStr = req.query.startDate || "";
+    const endDateStr = req.query.endDate || "";
+
     const totalOrders = await Order.countDocuments();
     const totalCustomers = await User.countDocuments({ role: "USER" });
-
     const totalSales = await Order.countDocuments({ paymentStatus: "SUCCESS" });
 
-    // Total Revenue: sum of grandTotal for SUCCESS paymentStatus
     const revenueAgg = await Order.aggregate([
       { $match: { paymentStatus: "SUCCESS" } },
       { $group: { _id: null, total: { $sum: "$grandTotal" } } }
@@ -310,39 +312,91 @@ export const getDashboard = async (req, res) => {
     const cancelledOrders = await Order.countDocuments({ status: "CANCELLED" });
     const returnedOrders = await Order.countDocuments({ status: "RETURNED" });
 
-    // Get weekly/daily sales stats for Chart.js (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // Build date ranges for filters
+    const matchQuery = { paymentStatus: "SUCCESS" };
+    const now = new Date();
+    let groupFormat = "%Y-%m-%d"; // default daily format
+
+    if (filter === "weekly") {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      matchQuery.createdAt = { $gte: oneWeekAgo };
+      groupFormat = "%Y-%m-%d";
+    } else if (filter === "monthly") {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      matchQuery.createdAt = { $gte: startOfMonth };
+      groupFormat = "%Y-%m-%d";
+    } else if (filter === "yearly") {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      matchQuery.createdAt = { $gte: startOfYear };
+      groupFormat = "%Y-%m"; // Group by Month
+    } else if (filter === "custom") {
+      matchQuery.createdAt = {};
+      if (startDateStr) {
+        matchQuery.createdAt.$gte = new Date(startDateStr + "T00:00:00.000Z");
+      }
+      if (endDateStr) {
+        matchQuery.createdAt.$lte = new Date(endDateStr + "T23:59:59.999Z");
+      }
+      if (!startDateStr && !endDateStr) {
+        delete matchQuery.createdAt;
+      }
+    }
 
     const salesOverTimeAgg = await Order.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: sevenDaysAgo },
-          paymentStatus: "SUCCESS"
-        }
-      },
+      { $match: matchQuery },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: groupFormat, date: "$createdAt" } },
           totalSales: { $sum: "$grandTotal" },
-          count: { $sum: 1 }
+          orderCount: { $sum: 1 }
         }
       },
       { $sort: { _id: 1 } }
     ]);
 
     const chartLabels = [];
-    const chartData = [];
+    const salesTrends = [];
+    const orderTrends = [];
 
-    // Fill in last 7 days labels
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateString = d.toISOString().split("T")[0];
-      chartLabels.push(dateString);
-
-      const found = salesOverTimeAgg.find(item => item._id === dateString);
-      chartData.push(found ? found.totalSales : 0);
+    if (filter === "weekly") {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateString = d.toISOString().split("T")[0];
+        chartLabels.push(dateString);
+        const found = salesOverTimeAgg.find(item => item._id === dateString);
+        salesTrends.push(found ? found.totalSales : 0);
+        orderTrends.push(found ? found.orderCount : 0);
+      }
+    } else if (filter === "monthly") {
+      // Last 30 days
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateString = d.toISOString().split("T")[0];
+        chartLabels.push(dateString);
+        const found = salesOverTimeAgg.find(item => item._id === dateString);
+        salesTrends.push(found ? found.totalSales : 0);
+        orderTrends.push(found ? found.orderCount : 0);
+      }
+    } else if (filter === "yearly") {
+      // 12 months
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      for (let i = 0; i < 12; i++) {
+        const yearMonth = `${now.getFullYear()}-${String(i + 1).padStart(2, "0")}`;
+        chartLabels.push(monthNames[i]);
+        const found = salesOverTimeAgg.find(item => item._id === yearMonth);
+        salesTrends.push(found ? found.totalSales : 0);
+        orderTrends.push(found ? found.orderCount : 0);
+      }
+    } else {
+      // Custom range listing
+      salesOverTimeAgg.forEach(item => {
+        chartLabels.push(item._id);
+        salesTrends.push(item.totalSales);
+        orderTrends.push(item.orderCount);
+      });
     }
 
     res.render("admin/dashboard", {
@@ -358,8 +412,12 @@ export const getDashboard = async (req, res) => {
         cancelledOrders,
         returnedOrders
       },
+      filter,
+      startDate: startDateStr,
+      endDate: endDateStr,
       chartLabels: JSON.stringify(chartLabels),
-      chartData: JSON.stringify(chartData)
+      salesTrends: JSON.stringify(salesTrends),
+      orderTrends: JSON.stringify(orderTrends)
     });
   } catch (err) {
     console.error("Admin dashboard calculation failed:", err);
