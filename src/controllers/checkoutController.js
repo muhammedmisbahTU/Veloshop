@@ -31,11 +31,18 @@ class CheckoutController {
         };
 
 
+        const Wallet = (await import("../models/Wallet.js")).default;
+        let wallet = await Wallet.findOne({ userId: user._id });
+        if (!wallet) {
+            wallet = await Wallet.create({ userId: user._id, balance: 0 });
+        }
+
         res.render("user/checkout", {
         title: "Checkout",
         addresses,
         cartItems,
         coupon: req.session.checkout?.coupon || null,
+        wallet,
         ...totals,
       });
 
@@ -48,7 +55,7 @@ class CheckoutController {
   async placeOrder(req,res){
     try {
         const userId = req.session?.user?.id || req.user?._id;
-        const { addressId, paymentMethod } = req.body;
+        const { addressId, paymentMethod, useWallet } = req.body;
 
         if (!addressId) {
         return res.status(400).json({
@@ -108,92 +115,43 @@ class CheckoutController {
         }
 
         for (const item of cart.items) {
-
         if (item.variantId.stock < item.quantity) {
-
             return res.json({
                 success:false,
                 message:`${item.productId.name} is out of stock`
             });
-
         }
-
     }
 
     const couponDiscount = req.session.checkout?.coupon?.discount || 0;
-
     const totals = calculateCheckout(cart, couponDiscount);
 
-    const shippingAddress = {
-    addressLine1: address.addressLine1,
-    addressLine2: address.addressLine2,
-    city: address.city,
-    state: address.state,
-    pinCode: address.pinCode,
-    phone: address.phone,
-    country: address.country
-};
-
-const addressSnapshot = {
-    addressLine1: address.addressLine1,
-    addressLine2: address.addressLine2,
-    city: address.city,
-    state: address.state,
-    pinCode: address.pinCode,
-    country: address.country
-};
+    const addressSnapshot = {
+        addressLine1: address.addressLine1,
+        addressLine2: address.addressLine2,
+        city: address.city,
+        state: address.state,
+        pinCode: address.pinCode,
+        country: address.country
+    };
 
     const items = cart.items.map(item => ({
-    variantId: item.variantId._id,
-    sku: item.variantId.sku,
-    productName: item.productId.name,
-    thumbnail: item.variantId.images[0],
-    quantity: item.quantity,
-    price: item.variantId.salePrice
-}));
+        variantId: item.variantId._id,
+        sku: item.variantId.sku,
+        productName: item.productId.name,
+        thumbnail: item.variantId.images[0],
+        quantity: item.quantity,
+        price: item.variantId.salePrice
+    }));
 
     const couponData = req.session.checkout?.coupon || null;
-
-    
-
     const orderNumber = `ORD-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
-    const order = await Order.create({
-    
-    orderNumber,
+    // Handle Wallet logic
+    let walletDeducted = 0;
+    let finalPayable = totals.grandTotal;
 
-    userId,
-
-    items,
-
-    shippingAddress,
-
-    subtotal:totals.subtotal,
-
-    offerDiscount: totals.offerDiscount,
-
-    taxAmount: totals.tax,
-
-    shippingCost: totals.shipping,
-
-    grandTotal: totals.grandTotal,
-
-    paymentMethod,
-
-    paymentStatus: "PENDING",
-
-    status: "CONFIRMED",
-
-    addressSnapshot,
-
-    couponId: couponData ? couponData.id : null,
-    
-    couponDiscount: totals.couponDiscount,
-
-});
-
-    // Wallet payment method logic
-    if (paymentMethod === "WALLET") {
+    if (useWallet) {
         const Wallet = (await import("../models/Wallet.js")).default;
         const Transaction = (await import("../models/Transaction.js")).default;
 
@@ -202,42 +160,58 @@ const addressSnapshot = {
             wallet = await Wallet.create({ userId, balance: 0 });
         }
 
-        if (wallet.balance < totals.grandTotal) {
-            return res.status(400).json({
-                success: false,
-                message: "Insufficient wallet balance."
-            });
+        if (wallet.balance > 0) {
+            walletDeducted = Math.min(wallet.balance, totals.grandTotal);
+            finalPayable = totals.grandTotal - walletDeducted;
+
+            wallet.balance -= walletDeducted;
+            await wallet.save();
         }
+    }
 
-        // Debit wallet
-        wallet.balance -= totals.grandTotal;
-        await wallet.save();
+    const order = await Order.create({
+        orderNumber,
+        userId,
+        items,
+        shippingAddress: addressSnapshot,
+        subtotal: totals.subtotal,
+        offerDiscount: totals.offerDiscount,
+        taxAmount: totals.tax,
+        shippingCost: totals.shipping,
+        grandTotal: totals.grandTotal,
+        paymentMethod: walletDeducted > 0 && finalPayable === 0 ? "WALLET" : paymentMethod,
+        paymentStatus: walletDeducted > 0 && finalPayable === 0 ? "SUCCESS" : "PENDING",
+        status: walletDeducted > 0 && finalPayable === 0 ? "CONFIRMED" : "PENDING",
+        addressSnapshot,
+        couponId: couponData ? couponData.id : null,
+        couponDiscount: totals.couponDiscount,
+    });
 
-        // Create transaction history
+    // Record wallet transaction if deducted
+    if (walletDeducted > 0) {
+        const Wallet = (await import("../models/Wallet.js")).default;
+        const Transaction = (await import("../models/Transaction.js")).default;
+        const wallet = await Wallet.findOne({ userId });
+
         await Transaction.create({
             userId,
             walletId: wallet._id,
             referenceType: "ORDER",
             referenceId: order._id,
-            amount: totals.grandTotal,
+            amount: walletDeducted,
             balanceAfter: wallet.balance,
             transactionType: "DEBIT",
             status: "SUCCESS",
-            description: `Payment for order ${order.orderNumber}`
+            description: `Wallet deduction for order ${order.orderNumber}`
         });
-
-        order.paymentStatus = "SUCCESS";
-        await order.save();
     }
 
     for (const item of cart.items) {
         item.variantId.stock -= item.quantity;
         await item.variantId.save();
     }
-    
 
     cart.items = [];
-
     await cart.save();
 
     if (req.session.checkout?.coupon) {
@@ -256,10 +230,17 @@ const addressSnapshot = {
     delete req.session.checkout;
 
     // Razorpay online payment integration
-    if (paymentMethod === "ONLINE") {
+    if (paymentMethod === "ONLINE" && finalPayable > 0) {
         try {
             const { initPayment } = await import("../services/paymentService.js");
+            // Set order grandTotal temporarily to finalPayable for Razorpay order generation
+            const originalGrandTotal = order.grandTotal;
+            order.grandTotal = finalPayable;
             const rzpData = await initPayment(order);
+            // Restore order grandTotal to original database state
+            order.grandTotal = originalGrandTotal;
+            await order.save();
+
             return res.json({
                 success: true,
                 paymentRequired: true,
@@ -276,6 +257,12 @@ const addressSnapshot = {
                 message: "Online payment initiation failed. You can retry from your orders page."
             });
         }
+    }
+
+    if (finalPayable === 0) {
+        order.status = "CONFIRMED";
+        order.paymentStatus = "SUCCESS";
+        await order.save();
     }
 
     return res.json({

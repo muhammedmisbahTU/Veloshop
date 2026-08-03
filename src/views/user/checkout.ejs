@@ -192,8 +192,6 @@
                             Cash on Delivery
                         </span>
 
-                    </label>
-
                     <label class="flex items-center gap-4 bg-zinc-800 p-4 rounded-xl cursor-pointer hover:bg-zinc-700">
 
                         <input
@@ -208,19 +206,33 @@
 
                     </label>
 
-                    <label class="flex items-center gap-4 bg-zinc-800 p-4 rounded-xl cursor-pointer hover:bg-zinc-700">
-
-                        <input
-                            type="radio"
-                            name="payment"
-                            value="WALLET"
-                            class="accent-lime-400">
-
-                        <span>
-                            Wallet
-                        </span>
-
-                    </label>
+                    <!-- Wallet Options -->
+                    <div class="bg-zinc-800 p-4 rounded-xl border border-white/5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-white flex items-center gap-2">
+                                💳 Wallet Balance: <span class="text-lime-400 font-bold">₹<%= wallet.balance.toFixed(2) %></span>
+                            </span>
+                            <% if (wallet.balance > 0) { %>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="useWalletCheckbox" class="sr-only peer" onchange="toggleWalletUsage()">
+                                    <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-400"></div>
+                                    <span class="ml-2 text-xs font-medium text-zinc-400">Use Wallet</span>
+                                </label>
+                            <% } else { %>
+                                <span class="text-xs text-zinc-500">Empty Wallet</span>
+                            <% } %>
+                        </div>
+                        <div id="walletDeductionInfo" class="hidden text-xs text-zinc-400 bg-black/30 p-2.5 rounded-lg space-y-1">
+                            <div class="flex justify-between">
+                                <span>Wallet deduction:</span>
+                                <span class="text-lime-400 font-semibold" id="walletDeductedAmount">-₹0.00</span>
+                            </div>
+                            <div class="flex justify-between font-medium text-white pt-1 border-t border-white/5">
+                                <span>Remaining to pay:</span>
+                                <span id="walletRemainingAmount">₹<%= grandTotal.toFixed(2) %></span>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 
@@ -443,10 +455,42 @@
 </div>
 
 <script>
+let originalGrandTotal = <%= grandTotal %>;
+let walletBalance = <%= wallet.balance %>;
+
+function toggleWalletUsage() {
+    const useWallet = document.getElementById("useWalletCheckbox")?.checked;
+    const infoDiv = document.getElementById("walletDeductionInfo");
+    const codLabel = document.querySelector("input[name='payment'][value='COD']")?.closest('label');
+
+    if (useWallet) {
+        infoDiv.classList.remove("hidden");
+        const deduction = Math.min(walletBalance, originalGrandTotal);
+        const remaining = originalGrandTotal - deduction;
+
+        document.getElementById("walletDeductedAmount").textContent = `-₹${deduction.toFixed(2)}`;
+        document.getElementById("walletRemainingAmount").textContent = `₹${remaining.toFixed(2)}`;
+
+        if (remaining <= 0) {
+            // Full Wallet payment: hide other standard payment methods / disable COD
+            if (codLabel) codLabel.style.display = 'none';
+            // Auto select ONLINE (it will be bypassed on backend anyway)
+            const onlineRadio = document.querySelector("input[name='payment'][value='ONLINE']");
+            if (onlineRadio) onlineRadio.checked = true;
+        } else {
+            if (codLabel) codLabel.style.display = 'flex';
+        }
+    } else {
+        infoDiv.classList.add("hidden");
+        if (codLabel) codLabel.style.display = 'flex';
+    }
+}
+
 async function placeOrder(){
 
     const address=document.querySelector("input[name='address']:checked")?.value;
     const payment=document.querySelector("input[name='payment']:checked")?.value;
+    const useWallet=document.getElementById("useWalletCheckbox")?.checked || false;
 
     if(!address){
         return Swal.fire({
@@ -462,7 +506,8 @@ async function placeOrder(){
         },
         body:JSON.stringify({
             addressId:address,
-            paymentMethod:payment
+            paymentMethod:payment,
+            useWallet:useWallet
         })
     });
 
