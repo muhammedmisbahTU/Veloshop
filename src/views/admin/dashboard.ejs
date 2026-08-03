@@ -104,6 +104,44 @@
             </div>
         </div>
     </div>
+
+    <!-- Best Selling Products Top 10 Ledger -->
+    <div class="bg-zinc-950 border border-white/5 rounded-3xl p-6 sm:p-8 backdrop-blur-xl mb-10">
+        <h3 class="text-xl font-bold text-white mb-6">Top 10 Best Selling Products</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-zinc-900 text-zinc-400">
+                    <tr>
+                        <th class="p-4">Rank</th>
+                        <th class="p-4">Product</th>
+                        <th class="p-4">SKU</th>
+                        <th class="p-4 text-center">Quantity Sold</th>
+                        <th class="p-4 text-right">Revenue Generated</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 text-white">
+                    <% if (bestSellers && bestSellers.length > 0) { %>
+                        <% bestSellers.forEach((item, index) => { %>
+                            <tr class="hover:bg-white/5 transition">
+                                <td class="p-4 font-bold text-lime-400">#<%= index + 1 %></td>
+                                <td class="p-4 flex items-center gap-3">
+                                    <img src="<%= item.thumbnail %>" class="w-10 h-10 object-cover rounded-lg" alt="<%= item.productName %>">
+                                    <span class="font-medium"><%= item.productName %></span>
+                                </td>
+                                <td class="p-4 text-zinc-400"><%= item.sku %></td>
+                                <td class="p-4 text-center font-semibold"><%= item.totalQuantity %></td>
+                                <td class="p-4 text-right text-lime-400 font-bold">₹<%= item.totalRevenue.toFixed(2) %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-zinc-500">No completed sales recorded yet.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
