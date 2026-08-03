@@ -72,6 +72,20 @@ router.get("/wishlist",isAuthenticated, wishlistController.getWishlist);
  router.post("/checkout/place-order", isAuthenticated, checkoutController.placeOrder);
  router.get("/order-success/:id", isAuthenticated, checkoutController.orderSuccess);
 
+ // Razorpay Payment Verification & Outcomes
+ router.post("/payment/verify", isAuthenticated, async (req, res, next) => {
+   const { default: paymentController } = await import("../controllers/paymentController.js");
+   paymentController.verifyPayment(req, res, next);
+ });
+ router.post("/payment/cancel/:id", isAuthenticated, async (req, res, next) => {
+   const { default: paymentController } = await import("../controllers/paymentController.js");
+   paymentController.cancelPayment(req, res, next);
+ });
+ router.get("/payment-failure/:id", isAuthenticated, async (req, res, next) => {
+   const { default: paymentController } = await import("../controllers/paymentController.js");
+   paymentController.getPaymentFailure(req, res, next);
+ });
+
  router.get( "/orders/search", isAuthenticated, orderController.searchOrders );
 
  router.get("/orders/:id", isAuthenticated, checkoutController.orderDetails);

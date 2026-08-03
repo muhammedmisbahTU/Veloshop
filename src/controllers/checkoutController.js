@@ -216,6 +216,29 @@ const addressSnapshot = {
 
     delete req.session.checkout;
 
+    // Razorpay online payment integration
+    if (paymentMethod === "ONLINE") {
+        try {
+            const { initPayment } = await import("../services/paymentService.js");
+            const rzpData = await initPayment(order);
+            return res.json({
+                success: true,
+                paymentRequired: true,
+                orderId: order._id,
+                ...rzpData
+            });
+        } catch (paymentError) {
+            console.error("Razorpay order creation failed, marking order as PAYMENT_FAILED:", paymentError);
+            order.status = "PAYMENT_FAILED";
+            order.paymentStatus = "FAILED";
+            await order.save();
+            return res.json({
+                success: false,
+                message: "Online payment initiation failed. You can retry from your orders page."
+            });
+        }
+    }
+
     return res.json({
     success: true,
     orderId: order._id

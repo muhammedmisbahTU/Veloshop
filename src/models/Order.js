@@ -85,13 +85,17 @@ const orderSchema = new mongoose.Schema(
     ],
     paymentMethod: {
       type: String,
-      enum: ["WALLET", "UPI", "CARD", "COD"],
+      enum: ["WALLET", "UPI", "CARD", "COD", "ONLINE"],
       required: true
     },
     paymentStatus: {
       type: String,
       enum: ["PENDING", "SUCCESS", "FAILED", "REFUNDED"],
       default: "PENDING"
+    },
+    paymentGatewayId: {
+      type: String,
+      default: null
     },
     status: {
       type: String,
