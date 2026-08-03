@@ -272,21 +272,45 @@ order.shippingCost -
 order.couponDiscount -
 order.offerDiscount;
 
+    // Process wallet refund for cancelled item
+    const itemTotal = item.price * item.quantity;
+    if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET")) {
+        const Wallet = (await import("../models/Wallet.js")).default;
+        const Transaction = (await import("../models/Transaction.js")).default;
 
+        let wallet = await Wallet.findOne({ userId });
+        if (!wallet) {
+            wallet = await Wallet.create({ userId, balance: 0 });
+        }
 
-await order.save();
+        wallet.balance += itemTotal;
+        await wallet.save();
 
+        await Transaction.create({
+            userId,
+            walletId: wallet._id,
+            referenceType: "REFUND",
+            referenceId: order._id,
+            amount: itemTotal,
+            balanceAfter: wallet.balance,
+            transactionType: "CREDIT",
+            status: "SUCCESS",
+            description: `Refund for cancelled item (${item.productName}) in order ${order.orderNumber}`
+        });
 
+        order.refundAmount = (order.refundAmount || 0) + itemTotal;
+        if (activeItems.length === 0) {
+            order.paymentStatus = "REFUNDED";
+            order.refundStatus = "COMPLETED";
+        }
+    }
 
-return res.json({
+    await order.save();
 
-success:true,
-
-message:"Product cancelled successfully"
-
-});
-
-
+    return res.json({
+    success:true,
+    message:"Product cancelled successfully"
+    });
 
 }catch(error){
 
