@@ -460,6 +460,40 @@ export const getDashboard = async (req, res) => {
       { $limit: 10 }
     ]);
 
+    // Aggregate top 10 best-selling brands (completed / DELIVERED orders)
+    const bestBrandsAgg = await Order.aggregate([
+      { $match: { status: "DELIVERED" } },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "variants",
+          localField: "items.variantId",
+          foreignField: "_id",
+          as: "variantInfo"
+        }
+      },
+      { $unwind: "$variantInfo" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "variantInfo.productId",
+          foreignField: "_id",
+          as: "productInfo"
+        }
+      },
+      { $unwind: "$productInfo" },
+      {
+        $group: {
+          _id: "$productInfo.brand",
+          brandName: { $first: "$productInfo.brand" },
+          totalQuantity: { $sum: "$items.quantity" },
+          totalRevenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+        }
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: 10 }
+    ]);
+
     res.render("admin/dashboard", {
       layout: "layouts/admin-layout",
       title: "Control Center Dashboard",
@@ -480,7 +514,8 @@ export const getDashboard = async (req, res) => {
       salesTrends: JSON.stringify(salesTrends),
       orderTrends: JSON.stringify(orderTrends),
       bestSellers: bestSellersAgg,
-      bestCategories: bestCategoriesAgg
+      bestCategories: bestCategoriesAgg,
+      bestBrands: bestBrandsAgg
     });
   } catch (err) {
     console.error("Admin dashboard calculation failed:", err);
