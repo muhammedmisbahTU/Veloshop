@@ -64,7 +64,11 @@ const router = express.Router();
 
 router.get("/admin/login", getAdminLogin);
 router.post("/admin/login", validate(loginSchema), postAdminLogin);
-router.get("/admin", isAdmin, (req, res) => res.redirect("/admin/users"));
+router.get("/admin", isAdmin, (req, res) => res.redirect("/admin/dashboard"));
+router.get("/admin/dashboard", isAdmin, async (req, res, next) => {
+    const { getDashboard } = await import("../controllers/adminController.js");
+    getDashboard(req, res, next);
+});
 router.get("/admin/users", isAdmin, getUsers);
 router.post("/admin/users/:id/block", isAdmin, blockUser);
 router.post("/admin/users/:id/unblock", isAdmin, unblockUser);

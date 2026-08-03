@@ -1,0 +1,124 @@
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold text-white">Dashboard Overview</h2>
+        <p class="text-zinc-500 text-sm mt-1">Real-time statistics & visual metrics of Veloshop</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <!-- Stat item 1 -->
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl backdrop-blur-xl">
+            <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Total Revenue</p>
+            <h3 class="text-3xl font-black text-lime-400 mt-2">₹<%= stats.totalRevenue.toFixed(2) %></h3>
+            <p class="text-xs text-zinc-500 mt-1">From successful sales transactions</p>
+        </div>
+        <!-- Stat item 2 -->
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl backdrop-blur-xl">
+            <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Total Sales Count</p>
+            <h3 class="text-3xl font-black text-white mt-2"><%= stats.totalSales %></h3>
+            <p class="text-xs text-zinc-500 mt-1">Paid orders placed</p>
+        </div>
+        <!-- Stat item 3 -->
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl backdrop-blur-xl">
+            <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Total Orders</p>
+            <h3 class="text-3xl font-black text-white mt-2"><%= stats.totalOrders %></h3>
+            <p class="text-xs text-zinc-500 mt-1">All orders in system</p>
+        </div>
+        <!-- Stat item 4 -->
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl backdrop-blur-xl">
+            <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Total Customers</p>
+            <h3 class="text-3xl font-black text-white mt-2"><%= stats.totalCustomers %></h3>
+            <p class="text-xs text-zinc-500 mt-1">Registered users</p>
+        </div>
+    </div>
+
+    <!-- Status Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Pending Orders</p>
+                <h4 class="text-2xl font-bold text-yellow-500 mt-1"><%= stats.pendingOrders %></h4>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">⏳</div>
+        </div>
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Cancelled Orders</p>
+                <h4 class="text-2xl font-bold text-red-500 mt-1"><%= stats.cancelledOrders %></h4>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">✖</div>
+        </div>
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Returned Orders</p>
+                <h4 class="text-2xl font-bold text-purple-500 mt-1"><%= stats.returnedOrders %></h4>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">↩</div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="bg-zinc-950 border border-white/5 p-6 sm:p-8 rounded-3xl backdrop-blur-xl">
+        <h3 class="text-xl font-bold text-white mb-6">Sales Analytics (Last 7 Days)</h3>
+        <div class="relative w-full h-80">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const labels = <%- chartLabels %>;
+        const data = <%- chartData %>;
+
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: data,
+                    borderColor: '#a3e635',
+                    backgroundColor: 'rgba(163, 230, 53, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: '#a3e635',
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#71717a'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#71717a',
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>

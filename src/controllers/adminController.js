@@ -288,3 +288,82 @@ export const unblockUser = async (req, res) => {
     });
   }
 };
+
+export const getDashboard = async (req, res) => {
+  try {
+    const Order = (await import("../models/Order.js")).default;
+    const User = (await import("../models/User.js")).default;
+
+    const totalOrders = await Order.countDocuments();
+    const totalCustomers = await User.countDocuments({ role: "USER" });
+
+    const totalSales = await Order.countDocuments({ paymentStatus: "SUCCESS" });
+
+    // Total Revenue: sum of grandTotal for SUCCESS paymentStatus
+    const revenueAgg = await Order.aggregate([
+      { $match: { paymentStatus: "SUCCESS" } },
+      { $group: { _id: null, total: { $sum: "$grandTotal" } } }
+    ]);
+    const totalRevenue = revenueAgg[0]?.total || 0;
+
+    const pendingOrders = await Order.countDocuments({ status: "PENDING" });
+    const cancelledOrders = await Order.countDocuments({ status: "CANCELLED" });
+    const returnedOrders = await Order.countDocuments({ status: "RETURNED" });
+
+    // Get weekly/daily sales stats for Chart.js (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const salesOverTimeAgg = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sevenDaysAgo },
+          paymentStatus: "SUCCESS"
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          totalSales: { $sum: "$grandTotal" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    const chartLabels = [];
+    const chartData = [];
+
+    // Fill in last 7 days labels
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateString = d.toISOString().split("T")[0];
+      chartLabels.push(dateString);
+
+      const found = salesOverTimeAgg.find(item => item._id === dateString);
+      chartData.push(found ? found.totalSales : 0);
+    }
+
+    res.render("admin/dashboard", {
+      layout: "layouts/admin-layout",
+      title: "Control Center Dashboard",
+      path: "/admin/dashboard",
+      stats: {
+        totalOrders,
+        totalSales,
+        totalRevenue,
+        totalCustomers,
+        pendingOrders,
+        cancelledOrders,
+        returnedOrders
+      },
+      chartLabels: JSON.stringify(chartLabels),
+      chartData: JSON.stringify(chartData)
+    });
+  } catch (err) {
+    console.error("Admin dashboard calculation failed:", err);
+    req.session.errorMessage = "Failed to load dashboard statistics.";
+    res.redirect("/admin/users");
+  }
+};

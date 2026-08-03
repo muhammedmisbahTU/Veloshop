@@ -17,6 +17,7 @@
             <nav class="mt-10 space-y-2 text-sm font-semibold text-zinc-300">
                 <% const activeClass = "block border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-lime-400"; %>
                 <% const inactiveClass = "block border border-white/10 px-4 py-3 hover:border-lime-400/50 hover:text-lime-400"; %>
+                <a href="/admin/dashboard" class="<%= (locals.path && path.startsWith('/admin/dashboard')) ? activeClass : inactiveClass %>">Dashboard</a>
                 <a href="/admin/users" class="<%= (locals.path && path.startsWith('/admin/users')) ? activeClass : inactiveClass %>">Users</a>
                 <a href="/admin/orders" class="<%= (locals.path && path.startsWith('/admin/orders')) ? activeClass : inactiveClass %>"> Orders </a>
                 <a href="/admin/categories" class="<%= (locals.path && path.startsWith('/admin/categories')) ? activeClass : inactiveClass %>">Categories</a>
