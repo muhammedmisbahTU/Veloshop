@@ -479,7 +479,48 @@ export const downloadSalesReport = async (req, res) => {
 
     const { orders, summary } = await compileSalesReportData(filter, startDate, endDate);
 
-    if (format === "csv") {
+    if (format === "excel") {
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Sales Report");
+
+      worksheet.columns = [
+        { header: "Order Number", key: "orderNumber", width: 25 },
+        { header: "Date", key: "date", width: 15 },
+        { header: "Payment Method", key: "paymentMethod", width: 15 },
+        { header: "Payment Status", key: "paymentStatus", width: 15 },
+        { header: "Order Status", key: "orderStatus", width: 15 },
+        { header: "Grand Total (INR)", key: "grandTotal", width: 20 }
+      ];
+
+      orders.forEach(order => {
+        worksheet.addRow({
+          orderNumber: order.orderNumber,
+          date: order.createdAt.toDateString(),
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          orderStatus: order.status,
+          grandTotal: order.grandTotal
+        });
+      });
+
+      // Add summary details at bottom of sheet
+      worksheet.addRow([]);
+      worksheet.addRow({ orderNumber: "Summary Statistics" });
+      worksheet.addRow({ orderNumber: "Order Count", date: summary.orderCount });
+      worksheet.addRow({ orderNumber: "Total Sales", date: summary.totalSales });
+      worksheet.addRow({ orderNumber: "Discounts Applied", date: summary.totalDiscounts });
+      worksheet.addRow({ orderNumber: "Coupon Deductions", date: summary.couponDeductions });
+      worksheet.addRow({ orderNumber: "Final Net Amount", date: summary.finalAmount });
+      worksheet.addRow({ orderNumber: "Cancelled Amount", date: summary.cancelledAmount });
+      worksheet.addRow({ orderNumber: "Returned Amount", date: summary.returnedAmount });
+
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename=sales-report-${filter}-${Date.now()}.xlsx`);
+
+      await workbook.xlsx.write(res);
+      return res.end();
+    } else if (format === "csv") {
       res.setHeader("Content-Type", "text/csv");
       res.setHeader("Content-Disposition", `attachment; filename=sales-report-${filter}-${Date.now()}.csv`);
 

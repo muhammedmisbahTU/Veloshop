@@ -5,6 +5,9 @@
             <p class="text-zinc-500 text-sm mt-1">Audit order counts, coupon deductions, refunds, and final revenues</p>
         </div>
         <div class="flex gap-3">
+            <a href="/admin/reports/download?filter=<%= filter %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=excel" class="bg-zinc-900 border border-white/10 hover:border-lime-400/50 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition">
+                Download Excel
+            </a>
             <a href="/admin/reports/download?filter=<%= filter %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=csv" class="bg-zinc-900 border border-white/10 hover:border-lime-400/50 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition">
                 Download CSV
             </a>
