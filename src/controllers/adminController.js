@@ -367,3 +367,179 @@ export const getDashboard = async (req, res) => {
     res.redirect("/admin/users");
   }
 };
+
+const compileSalesReportData = async (filter, startDateStr, endDateStr) => {
+  const Order = (await import("../models/Order.js")).default;
+  const matchQuery = {};
+
+  const now = new Date();
+  if (filter === "daily") {
+    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+    matchQuery.createdAt = { $gte: startOfDay, $lte: endOfDay };
+  } else if (filter === "weekly") {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    matchQuery.createdAt = { $gte: oneWeekAgo };
+  } else if (filter === "monthly") {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    matchQuery.createdAt = { $gte: startOfMonth };
+  } else if (filter === "yearly") {
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    matchQuery.createdAt = { $gte: startOfYear };
+  } else if (filter === "custom") {
+    matchQuery.createdAt = {};
+    if (startDateStr) {
+      matchQuery.createdAt.$gte = new Date(startDateStr + "T00:00:00.000Z");
+    }
+    if (endDateStr) {
+      matchQuery.createdAt.$lte = new Date(endDateStr + "T23:59:59.999Z");
+    }
+    if (!startDateStr && !endDateStr) {
+      delete matchQuery.createdAt;
+    }
+  }
+
+  // Fetch orders matching the range
+  const orders = await Order.find(matchQuery).sort({ createdAt: -1 });
+
+  // Calculate totals
+  let orderCount = orders.length;
+  let totalSales = 0;
+  let totalDiscounts = 0;
+  let couponDeductions = 0;
+  let finalAmount = 0;
+  let cancelledAmount = 0;
+  let returnedAmount = 0;
+
+  orders.forEach(order => {
+    // Sum coupon discount
+    couponDeductions += order.couponDiscount || 0;
+    // Sum total discounts (Coupon + Offer)
+    totalDiscounts += (order.couponDiscount || 0) + (order.offerDiscount || 0);
+
+    if (order.status === "CANCELLED") {
+      cancelledAmount += order.grandTotal;
+    } else if (order.status === "RETURNED") {
+      returnedAmount += order.grandTotal;
+    } else {
+      // For CONFIRMED, PROCESSING, SHIPPED, DELIVERED
+      if (order.paymentStatus === "SUCCESS") {
+        totalSales += order.grandTotal;
+      }
+      finalAmount += order.grandTotal;
+    }
+  });
+
+  return {
+    orders,
+    summary: {
+      orderCount,
+      totalSales,
+      totalDiscounts,
+      couponDeductions,
+      finalAmount,
+      cancelledAmount,
+      returnedAmount
+    }
+  };
+};
+
+export const getSalesReports = async (req, res) => {
+  try {
+    const filter = req.query.filter || "daily";
+    const startDate = req.query.startDate || "";
+    const endDate = req.query.endDate || "";
+
+    const { orders, summary } = await compileSalesReportData(filter, startDate, endDate);
+
+    res.render("admin/reports", {
+      layout: "layouts/admin-layout",
+      title: "Sales Report Analytics",
+      path: "/admin/reports",
+      orders,
+      summary,
+      filter,
+      startDate,
+      endDate
+    });
+  } catch (error) {
+    console.error("Get sales report error:", error);
+    req.session.errorMessage = "Failed to load sales report.";
+    res.redirect("/admin/dashboard");
+  }
+};
+
+export const downloadSalesReport = async (req, res) => {
+  try {
+    const filter = req.query.filter || "daily";
+    const startDate = req.query.startDate || "";
+    const endDate = req.query.endDate || "";
+    const format = req.query.format || "csv";
+
+    const { orders, summary } = await compileSalesReportData(filter, startDate, endDate);
+
+    if (format === "csv") {
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename=sales-report-${filter}-${Date.now()}.csv`);
+
+      let csvContent = "Sales Report Summary\n";
+      csvContent += `Order Count,${summary.orderCount}\n`;
+      csvContent += `Total Sales,INR ${summary.totalSales.toFixed(2)}\n`;
+      csvContent += `Discounts,INR ${summary.totalDiscounts.toFixed(2)}\n`;
+      csvContent += `Coupon Deductions,INR ${summary.couponDeductions.toFixed(2)}\n`;
+      csvContent += `Final Revenue Amount,INR ${summary.finalAmount.toFixed(2)}\n`;
+      csvContent += `Cancelled Amount,INR ${summary.cancelledAmount.toFixed(2)}\n`;
+      csvContent += `Returned Amount,INR ${summary.returnedAmount.toFixed(2)}\n\n`;
+
+      csvContent += "Order Number,Date,Payment Method,Payment Status,Order Status,Grand Total\n";
+      orders.forEach(order => {
+        csvContent += `${order.orderNumber},${order.createdAt.toDateString()},${order.paymentMethod},${order.paymentStatus},${order.status},${order.grandTotal}\n`;
+      });
+
+      return res.status(200).send(csvContent);
+    } else {
+      // PDF download using PDFKit
+      const PDFDocument = (await import("pdfkit")).default;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename=sales-report-${filter}-${Date.now()}.pdf`);
+
+      const doc = new PDFDocument({ margin: 50 });
+      doc.pipe(res);
+
+      // Title header
+      doc.fontSize(22).text("VELOSHOP SALES REPORT", { align: "center" });
+      doc.fontSize(12).text(`Filter Type: ${filter.toUpperCase()}`, { align: "center" });
+      if (filter === "custom") {
+        doc.text(`Range: ${startDate} to ${endDate}`, { align: "center" });
+      }
+      doc.moveDown();
+
+      // Summary
+      doc.fontSize(15).text("Summary Analytics", { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(11).text(`Total Orders Count: ${summary.orderCount}`);
+      doc.text(`Total Sales Value (Paid): ₹${summary.totalSales.toFixed(2)}`);
+      doc.text(`Total Discounts Applied: ₹${summary.totalDiscounts.toFixed(2)}`);
+      doc.text(`Coupon Deductions: ₹${summary.couponDeductions.toFixed(2)}`);
+      doc.text(`Final Net Revenue: ₹${summary.finalAmount.toFixed(2)}`);
+      doc.text(`Cancelled Revenue Loss: ₹${summary.cancelledAmount.toFixed(2)}`);
+      doc.text(`Returned Revenue Loss: ₹${summary.returnedAmount.toFixed(2)}`);
+      doc.moveDown();
+
+      // Orders list table
+      doc.fontSize(15).text("Order Ledger", { underline: true });
+      doc.moveDown(0.5);
+      orders.forEach((order, index) => {
+        doc.fontSize(10).text(
+          `${index + 1}. Order: ${order.orderNumber} | Date: ${order.createdAt.toLocaleDateString()} | Total: ₹${order.grandTotal.toFixed(2)} | Method: ${order.paymentMethod} | Status: ${order.status}`
+        );
+      });
+
+      doc.end();
+    }
+  } catch (error) {
+    console.error("Download sales report error:", error);
+    res.status(500).send("Report download failed.");
+  }
+};

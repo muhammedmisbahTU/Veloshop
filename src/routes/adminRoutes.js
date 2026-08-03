@@ -100,6 +100,15 @@ router.get( "/admin/orders/:id", isAdmin, adminOrderController.orderDetails );
 router.post( "/admin/orders/:id/status", isAdmin, adminOrderController.updateOrderStatus );
 router.post( "/admin/orders/:orderId/item/:itemId/return-status", isAdmin, adminOrderController.updateItemReturnStatus );
 
+router.get("/admin/reports", isAdmin, async (req, res, next) => {
+    const { getSalesReports } = await import("../controllers/adminController.js");
+    getSalesReports(req, res, next);
+});
+router.get("/admin/reports/download", isAdmin, async (req, res, next) => {
+    const { downloadSalesReport } = await import("../controllers/adminController.js");
+    downloadSalesReport(req, res, next);
+});
+
 //offer
 router.get("/admin/offers", isAdmin, getOffers);
 router.get("/admin/offers/new", isAdmin, getNewOffer);

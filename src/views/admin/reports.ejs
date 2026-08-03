@@ -1,0 +1,127 @@
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold text-white">Sales Reports Ledger</h2>
+            <p class="text-zinc-500 text-sm mt-1">Audit order counts, coupon deductions, refunds, and final revenues</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="/admin/reports/download?filter=<%= filter %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=csv" class="bg-zinc-900 border border-white/10 hover:border-lime-400/50 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition">
+                Download CSV
+            </a>
+            <a href="/admin/reports/download?filter=<%= filter %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=pdf" class="bg-lime-400 hover:bg-lime-300 text-black font-semibold text-sm px-4 py-2.5 rounded-xl transition">
+                Download PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl mb-8 backdrop-blur-xl">
+        <form method="GET" action="/admin/reports" class="flex flex-wrap items-end gap-6">
+            <div class="flex-1 min-w-[200px]">
+                <label class="text-xs text-zinc-400 block mb-2 font-semibold">Report Period</label>
+                <select name="filter" id="reportFilter" onchange="checkCustomRange()" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none text-white">
+                    <option value="daily" <%= filter === 'daily' ? 'selected' : '' %>>Daily Report</option>
+                    <option value="weekly" <%= filter === 'weekly' ? 'selected' : '' %>>Weekly Report</option>
+                    <option value="monthly" <%= filter === 'monthly' ? 'selected' : '' %>>Monthly Report</option>
+                    <option value="yearly" <%= filter === 'yearly' ? 'selected' : '' %>>Yearly Report</option>
+                    <option value="custom" <%= filter === 'custom' ? 'selected' : '' %>>Custom Range</option>
+                </select>
+            </div>
+
+            <div class="flex-1 min-w-[150px] <%= filter === 'custom' ? '' : 'hidden' %>" id="startDateGroup">
+                <label class="text-xs text-zinc-400 block mb-2 font-semibold">Start Date</label>
+                <input type="date" name="startDate" value="<%= startDate %>" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none text-white">
+            </div>
+
+            <div class="flex-1 min-w-[150px] <%= filter === 'custom' ? '' : 'hidden' %>" id="endDateGroup">
+                <label class="text-xs text-zinc-400 block mb-2 font-semibold">End Date</label>
+                <input type="date" name="endDate" value="<%= endDate %>" class="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:border-lime-400 focus:outline-none text-white">
+            </div>
+
+            <button type="submit" class="bg-lime-400 hover:bg-lime-300 text-black font-bold text-sm px-6 py-3 rounded-xl transition">
+                Generate Report
+            </button>
+        </form>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl">
+            <p class="text-xs text-zinc-500 uppercase font-semibold">Orders Count</p>
+            <h3 class="text-3xl font-black text-white mt-2"><%= summary.orderCount %></h3>
+        </div>
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl">
+            <p class="text-xs text-zinc-500 uppercase font-semibold">Total Revenue (Paid)</p>
+            <h3 class="text-3xl font-black text-lime-400 mt-2">₹<%= summary.totalSales.toFixed(2) %></h3>
+        </div>
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl">
+            <p class="text-xs text-zinc-500 uppercase font-semibold">Coupon Discounts</p>
+            <h3 class="text-3xl font-black text-red-400 mt-2">₹<%= summary.couponDeductions.toFixed(2) %></h3>
+        </div>
+        <div class="bg-zinc-950 border border-white/5 p-6 rounded-3xl">
+            <p class="text-xs text-zinc-500 uppercase font-semibold">Refunds (Returns/Cancelled)</p>
+            <h3 class="text-3xl font-black text-purple-400 mt-2">₹<%= (summary.cancelledAmount + summary.returnedAmount).toFixed(2) %></h3>
+        </div>
+    </div>
+
+    <!-- Details Ledger Table -->
+    <div class="bg-zinc-950 border border-white/5 rounded-3xl overflow-hidden">
+        <div class="p-6 border-b border-white/5">
+            <h3 class="text-xl font-bold text-white">Orders Ledger</h3>
+        </div>
+        <table class="w-full text-left">
+            <thead class="bg-zinc-900 text-zinc-400 text-sm">
+                <tr>
+                    <th class="p-5">Order ID</th>
+                    <th class="p-5">Date</th>
+                    <th class="p-5">Payment Method</th>
+                    <th class="p-5">Payment Status</th>
+                    <th class="p-5">Order Status</th>
+                    <th class="p-5 text-right">Grand Total</th>
+                </tr>
+            </thead>
+            <tbody class="text-white text-sm divide-y divide-white/5">
+                <% if (orders && orders.length > 0) { %>
+                    <% orders.forEach(order => { %>
+                        <tr class="hover:bg-zinc-900/40 transition">
+                            <td class="p-5 text-lime-400 font-semibold"><%= order.orderNumber %></td>
+                            <td class="p-5 text-zinc-400"><%= order.createdAt.toDateString() %></td>
+                            <td class="p-5"><%= order.paymentMethod %></td>
+                            <td class="p-5">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= order.paymentStatus === 'SUCCESS' ? 'bg-green-500/10 text-green-400' : order.paymentStatus === 'FAILED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400' %>">
+                                    <%= order.paymentStatus %>
+                                </span>
+                            </td>
+                            <td class="p-5">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= order.status === 'DELIVERED' ? 'bg-green-500/10 text-green-400' : order.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400' %>">
+                                    <%= order.status %>
+                                </span>
+                            </td>
+                            <td class="p-5 text-right font-bold">₹<%= order.grandTotal.toFixed(2) %></td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="text-center py-12 text-zinc-500">No records found for this period.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function checkCustomRange() {
+        const filter = document.getElementById("reportFilter").value;
+        const start = document.getElementById("startDateGroup");
+        const end = document.getElementById("endDateGroup");
+
+        if (filter === "custom") {
+            start.classList.remove("hidden");
+            end.classList.remove("hidden");
+        } else {
+            start.classList.add("hidden");
+            end.classList.add("hidden");
+        }
+    }
+</script>
