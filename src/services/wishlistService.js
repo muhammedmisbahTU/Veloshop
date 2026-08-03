@@ -1,4 +1,4 @@
-import Wishlist from "../models/wishlist.js";
+import Wishlist from "../models/Wishlist.js";
 
 class WishlistService {
   async addToWishlist(userId, variantId) {

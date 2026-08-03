@@ -13,7 +13,7 @@ const orders = await Order.find()
 
 .populate(
     "userId",
-    "name email"
+    "fullName email"
 )
 
 .sort({
@@ -58,7 +58,7 @@ const order = await Order.findById(req.params.id)
 
 .populate(
     "userId",
-    "name email phone"
+    "fullName email phone"
 );
 
 

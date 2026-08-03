@@ -577,7 +577,7 @@ doc.fontSize(11);
 
 
 doc.text(
-`${order.userId.name}`
+`${order.userId.fullName}`
 );
 
 
