@@ -94,6 +94,7 @@ router.post("/admin/variants/:variantId/toggle-status", isAdmin, toggleVariantSt
 router.get( "/admin/orders", isAdmin, adminOrderController.orderList );
 router.get( "/admin/orders/:id", isAdmin, adminOrderController.orderDetails );
 router.post( "/admin/orders/:id/status", isAdmin, adminOrderController.updateOrderStatus );
+router.post( "/admin/orders/:orderId/item/:itemId/return-status", isAdmin, adminOrderController.updateItemReturnStatus );
 
 //offer
 router.get("/admin/offers", isAdmin, getOffers);

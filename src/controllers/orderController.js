@@ -53,7 +53,6 @@ return res.json({
 
 
 // Only allow cancellation before shipping
-
 if(
 order.status !== "PENDING" &&
 order.status !== "CONFIRMED"
@@ -66,52 +65,32 @@ return res.json({
 
 }
 
-
+const { reason } = req.body;
+const cancellationText = reason || "Cancelled by customer";
 
 for(const item of order.items){
-
-
-const variant = await Variant.findById(
-    item.variantId
-);
-
-
-if(variant){
-
-variant.stock += item.quantity;
-
-await variant.save();
-
+  if (item.itemStatus !== "CANCELLED") {
+    const variant = await Variant.findById(
+        item.variantId
+    );
+    if(variant){
+      variant.stock += item.quantity;
+      await variant.save();
+    }
+    item.itemStatus="CANCELLED";
+    item.cancellationReason = cancellationText;
+  }
 }
-
-
-// update item status
-
-item.itemStatus="CANCELLED";
-
-
-}
-
-
 
 // update order
-
 order.status="CANCELLED";
-
-order.cancellationReason =
-"Cancelled by customer";
-
+order.cancellationReason = cancellationText;
 
 await order.save();
 
-
-
 return res.json({
-
 success:true,
-
 message:"Order cancelled successfully"
-
 });
 
 
@@ -220,7 +199,7 @@ await variant.save();
 // update item status
 
 item.itemStatus="CANCELLED";
-item.cancelReason = reason || "No reason provided";
+item.cancellationReason = reason || "No reason provided";
 
 
 // check remaining active products
@@ -406,6 +385,8 @@ item.returnStatus="REQUESTED";
 item.returnReason=reason;
 
 
+order.returnStatus="REQUESTED";
+order.returnReason=reason;
 
 await order.save();
 
