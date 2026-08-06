@@ -155,14 +155,14 @@
 
             <div>
 
-                <% if(defaultVariant.salePrice){ %>
+                <% if(defaultVariant?.salePrice){ %>
 
                     <div class="flex items-center gap-3">
 
                         <span id="salePrice"
                             class="text-4xl font-black text-white">
 
-                            ₹<%= defaultVariant.salePrice %>
+                            ₹<%= defaultVariant?.salePrice %>
 
                         </span>
 
@@ -364,20 +364,20 @@
 
                 <div class="mt-3 flex items-center gap-2">
 
-                    <% if(p.variant.salePrice){ %>
+                    <% if(p.variant?.salePrice){ %>
 
                         <span class="text-lime-400 font-bold text-lg">
-                            ₹<%= p.variant.salePrice %>
+                            ₹<%= p.variant?.salePrice %>
                         </span>
 
                         <span class="text-sm text-zinc-500 line-through">
-                            ₹<%= p.variant.regularPrice %>
+                            ₹<%= p.variant?.regularPrice %>
                         </span>
 
                     <% } else { %>
 
                         <span class="text-lime-400 font-bold text-lg">
-                            ₹<%= p.variant.regularPrice %>
+                            ₹<%= p.variant?.regularPrice %>
                         </span>
 
                     <% } %>

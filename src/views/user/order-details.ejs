@@ -517,7 +517,11 @@ return;
 const response = await fetch(
 `/orders/${id}/cancel`,
 {
-method:"POST"
+method:"POST",
+headers:{
+  "Content-Type":"application/json"
+},
+body:JSON.stringify({ reason: "" })
 }
 );
 

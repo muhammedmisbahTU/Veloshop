@@ -27,7 +27,7 @@ app.get("/.well-known/appspecific/com.chrome.devtools.json", (req, res) => {
 app.use(morgan("dev"))
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(sessionConfig);
 
 // Initialize Passport for Google OAuth

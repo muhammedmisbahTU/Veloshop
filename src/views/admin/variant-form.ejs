@@ -444,13 +444,6 @@ validation
       errorMessage: "Sale Price cannot be less than 0",
     },
   ])
-  .addField("#variantImagesInput", [
-    {
-      rule: "minFilesCount",
-      value: 3,
-      errorMessage: "Upload at least 3 images",
-    },
-  ])
   .onSuccess(async (event) => {
       event.preventDefault();
 

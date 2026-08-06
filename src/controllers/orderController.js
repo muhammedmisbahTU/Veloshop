@@ -65,7 +65,7 @@ return res.json({
 
 }
 
-const { reason } = req.body;
+const { reason } = req.body || {};
 const cancellationText = reason || "Cancelled by customer";
 
 for(const item of order.items){
@@ -78,7 +78,7 @@ for(const item of order.items){
       await variant.save();
     }
     item.itemStatus="CANCELLED";
-    item.cancellationReason = cancellationText;
+    item.cancelReason = cancellationText;
   }
 }
 
@@ -126,7 +126,7 @@ message:"Order cancelled successfully"
 
 }catch(error){
 
-console.log(error);
+console.error("Cancel order error:", error);
 
 return res.status(500).json({
 
@@ -228,7 +228,7 @@ await variant.save();
 // update item status
 
 item.itemStatus="CANCELLED";
-item.cancellationReason = reason || "No reason provided";
+item.cancelReason = reason || "No reason provided";
 
 
 // check remaining active products

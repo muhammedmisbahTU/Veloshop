@@ -219,7 +219,7 @@ if (status === "CANCELLED" && order.status !== "CANCELLED") {
                 await variant.save();
             }
             item.itemStatus = "CANCELLED";
-            item.cancellationReason = "Cancelled by Administrator";
+            item.cancelReason = "Cancelled by Administrator";
         }
     }
     order.paymentStatus = "FAILED";
