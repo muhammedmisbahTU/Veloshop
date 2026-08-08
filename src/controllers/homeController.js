@@ -90,7 +90,8 @@ const attachVariantDetails = async (products) => {
         images: v.images || [],
         minPrice: currentPrice,
         maxPrice: currentPrice,
-        stock: v.stock
+        stock: v.stock,
+        defaultVariantId: v._id
       });
     } else {
       const existing = detailsByProductId.get(pid);
@@ -100,6 +101,9 @@ const attachVariantDetails = async (products) => {
       if (!existing.images.length && v.images?.length) {
         existing.images = v.images;
       }
+      if (!existing.defaultVariantId) {
+        existing.defaultVariantId = v._id;
+      }
     }
   });
 
@@ -108,14 +112,16 @@ const attachVariantDetails = async (products) => {
       images: [],
       minPrice: 0,
       maxPrice: 0,
-      stock: 0
+      stock: 0,
+      defaultVariantId: null
     };
     return {
       ...product.toObject(),
       displayImage: details.images[0] || "",
       minPrice: details.minPrice,
       maxPrice: details.maxPrice,
-      stock: details.stock
+      stock: details.stock,
+      defaultVariantId: details.defaultVariantId
     };
   });
 };
@@ -132,6 +138,18 @@ export const getShop = async (req, res) => {
     const sortOption = req.query.sort || "newest";
     const selectedCategories = toArray(req.query.category);
     const selectedBrands = toArray(req.query.brand);
+
+    // Fetch user wishlist if logged in
+    const userId = req.session?.user?.id || req.user?._id;
+    let wishlistedVariantIds = [];
+    if (userId) {
+      const wishlist = await wishlistService.getWishlist(userId);
+      if (wishlist && wishlist.items) {
+        wishlistedVariantIds = wishlist.items.map((item) =>
+          item.variantId?._id ? item.variantId._id.toString() : item.variantId?.toString()
+        );
+      }
+    }
 
     // 1. Fetch active categories and brands for filtering sidebar
     const [categories, brands] = await Promise.all([
@@ -228,7 +246,8 @@ export const getShop = async (req, res) => {
       sortOption,
       currentPage: page,
       totalPages,
-      totalProducts
+      totalProducts,
+      wishlistedVariantIds
     });
   } catch (error) {
     console.error("Shop page error:", error);

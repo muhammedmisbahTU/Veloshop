@@ -187,6 +187,30 @@
                                     </div>
                                 <% } %>
 
+                                <!-- Quick Action Buttons -->
+                                <div class="absolute top-4 right-4 flex flex-col gap-2 md:opacity-0 group-hover:opacity-100 transition duration-300 z-10">
+                                    <% if (product.defaultVariantId) { %>
+                                        <% const isWishlisted = typeof wishlistedVariantIds !== 'undefined' && wishlistedVariantIds.includes(product.defaultVariantId.toString()); %>
+                                        <button 
+                                            onclick="toggleWishlist('<%= product.defaultVariantId %>', this, event)"
+                                            class="w-10 h-10 flex items-center justify-center rounded-full bg-black/60 border border-white/10 backdrop-blur-md text-white hover:text-red-500 hover:bg-black/80 hover:scale-110 transition duration-200"
+                                            title="Add to Wishlist"
+                                        >
+                                            <i class="<%= isWishlisted ? 'fa-solid text-red-500' : 'fa-regular' %> fa-heart"></i>
+                                        </button>
+                                        
+                                        <% if (product.stock > 0) { %>
+                                            <button 
+                                                onclick="quickAddToCart('<%= product._id %>', '<%= product.defaultVariantId %>', event)"
+                                                class="w-10 h-10 flex items-center justify-center rounded-full bg-black/60 border border-white/10 backdrop-blur-md text-white hover:text-lime-400 hover:bg-black/80 hover:scale-110 transition duration-200"
+                                                title="Add to Cart"
+                                            >
+                                                <i class="fa-solid fa-cart-shopping"></i>
+                                            </button>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+
                                 <% if (product.stock === 0) { %>
                                     <span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full">
                                         Sold Out
@@ -356,4 +380,127 @@ filterValidation
             filterForm.submit();
         });
     })();
+
+    async function toggleWishlist(variantId, btn, event) {
+        if (event) event.preventDefault();
+        const icon = btn.querySelector("i");
+        const isWishlisted = icon.classList.contains("fa-solid");
+
+        try {
+            let response;
+            if (!isWishlisted) {
+                response = await fetch("/wishlist", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ variantId })
+                });
+            } else {
+                response = await fetch(`/wishlist/${variantId}`, {
+                    method: "DELETE"
+                });
+            }
+
+            const data = await response.json();
+
+            if (response.status === 401 || (data.redirect && !data.success)) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Login Required",
+                    text: "Please login to manage your wishlist.",
+                    confirmButtonColor: "#84cc16"
+                }).then(() => {
+                    window.location.href = "/login";
+                });
+                return;
+            }
+
+            if (!data.success) {
+                return Swal.fire({
+                    icon: "info",
+                    title: data.message
+                });
+            }
+
+            if (isWishlisted) {
+                icon.classList.remove("fa-solid", "text-red-500");
+                icon.classList.add("fa-regular");
+            } else {
+                icon.classList.remove("fa-regular");
+                icon.classList.add("fa-solid", "text-red-500");
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: data.message,
+                timer: 1200,
+                showConfirmButton: false
+            });
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: "error",
+                title: "Something went wrong"
+            });
+        }
+    }
+
+    async function quickAddToCart(productId, variantId, event) {
+        if (event) event.preventDefault();
+
+        try {
+            const response = await fetch("/cart", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({
+                    productId,
+                    variantId,
+                    quantity: 1
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.status === 401 || data.redirect) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Login Required",
+                    text: data.message || "Please login to add items to your cart.",
+                    confirmButtonColor: "#84cc16"
+                }).then(() => {
+                    window.location.href = data.redirect || "/login";
+                });
+                return;
+            }
+
+            if (!data.success) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Oops!",
+                    text: data.message,
+                    confirmButtonColor: "#84cc16"
+                });
+                return;
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: "Added to Cart",
+                text: data.message,
+                confirmButtonColor: "#84cc16",
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: "error",
+                title: "Something went wrong"
+            });
+        }
+    }
 </script>
