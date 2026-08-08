@@ -36,7 +36,9 @@ export const applyCoupon = async (code, subtotal, userId) => {
     };
   }
 
-  if (coupon.usedBy.includes(userId)) {
+  const alreadyUsedCount = coupon.usedBy.filter(id => id.toString() === userId.toString()).length;
+  const usagePerUser = coupon.usagePerUser || 1;
+  if (alreadyUsedCount >= usagePerUser) {
     return {
       success: false,
       message: "Coupon already used",

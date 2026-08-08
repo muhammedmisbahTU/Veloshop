@@ -37,6 +37,10 @@ const otpSchema = new mongoose.Schema(
     isUsed: {
       type: Boolean,
       default: false
+    },
+    tempData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
     }
   },
   {

@@ -15,11 +15,23 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+if (process.env.NODE_ENV === "production") {
+  if (!googleClientId || googleClientId === "PLACEHOLDER_ID") {
+    throw new Error("GOOGLE_CLIENT_ID is not configured for production!");
+  }
+  if (!googleClientSecret || googleClientSecret === "PLACEHOLDER_SECRET") {
+    throw new Error("GOOGLE_CLIENT_SECRET is not configured for production!");
+  }
+}
+
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID || "PLACEHOLDER_ID",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "PLACEHOLDER_SECRET",
+      clientID: googleClientId || "PLACEHOLDER_ID",
+      clientSecret: googleClientSecret || "PLACEHOLDER_SECRET",
       callbackURL: "/auth/google/callback",
       passReqToCallback: true,
     },

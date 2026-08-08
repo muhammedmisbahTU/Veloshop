@@ -23,7 +23,7 @@ class CheckoutController {
 
         const couponDiscount = req.session.checkout?.coupon?.discount || 0;
 
-        const totals = calculateCheckout(cartItems, couponDiscount);
+        const totals = await calculateCheckout(cartItems, couponDiscount);
 
         req.session.checkout = {
             ...totals,
@@ -114,17 +114,8 @@ class CheckoutController {
         });
         }
 
-        for (const item of cart.items) {
-        if (item.variantId.stock < item.quantity) {
-            return res.json({
-                success:false,
-                message:`${item.productId.name} is out of stock`
-            });
-        }
-    }
-
     const couponDiscount = req.session.checkout?.coupon?.discount || 0;
-    const totals = calculateCheckout(cart, couponDiscount);
+    const totals = await calculateCheckout(cart, couponDiscount);
 
     const addressSnapshot = {
         addressLine1: address.addressLine1,
@@ -141,91 +132,174 @@ class CheckoutController {
         productName: item.productId.name,
         thumbnail: item.variantId.images[0],
         quantity: item.quantity,
-        price: item.variantId.salePrice
+        price: item.variantId.salePrice != null ? item.variantId.salePrice : item.variantId.regularPrice
     }));
 
     const couponData = req.session.checkout?.coupon || null;
     const orderNumber = `ORD-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
-    // Handle Wallet logic
-    let walletDeducted = 0;
-    let finalPayable = totals.grandTotal;
-
-    if (useWallet) {
-        const Wallet = (await import("../models/Wallet.js")).default;
-        const Transaction = (await import("../models/Transaction.js")).default;
-
-        let wallet = await Wallet.findOne({ userId });
-        if (!wallet) {
-            wallet = await Wallet.create({ userId, balance: 0 });
+    // Perform atomic stock check and decrement
+    const updatedVariants = [];
+    try {
+        for (const item of cart.items) {
+            const updated = await Variant.findOneAndUpdate(
+                { _id: item.variantId._id, stock: { $gte: item.quantity } },
+                { $inc: { stock: -item.quantity } },
+                { new: true }
+            );
+            if (!updated) {
+                throw new Error(`${item.productId.name} is out of stock.`);
+            }
+            updatedVariants.push({ id: item.variantId._id, quantity: item.quantity });
         }
-
-        if (wallet.balance > 0) {
-            walletDeducted = Math.min(wallet.balance, totals.grandTotal);
-            finalPayable = totals.grandTotal - walletDeducted;
-
-            wallet.balance -= walletDeducted;
-            await wallet.save();
+    } catch (stockError) {
+        // Rollback already updated variants
+        for (const uv of updatedVariants) {
+            await Variant.findByIdAndUpdate(uv.id, { $inc: { stock: uv.quantity } });
         }
-    }
-
-    const order = await Order.create({
-        orderNumber,
-        userId,
-        items,
-        shippingAddress: addressSnapshot,
-        subtotal: totals.subtotal,
-        offerDiscount: totals.offerDiscount,
-        taxAmount: totals.tax,
-        shippingCost: totals.shipping,
-        grandTotal: totals.grandTotal,
-        paymentMethod: walletDeducted > 0 && finalPayable === 0 ? "WALLET" : paymentMethod,
-        paymentStatus: walletDeducted > 0 && finalPayable === 0 ? "SUCCESS" : "PENDING",
-        status: walletDeducted > 0 && finalPayable === 0 ? "CONFIRMED" : "PENDING",
-        addressSnapshot,
-        couponId: couponData ? couponData.id : null,
-        couponDiscount: totals.couponDiscount,
-    });
-
-    // Record wallet transaction if deducted
-    if (walletDeducted > 0) {
-        const Wallet = (await import("../models/Wallet.js")).default;
-        const Transaction = (await import("../models/Transaction.js")).default;
-        const wallet = await Wallet.findOne({ userId });
-
-        await Transaction.create({
-            userId,
-            walletId: wallet._id,
-            referenceType: "ORDER",
-            referenceId: order._id,
-            amount: walletDeducted,
-            balanceAfter: wallet.balance,
-            transactionType: "DEBIT",
-            status: "SUCCESS",
-            description: `Wallet deduction for order ${order.orderNumber}`
+        return res.json({
+            success: false,
+            message: stockError.message
         });
     }
 
-    for (const item of cart.items) {
-        item.variantId.stock -= item.quantity;
-        await item.variantId.save();
+    // Perform atomic coupon limit check and usage increment
+    if (couponData) {
+        const couponObj = await Coupon.findById(couponData.id);
+        if (couponObj) {
+            const alreadyUsedCount = couponObj.usedBy.filter(id => id.toString() === userId.toString()).length;
+            const usagePerUser = couponObj.usagePerUser || 1;
+            if (alreadyUsedCount >= usagePerUser) {
+                for (const uv of updatedVariants) {
+                    await Variant.findByIdAndUpdate(uv.id, { $inc: { stock: uv.quantity } });
+                }
+                return res.status(400).json({
+                    success: false,
+                    message: "Coupon limit exceeded for this account."
+                });
+            }
+            if (couponObj.usageLimit !== null && couponObj.usedCount >= couponObj.usageLimit) {
+                for (const uv of updatedVariants) {
+                    await Variant.findByIdAndUpdate(uv.id, { $inc: { stock: uv.quantity } });
+                }
+                return res.status(400).json({
+                    success: false,
+                    message: "Coupon limit reached."
+                });
+            }
+
+            const updateQuery = {
+                _id: couponData.id,
+                $or: [
+                    { usageLimit: null },
+                    { usedCount: { $lt: couponObj.usageLimit } }
+                ]
+            };
+            if (usagePerUser === 1) {
+                updateQuery.usedBy = { $ne: userId };
+            }
+
+            const updatedCoupon = await Coupon.findOneAndUpdate(
+                updateQuery,
+                {
+                    $inc: { usedCount: 1 },
+                    $push: { usedBy: userId }
+                },
+                { new: true }
+            );
+
+            if (!updatedCoupon) {
+                for (const uv of updatedVariants) {
+                    await Variant.findByIdAndUpdate(uv.id, { $inc: { stock: uv.quantity } });
+                }
+                return res.status(400).json({
+                    success: false,
+                    message: "Coupon is no longer valid or limit exceeded."
+                });
+            }
+        }
+    }
+
+    // Handle Wallet logic and Order creation with try-catch for failure rollback
+    let order;
+    let walletDeducted = 0;
+    let finalPayable = totals.grandTotal;
+
+    try {
+        if (useWallet) {
+            const Wallet = (await import("../models/Wallet.js")).default;
+            let wallet = await Wallet.findOne({ userId });
+            if (!wallet) {
+                wallet = await Wallet.create({ userId, balance: 0 });
+            }
+
+            if (wallet.balance > 0) {
+                walletDeducted = Math.min(wallet.balance, totals.grandTotal);
+                finalPayable = totals.grandTotal - walletDeducted;
+
+                wallet.balance -= walletDeducted;
+                await wallet.save();
+            }
+        }
+
+        order = await Order.create({
+            orderNumber,
+            userId,
+            items,
+            shippingAddress: addressSnapshot,
+            subtotal: totals.subtotal,
+            offerDiscount: totals.offerDiscount,
+            taxAmount: totals.tax,
+            shippingCost: totals.shipping,
+            grandTotal: totals.grandTotal,
+            paymentMethod: walletDeducted > 0 && finalPayable === 0 ? "WALLET" : paymentMethod,
+            paymentStatus: walletDeducted > 0 && finalPayable === 0 ? "SUCCESS" : "PENDING",
+            status: walletDeducted > 0 && finalPayable === 0 ? "CONFIRMED" : "PENDING",
+            addressSnapshot,
+            couponId: couponData ? couponData.id : null,
+            couponDiscount: totals.couponDiscount,
+        });
+
+        // Record wallet transaction if deducted
+        if (walletDeducted > 0) {
+            const Wallet = (await import("../models/Wallet.js")).default;
+            const Transaction = (await import("../models/Transaction.js")).default;
+            const wallet = await Wallet.findOne({ userId });
+
+            await Transaction.create({
+                userId,
+                walletId: wallet._id,
+                referenceType: "ORDER",
+                referenceId: order._id,
+                amount: walletDeducted,
+                balanceAfter: wallet.balance,
+                transactionType: "DEBIT",
+                status: "SUCCESS",
+                description: `Wallet deduction for order ${order.orderNumber}`
+            });
+        }
+    } catch (orderError) {
+        // Rollback wallet
+        if (walletDeducted > 0) {
+            const Wallet = (await import("../models/Wallet.js")).default;
+            await Wallet.findOneAndUpdate({ userId }, { $inc: { balance: walletDeducted } });
+        }
+        // Rollback coupon
+        if (couponData) {
+            await Coupon.findByIdAndUpdate(couponData.id, {
+                $inc: { usedCount: -1 },
+                $pull: { usedBy: userId }
+            });
+        }
+        // Rollback stock
+        for (const uv of updatedVariants) {
+            await Variant.findByIdAndUpdate(uv.id, { $inc: { stock: uv.quantity } });
+        }
+        throw orderError;
     }
 
     cart.items = [];
     await cart.save();
-
-    if (req.session.checkout?.coupon) {
-
-        const coupon = await Coupon.findById(
-            req.session.checkout.coupon.id
-        );
-
-        if (coupon) {
-            coupon.usedCount += 1;
-            coupon.usedBy.push(userId);
-            await coupon.save();
-        }
-    }
 
     delete req.session.checkout;
 
@@ -334,6 +408,13 @@ class CheckoutController {
 
     const {code}=req.body;
 
+    if (typeof code !== "string" || !code.trim()) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid coupon code."
+        });
+    }
+
     if (!req.session.checkout) {
         return res.status(400).json({
             success: false,
@@ -351,7 +432,7 @@ class CheckoutController {
         });
     }
 
-    const totals = calculateCheckout(cart);
+    const totals = await calculateCheckout(cart);
 
     const result = await applyCoupon(
         code,

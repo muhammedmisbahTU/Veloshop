@@ -72,7 +72,7 @@ const ensureUniqueCategory = async ({ slug, excludeId = null }) => {
 
 export const getCategories = async (req, res) => {
   try {
-    const search = (req.query.search || "").trim();
+    const search = String(req.query.search || "").trim();
     const status = req.query.status || "active";
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const sort = req.query.sort === "asc" ? "asc" : "desc";
@@ -267,6 +267,12 @@ export const softDeleteCategory = async (req, res) => {
     category.isActive = false;
     await category.save();
 
+    const Product = (await import("../models/Product.js")).default;
+    await Product.updateMany(
+      { categoryId: category._id },
+      { status: "INACTIVE", isDeleted: true, deletedAt: new Date() }
+    );
+
     return res.status(200).json({
       success: true,
       message: "Category moved to deleted list."
@@ -288,6 +294,12 @@ export const restoreCategory = async (req, res) => {
     category.deletedAt = null;
     category.isActive = true;
     await category.save();
+
+    const Product = (await import("../models/Product.js")).default;
+    await Product.updateMany(
+      { categoryId: category._id },
+      { status: "ACTIVE", isDeleted: false, deletedAt: null }
+    );
 
     return res.status(200).json({
       success: true,
@@ -315,6 +327,14 @@ export const toggleCategoryStatus = async (req, res) => {
 
     category.isActive = !category.isActive;
     await category.save();
+
+    if (!category.isActive) {
+      const Product = (await import("../models/Product.js")).default;
+      await Product.updateMany(
+        { categoryId: category._id },
+        { status: "INACTIVE" }
+      );
+    }
 
     return res.status(200).json({
       success: true,

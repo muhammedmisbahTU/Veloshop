@@ -1,16 +1,23 @@
-// services/checkoutService.js
+import { getBestOffer } from "./offerService.js";
+import { calculateOfferPrice } from "./priceService.js";
 
-export function calculateCheckout(cart, couponDiscount = 0) {
+export async function calculateCheckout(cart, couponDiscount = 0) {
     let subtotal = 0;
+    let offerDiscount = 0;
 
-    cart.items.forEach(item => {
-        item.subtotal = item.quantity * item.variantId.salePrice;
-        subtotal += item.subtotal;
-    });
+    for (const item of cart.items) {
+        const currentPrice = item.variantId.salePrice != null ? item.variantId.salePrice : item.variantId.regularPrice;
+        // Calculate offer
+        const offer = await getBestOffer(item.productId, currentPrice);
+        const pricing = calculateOfferPrice(currentPrice, offer);
+        
+        item.subtotal = item.quantity * pricing.finalPrice;
+        subtotal += item.quantity * currentPrice;
+        offerDiscount += item.quantity * pricing.discount;
+    }
 
-    const offerDiscount = 0;
     const shipping = 0;
-    const tax = subtotal * 0.18;
+    const tax = Math.max(0, (subtotal - offerDiscount) * 0.18);
 
     const grandTotal =
         subtotal
@@ -26,6 +33,6 @@ export function calculateCheckout(cart, couponDiscount = 0) {
         discount: couponDiscount + offerDiscount,
         shipping,
         tax,
-        grandTotal
+        grandTotal: Math.max(0, grandTotal)
     };
 }

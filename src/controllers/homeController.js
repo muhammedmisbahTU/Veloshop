@@ -161,11 +161,12 @@ export const getShop = async (req, res) => {
     }
 
     // Apply search filter
-    if (req.query.search) {
+    const searchQuery = String(req.query.search || "").trim();
+    if (searchQuery) {
       query.$or = [
-        { name: { $regex: req.query.search, $options: "i" } },
-        { brand: { $regex: req.query.search, $options: "i" } },
-        { description: { $regex: req.query.search, $options: "i" } }
+        { name: { $regex: searchQuery, $options: "i" } },
+        { brand: { $regex: searchQuery, $options: "i" } },
+        { description: { $regex: searchQuery, $options: "i" } }
       ];
     }
 
@@ -220,7 +221,7 @@ export const getShop = async (req, res) => {
       brands,
       selectedCategories,
       selectedBrands,
-      searchQuery: req.query.search || "",
+      searchQuery,
       minPrice: req.query.minPrice || "",
       maxPrice: req.query.maxPrice || "",
       stockFilter: req.query.stock || "",
@@ -257,10 +258,8 @@ export const getProductDetails = async (req, res) => {
       return res.redirect("/shop");
     }
 
-    const defaultVariant = variants[0];
-
-    const offer =
-    await getBestOffer(product);
+    const defaultPrice = defaultVariant.salePrice != null ? defaultVariant.salePrice : defaultVariant.regularPrice;
+    const offer = await getBestOffer(product, defaultPrice);
 
 
     const pricing =

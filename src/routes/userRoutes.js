@@ -23,6 +23,8 @@ import {
 } from '../controllers/userController.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { uploadAvatar } from '../config/cloudinaryConfig.js';
+import validate from "../middleware/validate.js";
+import { addressSchema } from "../validators/addressValidator.js";
 import wishlistController from "../controllers/wishlistController.js";
 import checkoutController from "../controllers/checkoutController.js";
 import orderController from "../controllers/orderController.js";
@@ -52,8 +54,8 @@ router.post("/profile/change-email", isAuthenticated, postChangeEmailRequest);
 router.post("/profile/verify-email", isAuthenticated, postVerifyEmailUpdate);
 
 // Address CRUD
-router.post("/addresses", isAuthenticated, postAddAddress);
-router.post("/addresses/edit/:id", isAuthenticated, postEditAddress);
+router.post("/addresses", isAuthenticated, validate(addressSchema), postAddAddress);
+router.post("/addresses/edit/:id", isAuthenticated, validate(addressSchema), postEditAddress);
 router.post("/addresses/delete/:id", isAuthenticated, postDeleteAddress);
 
 // Cart

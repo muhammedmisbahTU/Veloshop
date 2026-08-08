@@ -167,6 +167,11 @@ PENDING:[
 "CANCELLED"
 ],
 
+PAYMENT_FAILED:[
+"CANCELLED",
+"PENDING"
+],
+
 CONFIRMED:[
 "PROCESSING",
 "CANCELLED"
@@ -222,7 +227,38 @@ if (status === "CANCELLED" && order.status !== "CANCELLED") {
             item.cancelReason = "Cancelled by Administrator";
         }
     }
-    order.paymentStatus = "FAILED";
+    
+    // Wallet refund logic for admin cancellation
+    if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET")) {
+        const Wallet = (await import("../models/Wallet.js")).default;
+        const Transaction = (await import("../models/Transaction.js")).default;
+
+        let wallet = await Wallet.findOne({ userId: order.userId });
+        if (!wallet) {
+            wallet = await Wallet.create({ userId: order.userId, balance: 0 });
+        }
+
+        wallet.balance += order.grandTotal;
+        await wallet.save();
+
+        await Transaction.create({
+            userId: order.userId,
+            walletId: wallet._id,
+            referenceType: "REFUND",
+            referenceId: order._id,
+            amount: order.grandTotal,
+            balanceAfter: wallet.balance,
+            transactionType: "CREDIT",
+            status: "SUCCESS",
+            description: `Refund for cancelled order ${order.orderNumber}`
+        });
+
+        order.paymentStatus = "REFUNDED";
+        order.refundStatus = "COMPLETED";
+        order.refundAmount = order.grandTotal;
+    } else {
+        order.paymentStatus = "FAILED";
+    }
     order.cancellationReason = "Cancelled by Administrator";
 }
 

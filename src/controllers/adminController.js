@@ -134,7 +134,7 @@ export const postAdminLogin = async (req, res) => {
 
 export const getUsers = async (req, res) => {
   try {
-    const search = (req.query.search || "").trim();
+    const search = String(req.query.search || "").trim();
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const requestedOrder = req.query.sort || "desc";
     const order = requestedOrder === "asc" ? "asc" : "desc";

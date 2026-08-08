@@ -14,6 +14,7 @@ import morgan from 'morgan';
 
 import passport from './config/passport.js';
 import { title } from 'process';
+import { csrfProtection } from "./middleware/csrf.js";
 
 const app = express();
 dotenv.config();
@@ -29,6 +30,7 @@ app.use(morgan("dev"))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionConfig);
+app.use(csrfProtection);
 
 // Initialize Passport for Google OAuth
 app.use(passport.initialize());

@@ -31,19 +31,41 @@ export const postRegister = async (req, res) => {
       });
     }
     const existingUser = await User.findOne({ email: email.toLowerCase() });
+    let pendingUserData = null;
+    let shouldSendActualOtp = true;
+
     if (existingUser) {
       if (existingUser.isEmailVerified) {
-        return res.status(400).json({
-          success: false,
-          message: "Email is already registered. Please login.",
-        });
+        // Send email informing user they already have an account
+        try {
+          const { default: nodemailer } = await import("nodemailer");
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          });
+          await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: existingUser.email,
+            subject: "Registration Attempt at Veloshop",
+            text: `Hello ${existingUser.fullName},\n\nSomeone (hopefully you) tried to register a new account with this email address. Since you already have a verified account, please login at the website or reset your password if you forgot it.`,
+          });
+        } catch (mailError) {
+          console.error("Mail sending failed for existing verified user:", mailError);
+        }
+        shouldSendActualOtp = false;
       } else {
+        // Unverified user: store updates in tempData rather than saving directly to prevent account takeover
         const hashedPassword = await bcrypt.hash(password, 10);
-        existingUser.fullName = fullName;
-        existingUser.password = hashedPassword;
-        await existingUser.save();
+        pendingUserData = {
+          fullName,
+          password: hashedPassword,
+        };
       }
     } else {
+      // Create user with isEmailVerified: false
       const hashedPassword = await bcrypt.hash(password, 10);
       let referredBy = null;
 
@@ -68,30 +90,33 @@ export const postRegister = async (req, res) => {
       });
     }
 
-    // Generate and save OTP
-    const otpCode = generateOtp();
-    const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
+    if (shouldSendActualOtp) {
+      // Generate and save OTP
+      const otpCode = generateOtp();
+      const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
-    // Delete existing verify OTPs for this email
-    await Otp.deleteMany({
-      email: email.toLowerCase(),
-      purpose: "VERIFY_EMAIL",
-    });
+      // Delete existing verify OTPs for this email
+      await Otp.deleteMany({
+        email: email.toLowerCase(),
+        purpose: "VERIFY_EMAIL",
+      });
 
-    await Otp.create({
-      email: email.toLowerCase(),
-      otp: otpCode,
-      purpose: "VERIFY_EMAIL",
-      expiresAt,
-      attempts: 0,
-      isUsed: false,
-    });
+      await Otp.create({
+        email: email.toLowerCase(),
+        otp: otpCode,
+        purpose: "VERIFY_EMAIL",
+        expiresAt,
+        attempts: 0,
+        isUsed: false,
+        tempData: pendingUserData
+      });
 
-    // Send email (async)
-    try {
-      await sendOtpEmail(email.toLowerCase(), otpCode);
-    } catch (mailError) {
-      console.error("Mail sending failed:", mailError);
+      // Send email (async)
+      try {
+        await sendOtpEmail(email.toLowerCase(), otpCode);
+      } catch (mailError) {
+        console.error("Mail sending failed:", mailError);
+      }
     }
 
     return res.status(200).json({
@@ -271,6 +296,10 @@ export const verifyOtp = async (req, res) => {
     }
 
     // Success! Verify user
+    if (otpRecord.tempData) {
+      if (otpRecord.tempData.fullName) user.fullName = otpRecord.tempData.fullName;
+      if (otpRecord.tempData.password) user.password = otpRecord.tempData.password;
+    }
     user.isEmailVerified = true;
     await user.save();
 
@@ -322,6 +351,13 @@ export const resendOtp = async (req, res) => {
     const otpCode = generateOtp();
     const expiresAt = new Date(Date.now() + VERIFY_OTP_TTL_MS);
 
+    // Carry forward tempData
+    const oldOtp = await Otp.findOne({
+      email: email.toLowerCase(),
+      purpose: "VERIFY_EMAIL",
+    });
+    const tempData = oldOtp?.tempData || null;
+
     // Recreate OTP
     await Otp.deleteMany({
       email: email.toLowerCase(),
@@ -334,6 +370,7 @@ export const resendOtp = async (req, res) => {
       expiresAt,
       attempts: 0,
       isUsed: false,
+      tempData,
     });
 
     try {
@@ -391,9 +428,10 @@ export const postForgotPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "No local user found with this email.",
+      return res.status(200).json({
+        success: true,
+        message: "If an account exists for this email, we've sent password reset instructions.",
+        email: email.toLowerCase(),
       });
     }
 
@@ -423,7 +461,7 @@ export const postForgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset OTP sent to email.",
+      message: "If an account exists for this email, we've sent password reset instructions.",
       email: email.toLowerCase(),
     });
   } catch (error) {
@@ -486,12 +524,20 @@ export const postResetPassword = async (req, res) => {
       });
     }
 
+    if (otpRecord.attempts >= 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Maximum OTP attempts exceeded. Please request a new password reset.",
+      });
+    }
+
     if (otpRecord.otp !== otp) {
       otpRecord.attempts += 1;
       await otpRecord.save();
+      const left = Math.max(0, 5 - otpRecord.attempts);
       return res.status(400).json({
         success: false,
-        message: "Invalid OTP code.",
+        message: `Invalid OTP code. ${left} attempts remaining.`,
       });
     }
 

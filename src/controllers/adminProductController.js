@@ -152,7 +152,7 @@ const attachVariantImages = async (products) => {
 
 export const getProducts = async (req, res) => {
   try {
-    const search = (req.query.search || "").trim();
+    const search = String(req.query.search || "").trim();
     const status = req.query.status || "active";
     const categoryId = req.query.categoryId || "all";
     const sort = req.query.sort === "asc" ? "asc" : "desc";
@@ -456,6 +456,11 @@ export const toggleProductStatus = async (req, res) => {
     console.error("Toggle product status error:", error);
     return res.status(500).json({ success: false, message: "Failed to update product status." });
   }
+};
+
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value.filter(Boolean) : [value];
 };
 
 export const bulkdelete = async (req,res)=>{

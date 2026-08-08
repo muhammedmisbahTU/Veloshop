@@ -6,8 +6,9 @@ class PaymentController {
   async verifyPayment(req, res) {
     try {
       const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+      const userId = req.session?.user?.id || req.user?._id;
 
-      const order = await Order.findById(orderId);
+      const order = await Order.findOne({ _id: orderId, userId });
       if (!order) {
         return res.status(404).json({ success: false, message: "Order not found" });
       }
@@ -39,7 +40,8 @@ class PaymentController {
   // POST /payment/cancel/:id
   async cancelPayment(req, res) {
     try {
-      const order = await Order.findById(req.params.id);
+      const userId = req.session?.user?.id || req.user?._id;
+      const order = await Order.findOne({ _id: req.params.id, userId });
       if (order) {
         order.paymentStatus = "FAILED";
         order.status = "PAYMENT_FAILED";
@@ -55,7 +57,8 @@ class PaymentController {
   // GET /payment-failure/:id
   async getPaymentFailure(req, res) {
     try {
-      const order = await Order.findById(req.params.id);
+      const userId = req.session?.user?.id || req.user?._id;
+      const order = await Order.findOne({ _id: req.params.id, userId });
       res.render("user/payment-failure", {
         title: "Payment Failed",
         order,
@@ -70,7 +73,8 @@ class PaymentController {
   // POST /payment/retry/:id
   async retryPaymentOrder(req, res) {
     try {
-      const order = await Order.findById(req.params.id);
+      const userId = req.session?.user?.id || req.user?._id;
+      const order = await Order.findOne({ _id: req.params.id, userId });
       if (!order) {
         return res.status(404).json({ success: false, message: "Order not found" });
       }

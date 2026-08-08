@@ -113,17 +113,117 @@ const processVariantImages = async (req, res, next) => {
 };
 
 // Middleware exports with localized rules
-export const uploadAvatar = multer({
-  storage: createStorage("ecommerce/avatars"),
+const avatarMemoryUpload = multer({
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
 });
 
-export const uploadProduct = multer({
-  storage: createStorage("ecommerce/products"),
+const processAvatarImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next();
+    }
+
+    const processedBuffer = await sharp(req.file.buffer)
+      .rotate()
+      .resize({
+        width: 300,
+        height: 300,
+        fit: "cover",
+        position: "centre",
+      })
+      .webp({ quality: 86 })
+      .toBuffer();
+
+    const uploaded = await uploadBufferToCloudinary(processedBuffer, "ecommerce/avatars");
+
+    req.file = {
+      ...req.file,
+      buffer: undefined,
+      path: uploaded.secure_url,
+      url: uploaded.secure_url,
+      secure_url: uploaded.secure_url,
+      filename: uploaded.public_id,
+      size: processedBuffer.length,
+      mimetype: "image/webp",
+    };
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadAvatar = {
+  single: (fieldName) => {
+    const single = avatarMemoryUpload.single(fieldName);
+    return (req, res, next) => {
+      single(req, res, (err) => {
+        if (err) {
+          return next(err);
+        }
+        processAvatarImage(req, res, next);
+      });
+    };
+  }
+};
+
+const productMemoryUpload = multer({
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
+
+const processProductImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next();
+    }
+
+    const processedBuffer = await sharp(req.file.buffer)
+      .rotate()
+      .resize({
+        width: 800,
+        height: 800,
+        fit: "cover",
+        position: "centre",
+      })
+      .webp({ quality: 86 })
+      .toBuffer();
+
+    const uploaded = await uploadBufferToCloudinary(processedBuffer, "ecommerce/products");
+
+    req.file = {
+      ...req.file,
+      buffer: undefined,
+      path: uploaded.secure_url,
+      url: uploaded.secure_url,
+      secure_url: uploaded.secure_url,
+      filename: uploaded.public_id,
+      size: processedBuffer.length,
+      mimetype: "image/webp",
+    };
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadProduct = {
+  single: (fieldName) => {
+    const single = productMemoryUpload.single(fieldName);
+    return (req, res, next) => {
+      single(req, res, (err) => {
+        if (err) {
+          return next(err);
+        }
+        processProductImage(req, res, next);
+      });
+    };
+  }
+};
 
 export const uploadVariantImages = {
   array: (fieldName, maxCount) => [

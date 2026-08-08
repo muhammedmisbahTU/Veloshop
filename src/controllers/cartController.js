@@ -63,7 +63,14 @@ export const addToCart = async (req, res) => {
   try {
     const userId = req.session.user.id;
 
-    const { productId, variantId, quantity } = req.body;
+    const { productId, variantId } = req.body;
+    const quantity = parseInt(req.body.quantity, 10);
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quantity."
+      });
+    }
 
     const product = await Product.findOne({
       _id: productId,
@@ -127,7 +134,7 @@ export const addToCart = async (req, res) => {
 
         quantity,
 
-        priceSnapshot: variant.salePrice || variant.regularPrice,
+        priceSnapshot: variant.salePrice != null ? variant.salePrice : variant.regularPrice,
       });
     }
 
@@ -152,7 +159,14 @@ export const updateCartQuantity = async (req, res) => {
   try {
     const userId = req.session.user.id;
 
-    const { variantId, change } = req.body;
+    const { variantId } = req.body;
+    const change = parseInt(req.body.change, 10);
+    if (!Number.isInteger(change) || (change !== 1 && change !== -1)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quantity change."
+      });
+    }
 
     const cart = await Cart.findOne({
       userId,

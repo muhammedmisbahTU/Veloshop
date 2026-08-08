@@ -94,7 +94,7 @@ const buildCouponQuery = ({ search, status, type }) => {
 
 export const getCoupons = async (req, res) => {
   try {
-    const search = (req.query.search || "").trim();
+    const search = String(req.query.search || "").trim();
     const status = req.query.status || "all";
     const type = req.query.type || "all";
     const page = Math.max(Number(req.query.page) || 1, 1);

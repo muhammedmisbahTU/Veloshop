@@ -124,7 +124,7 @@ const buildOfferQuery = ({ search, status, type }) => {
 
 export const getOffers = async (req, res) => {
   try {
-    const search = (req.query.search || '').trim();
+    const search = String(req.query.search || '').trim();
 
     const status = req.query.status || 'all';
 

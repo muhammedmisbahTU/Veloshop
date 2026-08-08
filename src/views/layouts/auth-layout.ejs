@@ -13,6 +13,41 @@
     <div class="w-full max-w-6xl">
         <%- body %>
     </div>
+    <script>
+      (function() {
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+          options = options || {};
+          const method = (options.method || 'GET').toUpperCase();
+          if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+            options.headers = options.headers || {};
+            const csrfToken = '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>';
+            if (csrfToken && !options.headers['x-csrf-token'] && !options.headers['X-CSRF-Token']) {
+              if (options.headers instanceof Headers) {
+                options.headers.set('x-csrf-token', csrfToken);
+              } else {
+                options.headers['x-csrf-token'] = csrfToken;
+              }
+            }
+          }
+          return originalFetch(url, options);
+        };
 
+        document.addEventListener('DOMContentLoaded', () => {
+          const csrfToken = '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>';
+          if (csrfToken) {
+            document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(form => {
+              if (!form.querySelector('input[name="csrfToken"]')) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'csrfToken';
+                input.value = csrfToken;
+                form.appendChild(input);
+              }
+            });
+          }
+        });
+      })();
+    </script>
 </body>
 </html>
