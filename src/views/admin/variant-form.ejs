@@ -453,7 +453,38 @@ validation
           submitButton.disabled = false;
       }
 
-      event.currentTarget.submit();
+      const form = event.currentTarget;
+      submitButton.disabled = true;
+      submitButton.classList.add("opacity-60", "cursor-not-allowed");
+
+      try {
+          const formData = new FormData(form);
+          const response = await fetch(form.action, {
+              method: "POST",
+              body: formData,
+              headers: {
+                  "X-CSRF-Token": window.getCsrfToken()
+              }
+          });
+
+          if (response.redirected) {
+              window.location.href = response.url;
+          } else {
+              const text = await response.text();
+              document.open();
+              document.write(text);
+              document.close();
+          }
+      } catch (err) {
+          console.error(err);
+          Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "A network error occurred. Please try again."
+          });
+          submitButton.disabled = false;
+          submitButton.classList.remove("opacity-60", "cursor-not-allowed");
+      }
   });
 
 validation.addField("#attributeRows", [

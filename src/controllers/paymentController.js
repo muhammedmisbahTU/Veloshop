@@ -1,5 +1,39 @@
 import Order from "../models/Order.js";
+import Variant from "../models/Variant.js";
 import { verifySignature } from "../services/paymentService.js";
+
+export async function restoreCartAndStock(order, userId) {
+  try {
+    // 1. Restore stock
+    for (const item of order.items) {
+        await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
+    }
+    
+    // 2. Restore cart
+    const Cart = (await import("../models/Cart.js")).default;
+    let cart = await Cart.findOne({ userId });
+    if (!cart) {
+        cart = new Cart({ userId, items: [] });
+    }
+    
+    // Re-add items from order to cart
+    for (const item of order.items) {
+        const hasItem = cart.items.some(ci => ci.variantId.toString() === item.variantId.toString());
+        if (!hasItem) {
+            const variantObj = await Variant.findById(item.variantId);
+            cart.items.push({
+                variantId: item.variantId,
+                productId: variantObj ? variantObj.productId : null,
+                quantity: item.quantity,
+                priceSnapshot: item.price
+            });
+        }
+    }
+    await cart.save();
+  } catch (err) {
+    console.error("Error restoring cart and stock:", err);
+  }
+}
 
 class PaymentController {
   // POST /payment/verify
@@ -26,9 +60,12 @@ class PaymentController {
         await order.save();
         return res.json({ success: true, message: "Payment verified successfully" });
       } else {
-        order.paymentStatus = "FAILED";
-        order.status = "PAYMENT_FAILED";
-        await order.save();
+        if (order.status !== "PAYMENT_FAILED") {
+          order.paymentStatus = "FAILED";
+          order.status = "PAYMENT_FAILED";
+          await order.save();
+          await restoreCartAndStock(order, userId);
+        }
         return res.status(400).json({ success: false, message: "Invalid signature verification" });
       }
     } catch (error) {
@@ -42,10 +79,11 @@ class PaymentController {
     try {
       const userId = req.session?.user?.id || req.user?._id;
       const order = await Order.findOne({ _id: req.params.id, userId });
-      if (order) {
+      if (order && order.status !== "PAYMENT_FAILED") {
         order.paymentStatus = "FAILED";
         order.status = "PAYMENT_FAILED";
         await order.save();
+        await restoreCartAndStock(order, userId);
       }
       return res.json({ success: true });
     } catch (error) {
@@ -78,6 +116,45 @@ class PaymentController {
       if (!order) {
         return res.status(404).json({ success: false, message: "Order not found" });
       }
+
+      // Re-verify and re-decrement stock for retry
+      const updatedVariants = [];
+      try {
+          for (const item of order.items) {
+              const variantObj = await Variant.findById(item.variantId);
+              if (!variantObj || !variantObj.isActive || variantObj.stock < item.quantity) {
+                  const availStock = variantObj ? variantObj.stock : 0;
+                  throw new Error(`Insufficient stock for ${item.productName}. Available quantity: ${availStock}.`);
+              }
+              const updated = await Variant.findOneAndUpdate(
+                  { _id: item.variantId, stock: { $gte: item.quantity } },
+                  { $inc: { stock: -item.quantity } },
+                  { new: true }
+              );
+              if (!updated) {
+                  throw new Error(`Insufficient stock for ${item.productName}. Available quantity: ${variantObj.stock}.`);
+              }
+              updatedVariants.push({ id: item.variantId, quantity: item.quantity });
+          }
+      } catch (stockError) {
+          // Rollback
+          for (const uv of updatedVariants) {
+              await Variant.findByIdAndUpdate(uv.id, { $inc: { stock: uv.quantity } });
+          }
+          return res.status(400).json({ success: false, message: stockError.message });
+      }
+
+      // Clear cart again now that stock is secured for retry
+      const Cart = (await import("../models/Cart.js")).default;
+      const cart = await Cart.findOne({ userId });
+      if (cart) {
+          cart.items = [];
+          await cart.save();
+      }
+
+      order.status = "PENDING";
+      order.paymentStatus = "PENDING";
+      await order.save();
 
       const { initPayment } = await import("../services/paymentService.js");
       const rzpData = await initPayment(order);

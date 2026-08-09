@@ -382,16 +382,20 @@ class CheckoutController {
                 orderId: order._id,
                 ...rzpData
             });
-        } catch (paymentError) {
-            console.error("Razorpay order creation failed, marking order as PAYMENT_FAILED:", paymentError);
-            order.status = "PAYMENT_FAILED";
-            order.paymentStatus = "FAILED";
-            await order.save();
-            return res.json({
-                success: false,
-                message: "Online payment initiation failed. You can retry from your orders page."
-            });
-        }
+         } catch (paymentError) {
+             console.error("Razorpay order creation failed, marking order as PAYMENT_FAILED:", paymentError);
+             order.status = "PAYMENT_FAILED";
+             order.paymentStatus = "FAILED";
+             await order.save();
+
+             const { restoreCartAndStock } = await import("./paymentController.js");
+             await restoreCartAndStock(order, userId);
+
+             return res.json({
+                 success: false,
+                 message: "Online payment initiation failed. You can retry from your orders page."
+             });
+         }
     }
 
     if (finalPayable === 0) {
