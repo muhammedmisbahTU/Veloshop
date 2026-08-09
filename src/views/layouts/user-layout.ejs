@@ -26,18 +26,25 @@
 
     <script>
       (function() {
+        window.getCsrfToken = function() {
+          return document.cookie
+              .split("; ")
+              .find(row => row.startsWith("XSRF-TOKEN="))
+              ?.split("=")[1] || '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>';
+        };
+
         const originalFetch = window.fetch;
         window.fetch = function(url, options) {
           options = options || {};
           const method = (options.method || 'GET').toUpperCase();
           if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
             options.headers = options.headers || {};
-            const csrfToken = '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>';
-            if (csrfToken && !options.headers['x-csrf-token'] && !options.headers['X-CSRF-Token']) {
+            const token = window.getCsrfToken();
+            if (token) {
               if (options.headers instanceof Headers) {
-                options.headers.set('x-csrf-token', csrfToken);
+                options.headers.set('X-CSRF-Token', token);
               } else {
-                options.headers['x-csrf-token'] = csrfToken;
+                options.headers['X-CSRF-Token'] = token;
               }
             }
           }
@@ -45,7 +52,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-          const csrfToken = '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>';
+          const csrfToken = window.getCsrfToken();
           if (csrfToken) {
             document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(form => {
               if (!form.querySelector('input[name="csrfToken"]')) {

@@ -28,19 +28,10 @@ export const validateCsrf = (req, res, next) => {
     }
 
     const clientToken =
-        req.body?.csrfToken ||
-        req.query?.csrfToken ||
         req.headers["x-csrf-token"] ||
-        req.headers["x-xsrf-token"];
-
-    // console.log("========== CSRF DEBUG ==========");
-    // console.log("Method:", req.method);
-    // console.log("URL:", req.originalUrl);
-    // console.log("Session ID:", req.sessionID);
-    // console.log("Session CSRF:", req.session?.csrfToken);
-    // console.log("Client CSRF:", clientToken);
-    // console.log("MATCH:", clientToken === req.session?.csrfToken);
-    // console.log("================================");
+        req.headers["x-xsrf-token"] ||
+        req.body?.csrfToken ||
+        req.query?.csrfToken;
 
     if (!clientToken || clientToken !== req.session?.csrfToken) {
         return res.status(403).json({

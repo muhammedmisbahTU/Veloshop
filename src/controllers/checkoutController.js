@@ -39,9 +39,12 @@ class CheckoutController {
             return res.redirect("/cart");
         }
 
-        // Check for deactivated/unavailable/out-of-stock items
+        // Check for deactivated/unavailable/out-of-stock items or quantity exceeding available stock
         const hasUnavailable = cartItems.items.some(item => {
-            return item.productId.status !== "ACTIVE" || !item.variantId.isActive || item.variantId.stock <= 0;
+            return item.productId.status !== "ACTIVE" || 
+                   !item.variantId.isActive || 
+                   item.variantId.stock <= 0 ||
+                   item.quantity > item.variantId.stock;
         });
 
         if (hasUnavailable) {
@@ -131,7 +134,7 @@ class CheckoutController {
         });
         }
 
-        // Validate each item for availability/deletion status
+        // Validate each item for availability/deletion status/stock levels
         for (const item of cart.items) {
             const isDeleted = !item.variantId || !item.productId || item.productId.isDeleted;
             if (isDeleted) {
@@ -140,13 +143,23 @@ class CheckoutController {
                     message: "Some items in your cart are no longer available. Please return to cart."
                 });
             }
-            const isUnavailable = item.productId.status !== "ACTIVE" || !item.variantId.isActive || item.variantId.stock <= 0;
-            if (isUnavailable) {
+            const isInactive = item.productId.status !== "ACTIVE" || !item.variantId.isActive;
+            if (isInactive) {
                 return res.status(400).json({
                     success: false,
-                    message: item.variantId.stock <= 0 
-                        ? `${item.productId.name} is out of stock. Please remove it before placing your order.`
-                        : "Please remove unavailable items before placing your order."
+                    message: "Please remove unavailable items before placing your order."
+                });
+            }
+            if (item.variantId.stock <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${item.productId.name} is out of stock. Please remove it before placing your order.`
+                });
+            }
+            if (item.quantity > item.variantId.stock) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for ${item.productId.name}. Available quantity: ${item.variantId.stock}.`
                 });
             }
         }
@@ -194,7 +207,9 @@ class CheckoutController {
                 { new: true }
             );
             if (!updated) {
-                throw new Error(`${item.productId.name} is out of stock.`);
+                const variantObj = await Variant.findById(item.variantId._id);
+                const availStock = variantObj ? variantObj.stock : 0;
+                throw new Error(`Insufficient stock for ${item.productId.name}. Available quantity: ${availStock}.`);
             }
             updatedVariants.push({ id: item.variantId._id, quantity: item.quantity });
         }

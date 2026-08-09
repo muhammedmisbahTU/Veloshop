@@ -52,7 +52,10 @@ export const getCart = async (req, res) => {
       const price = item.priceSnapshot;
       
       const isOutOfStock = variant.stock <= 0;
-      const isUnavailable = product.status !== "ACTIVE" || !variant.isActive || isOutOfStock;
+      const isInactive = product.status !== "ACTIVE" || !variant.isActive;
+      const isInsufficientStock = variant.stock > 0 && item.quantity > variant.stock;
+      
+      const isUnavailable = isInactive || isOutOfStock || isInsufficientStock;
       const subtotal = price * item.quantity;
       
       if (!isUnavailable) {
@@ -68,7 +71,9 @@ export const getCart = async (req, res) => {
         price,
         subtotal,
         isUnavailable,
-        isOutOfStock
+        isOutOfStock,
+        isInactive,
+        isInsufficientStock
       };
     });
 
@@ -218,10 +223,9 @@ export const updateCartQuantity = async (req, res) => {
       });
     }
 
-    if (newQuantity > variant.stock) {
+    if (change === 1 && newQuantity > variant.stock) {
       return res.json({
         success: false,
-
         message: "Maximum stock reached",
       });
     }
