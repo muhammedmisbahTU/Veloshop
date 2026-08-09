@@ -62,6 +62,18 @@ class WishlistService {
       },
     });
 
+    if (wishlist && wishlist.items) {
+      const originalCount = wishlist.items.length;
+      wishlist.items = wishlist.items.filter(item => {
+        return item.variantId && 
+               item.variantId.productId && 
+               !item.variantId.productId.isDeleted;
+      });
+      if (wishlist.items.length !== originalCount) {
+        await wishlist.save();
+      }
+    }
+
     return wishlist;
   }
 

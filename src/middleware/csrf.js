@@ -27,8 +27,8 @@ export const csrfProtection = (req, res, next) => {
 
   // Retrieve token from request body, query parameter, or headers
   const clientToken =
-    req.body.csrfToken ||
-    req.query.csrfToken ||
+    req.body?.csrfToken ||
+    req.query?.csrfToken ||
     req.headers["x-csrf-token"] ||
     req.headers["x-xsrf-token"];
 

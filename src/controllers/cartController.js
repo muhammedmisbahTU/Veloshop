@@ -15,46 +15,68 @@ export const getCart = async (req, res) => {
       },
     });
 
-    if (!cart || cart.items.length === 0) {
+    if (!cart) {
       return res.render("user/cart", {
         cartItems: [],
         total: 0,
+        hasUnavailable: false
+      });
+    }
+
+    // Auto-remove deleted products from Cart database
+    const originalLength = cart.items.length;
+    cart.items = cart.items.filter(item => {
+      return item.variantId && 
+             item.variantId.productId && 
+             !item.variantId.productId.isDeleted;
+    });
+
+    if (cart.items.length !== originalLength) {
+      await cart.save();
+    }
+
+    if (cart.items.length === 0) {
+      return res.render("user/cart", {
+        cartItems: [],
+        total: 0,
+        hasUnavailable: false
       });
     }
 
     let total = 0;
+    let hasUnavailable = false;
 
     const cartItems = cart.items.map((item) => {
       const variant = item.variantId;
-
       const product = variant.productId;
-
       const price = item.priceSnapshot;
-
+      
+      const isUnavailable = product.status !== "ACTIVE" || !variant.isActive;
       const subtotal = price * item.quantity;
-
-      total += subtotal;
+      
+      if (!isUnavailable) {
+        total += subtotal;
+      } else {
+        hasUnavailable = true;
+      }
 
       return {
         product,
-
         variant,
-
         quantity: item.quantity,
-
         price,
-
         subtotal,
+        isUnavailable
       };
     });
 
     res.render("user/cart", {
       cartItems,
       total,
+      hasUnavailable
     });
   } catch (error) {
     console.log(error);
-
     res.redirect("/");
   }
 };
@@ -82,21 +104,19 @@ export const addToCart = async (req, res) => {
       },
     });
 
-    if (!product || !product.categoryId) {
+    if (!product || !product.categoryId || product.status !== "ACTIVE") {
       return res.json({
         success: false,
-
-        message: "Product unavailable.",
+        message: "This product is no longer available.",
       });
     }
 
     const variant = await Variant.findById(variantId);
 
-    if (!variant) {
+    if (!variant || !variant.isActive) {
       return res.json({
         success: false,
-
-        message: "Variant not found.",
+        message: "This product is no longer available.",
       });
     }
 

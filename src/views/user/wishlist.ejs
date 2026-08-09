@@ -1,56 +1,85 @@
-<% wishlist.items.forEach(item => { %>
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <h1 class="text-3xl font-black mb-8 uppercase tracking-wider">My Wishlist</h1>
 
-<div class="bg-zinc-900 rounded-2xl p-5 flex gap-5">
+    <% if (wishlist && wishlist.items && wishlist.items.length > 0) { %>
+        <div class="grid grid-cols-1 gap-6">
+            <% wishlist.items.forEach(item => { %>
+                <% 
+                    const isAvailable = item.variantId && 
+                                        item.variantId.isActive && 
+                                        item.variantId.productId && 
+                                        item.variantId.productId.status === 'ACTIVE' && 
+                                        !item.variantId.productId.isDeleted;
+                %>
+                <div class="bg-zinc-900 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between">
+                    <div class="flex gap-5 items-center">
+                        <% if (item.variantId && item.variantId.images && item.variantId.images[0]) { %>
+                            <img src="<%= item.variantId.images[0] %>" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-xl bg-black">
+                        <% } else { %>
+                            <div class="w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center rounded-xl bg-zinc-950 text-zinc-600 text-xs">No Image</div>
+                        <% } %>
 
-    <img
-        src="<%= item.variantId.images[0] %>"
-        class="w-36 h-36 object-cover rounded-xl">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-white">
+                                <%= (item.variantId && item.variantId.productId) ? item.variantId.productId.name : 'Unknown Product' %>
+                            </h2>
+                            <p class="text-zinc-400 text-sm">
+                                <%= (item.variantId && item.variantId.productId) ? item.variantId.productId.brand : '' %>
+                            </p>
+                            <p class="text-lime-400 text-lg font-semibold mt-2">
+                                ₹<%= item.variantId ? (item.variantId.salePrice || item.variantId.regularPrice) : 0 %>
+                              </p>
+                            <% if (!isAvailable) { %>
+                                <span class="inline-block mt-1 text-[10px] bg-red-500/10 border border-red-500/30 text-red-500 font-black uppercase tracking-wider px-2 py-0.5 rounded">Unavailable</span>
+                            <% } %>
+                        </div>
+                    </div>
 
-    <div class="flex-1">
-
-        <h2 class="text-xl font-bold">
-            <%= item.variantId.productId.name %>
-        </h2>
-
-        <p class="text-zinc-400">
-            <%= item.variantId.productId.brand %>
-        </p>
-
-        <p class="text-lime-400 text-xl font-semibold mt-3">
-            ₹<%= item.variantId.salePrice || item.variantId.regularPrice %>
-        </p>
-
-        <div class="mt-5 flex gap-3">
-
-            <button
-                onclick="addToCartFromWishlist( '<%= item.variantId.productId._id %>', '<%= item.variantId._id %>', this )"
-                class="bg-lime-400 text-black px-5 py-2 rounded-lg">
-                Add to Cart
-            </button>
-
-            <button
-                onclick="removeWishlistItem('<%= item.variantId._id %>')"
-                class="bg-red-600 px-5 py-2 rounded-lg">
-                Remove
-            </button>
-
+                    <div class="flex gap-3 w-full sm:w-auto">
+                        <% if (isAvailable) { %>
+                            <button
+                                onclick="addToCartFromWishlist('<%= item.variantId.productId._id %>', '<%= item.variantId._id %>', this)"
+                                class="flex-1 sm:flex-initial bg-lime-400 hover:bg-lime-300 text-black px-5 py-2.5 font-bold text-sm rounded-lg transition duration-200">
+                                Add to Cart
+                            </button>
+                        <% } else { %>
+                            <button
+                                onclick="Swal.fire({ icon: 'warning', title: 'Unavailable', text: 'This product is no longer available.', confirmButtonColor: '#84cc16' })"
+                                class="flex-1 sm:flex-initial bg-zinc-800 text-zinc-500 px-5 py-2.5 font-bold text-sm rounded-lg cursor-not-allowed">
+                                Unavailable
+                            </button>
+                        <% } %>
+                        <button
+                            onclick="removeWishlistItem('<%= item.variantId ? item.variantId._id : "" %>')"
+                            class="bg-red-600/10 border border-red-600/30 hover:bg-red-600 text-red-500 hover:text-white px-5 py-2.5 font-bold text-sm rounded-lg transition duration-200">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            <% }) %>
         </div>
-
-    </div>
-
+    <% } else { %>
+        <div class="text-center py-20 bg-zinc-900 border border-white/5 rounded-3xl">
+            <svg class="w-16 h-16 text-zinc-700 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <h3 class="text-lg font-bold text-white mb-2">Your wishlist is empty.</h3>
+            <p class="text-sm text-zinc-500 max-w-sm mx-auto mb-6">Explore our products and save your favorites here!</p>
+            <a href="/shop" class="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-black font-black text-sm rounded-xl transition duration-300">
+                Continue Shopping
+            </a>
+        </div>
+    <% } %>
 </div>
 
-<% }) %>
-
 <script>
-async function addToCartFromWishlist(productId,variantId, btn) {
+async function addToCartFromWishlist(productId, variantId, btn) {
     try {
-
-        // Add to cart
         const cartRes = await fetch("/cart", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
             body: JSON.stringify({
                 productId,
@@ -65,7 +94,7 @@ async function addToCartFromWishlist(productId,variantId, btn) {
             Swal.fire({
                 icon: "error",
                 title: "Oops...",
-                text: cartData.message
+                text: cartData.message || "This product is no longer available."
             });
             return;
         }
@@ -75,20 +104,19 @@ async function addToCartFromWishlist(productId,variantId, btn) {
             method: "DELETE"
         });
 
-        // Remove item from page
-        btn.closest(".bg-zinc-900").remove();
-
+        // Reload to update views cleanly
         Swal.fire({
             icon: "success",
             title: "Added to Cart!",
             text: "The item has been moved from your wishlist to your cart.",
             timer: 1500,
             showConfirmButton: false
+        }).then(() => {
+            window.location.reload();
         });
 
     } catch (err) {
         console.error(err);
-
         Swal.fire({
             icon: "error",
             title: "Something went wrong",
@@ -98,8 +126,8 @@ async function addToCartFromWishlist(productId,variantId, btn) {
 }
 
 async function removeWishlistItem(variantId) {
+    if (!variantId) return;
 
-    // Confirmation dialog
     const result = await Swal.fire({
         title: "Remove from wishlist?",
         text: "This item will be removed from your wishlist.",
@@ -114,7 +142,6 @@ async function removeWishlistItem(variantId) {
     if (!result.isConfirmed) return;
 
     try {
-
         const res = await fetch(`/wishlist/${variantId}`, {
             method: "DELETE"
         });
@@ -122,41 +149,30 @@ async function removeWishlistItem(variantId) {
         const data = await res.json();
 
         if (data.success) {
-
-            document
-                .querySelector(`button[onclick="removeWishlistItem('${variantId}')"]`)
-                .closest(".bg-zinc-900")
-                .remove();
-
             Swal.fire({
                 icon: "success",
                 title: "Removed!",
                 text: "The item has been removed from your wishlist.",
                 timer: 1500,
                 showConfirmButton: false
+            }).then(() => {
+                window.location.reload();
             });
-
         } else {
-
             Swal.fire({
                 icon: "error",
                 title: "Oops...",
                 text: data.message
             });
-
         }
 
     } catch (err) {
-
         console.error(err);
-
         Swal.fire({
             icon: "error",
             title: "Something went wrong",
             text: "Please try again later."
         });
-
     }
-
 }
 </script>

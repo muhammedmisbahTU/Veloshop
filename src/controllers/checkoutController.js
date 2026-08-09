@@ -11,25 +11,51 @@ import { calculateCheckout } from "../services/checkoutService.js";
 class CheckoutController {
   async getCheckout(req, res) {
     try {
-
         const userId = req.session?.user?.id || req.user?._id;
         const user = await User.findById(userId);
         const addresses = await Address.find({ userId: user._id });
-        const cartItems = await Cart.findOne({ userId: user._id }).populate('items.variantId').populate('items.productId');
+        
+        let cartItems = await Cart.findOne({ userId: user._id })
+            .populate('items.variantId')
+            .populate('items.productId');
 
         if (!cartItems || cartItems.items.length === 0) {
             return res.redirect("/cart");
         }
 
-        const couponDiscount = req.session.checkout?.coupon?.discount || 0;
+        // Clean up deleted items from cart database first
+        const originalLength = cartItems.items.length;
+        cartItems.items = cartItems.items.filter(item => {
+            return item.variantId && 
+                   item.productId && 
+                   !item.productId.isDeleted;
+        });
 
+        if (cartItems.items.length !== originalLength) {
+            await cartItems.save();
+        }
+
+        if (cartItems.items.length === 0) {
+            return res.redirect("/cart");
+        }
+
+        // Check for deactivated/unavailable items
+        const hasUnavailable = cartItems.items.some(item => {
+            return item.productId.status !== "ACTIVE" || !item.variantId.isActive;
+        });
+
+        if (hasUnavailable) {
+            req.session.errorMessage = "Please remove unavailable items before placing your order.";
+            return res.redirect("/cart");
+        }
+
+        const couponDiscount = req.session.checkout?.coupon?.discount || 0;
         const totals = await calculateCheckout(cartItems, couponDiscount);
 
         req.session.checkout = {
             ...totals,
             coupon: req.session.checkout?.coupon || null
         };
-
 
         const Wallet = (await import("../models/Wallet.js")).default;
         let wallet = await Wallet.findOne({ userId: user._id });
@@ -38,13 +64,13 @@ class CheckoutController {
         }
 
         res.render("user/checkout", {
-        title: "Checkout",
-        addresses,
-        cartItems,
-        coupon: req.session.checkout?.coupon || null,
-        wallet,
-        ...totals,
-      });
+          title: "Checkout",
+          addresses,
+          cartItems,
+          coupon: req.session.checkout?.coupon || null,
+          wallet,
+          ...totals,
+        });
 
     } catch (error) {
       console.log("🚀 ~ CheckoutController ~ getCheckout ~ error:", error);
@@ -103,6 +129,24 @@ class CheckoutController {
             success: false,
             message: "Your cart is empty.",
         });
+        }
+
+        // Validate each item for availability/deletion status
+        for (const item of cart.items) {
+            const isDeleted = !item.variantId || !item.productId || item.productId.isDeleted;
+            if (isDeleted) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Some items in your cart are no longer available. Please return to cart."
+                });
+            }
+            const isUnavailable = item.productId.status !== "ACTIVE" || !item.variantId.isActive;
+            if (isUnavailable) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please remove unavailable items before placing your order."
+                });
+            }
         }
         
         const allowedPaymentMethods = ["COD", "ONLINE", "WALLET"];

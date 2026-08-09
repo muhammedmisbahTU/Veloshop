@@ -30,127 +30,77 @@ Continue Shopping
 
 
 <div class="space-y-5">
-
-
 <% cartItems.forEach(item=>{ %>
+<div class="flex gap-5 bg-zinc-900 p-5 rounded-xl <%= item.isUnavailable ? 'border border-red-500/20 opacity-60' : '' %>">
+    <img src="<%= item.variant.images[0] %>" class="w-32 h-32 object-cover rounded-xl bg-black">
 
+    <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-4">
+            <h2 class="text-xl font-bold text-white truncate">
+                <%= item.product.name %>
+            </h2>
+            <% if (item.isUnavailable) { %>
+                <span class="text-xs bg-red-500/10 border border-red-500/30 text-red-500 font-black uppercase tracking-wider px-2 py-0.5 rounded">Unavailable</span>
+            <% } %>
+        </div>
 
-<div class="flex gap-5 
-bg-zinc-900 p-5 rounded-xl">
+        <p class="text-zinc-400">
+            <%= item.product.brand %>
+        </p>
 
+        <div class="flex items-center gap-3 mt-3">
+            <button
+                onclick="updateQuantity('<%= item.variant._id %>', -1)"
+                <%= item.isUnavailable ? 'disabled' : '' %>
+                class="px-3 py-1 bg-zinc-800 rounded hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                -
+            </button>
 
-<img
-src="<%= item.variant.images[0] %>"
-class="w-32 h-32 object-cover rounded-xl">
+            <span id="qty-<%= item.variant._id %>">
+                <%= item.quantity %>
+            </span>
 
+            <button
+                onclick="updateQuantity('<%= item.variant._id %>', 1)"
+                <%= item.isUnavailable ? 'disabled' : '' %>
+                class="px-3 py-1 bg-zinc-800 rounded hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                +
+            </button>
+        </div>
 
+        <p class="mt-2">
+            Price: ₹<%= item.price %>
+        </p>
 
-<div>
-
-
-<h2 class="text-xl font-bold">
-
-<%= item.product.name %>
-
-</h2>
-
-
-
-<p class="text-zinc-400">
-
-<%= item.product.brand %>
-
-</p>
-
-
-
-<div class="flex items-center gap-3">
-
-<button
-onclick="updateQuantity('<%= item.variant._id %>', -1)"
-class="px-3 py-1 bg-zinc-800 rounded">
--
-</button>
-
-
-<span id="qty-<%= item.variant._id %>">
-<%= item.quantity %>
-</span>
-
-
-<button
-onclick="updateQuantity('<%= item.variant._id %>', 1)"
-class="px-3 py-1 bg-zinc-800 rounded">
-+
-</button>
-
-
-</div>
-
-
-
-<p>
-
-Price:
-₹<%= item.price %>
-
-</p>
-
-
-
-<p>
-
-Subtotal:
-₹<%= item.subtotal %>
-
-</p>
-
-
-
-</div>
-
-
-
+        <p>
+            Subtotal: ₹<%= item.subtotal %>
+        </p>
+    </div>
 </div>
 
 <button
-onclick="removeItem('<%= item.variant._id %>')"
-class="text-red-500">
-
-Remove
-
+    onclick="removeItem('<%= item.variant._id %>')"
+    class="text-red-500 hover:text-red-400 font-semibold mb-6 block">
+    Remove
 </button>
-
 <% }) %>
-
 </div>
-
-
 
 <div class="mt-10">
+    <h2 class="text-2xl font-bold">
+        Total: ₹<%= total %>
+    </h2>
 
-
-<h2 class="text-2xl font-bold">
-
-Total:
-₹<%= total %>
-
-</h2>
-
-
-<button
-onclick="window.location.href='/checkout'"
-class="mt-5 bg-lime-400 text-black px-8 py-3 rounded-xl">
-
-Checkout
-
-</button>
-
-
+    <button
+        <% if (hasUnavailable) { %>
+            onclick="Swal.fire({ icon: 'warning', title: 'Action Required', text: 'Please remove unavailable items before placing your order.', confirmButtonColor: '#84cc16' })"
+        <% } else { %>
+            onclick="window.location.href='/checkout'"
+        <% } %>
+        class="mt-5 bg-lime-400 hover:bg-lime-300 text-black px-8 py-3 rounded-xl font-bold transition">
+        Checkout
+    </button>
 </div>
-
-
-
 <% } %>
 
 
