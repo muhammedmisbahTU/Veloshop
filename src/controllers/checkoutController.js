@@ -66,12 +66,19 @@ class CheckoutController {
             wallet = await Wallet.create({ userId: user._id, balance: 0 });
         }
 
+        const coupons = await Coupon.find({
+            isActive: true,
+            isDeleted: false,
+            expiryDate: { $gt: new Date() }
+        });
+
         res.render("user/checkout", {
           title: "Checkout",
           addresses,
           cartItems,
           coupon: req.session.checkout?.coupon || null,
           wallet,
+          coupons,
           ...totals,
         });
 
