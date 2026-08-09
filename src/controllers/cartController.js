@@ -51,7 +51,8 @@ export const getCart = async (req, res) => {
       const product = variant.productId;
       const price = item.priceSnapshot;
       
-      const isUnavailable = product.status !== "ACTIVE" || !variant.isActive;
+      const isOutOfStock = variant.stock <= 0;
+      const isUnavailable = product.status !== "ACTIVE" || !variant.isActive || isOutOfStock;
       const subtotal = price * item.quantity;
       
       if (!isUnavailable) {
@@ -66,7 +67,8 @@ export const getCart = async (req, res) => {
         quantity: item.quantity,
         price,
         subtotal,
-        isUnavailable
+        isUnavailable,
+        isOutOfStock
       };
     });
 

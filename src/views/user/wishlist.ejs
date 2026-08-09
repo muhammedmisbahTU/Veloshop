@@ -5,11 +5,13 @@
         <div class="grid grid-cols-1 gap-6">
             <% wishlist.items.forEach(item => { %>
                 <% 
+                    const isOutOfStock = item.variantId && item.variantId.stock <= 0;
                     const isAvailable = item.variantId && 
                                         item.variantId.isActive && 
                                         item.variantId.productId && 
                                         item.variantId.productId.status === 'ACTIVE' && 
-                                        !item.variantId.productId.isDeleted;
+                                        !item.variantId.productId.isDeleted &&
+                                        !isOutOfStock;
                 %>
                 <div class="bg-zinc-900 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between">
                     <div class="flex gap-5 items-center">
@@ -29,7 +31,9 @@
                             <p class="text-lime-400 text-lg font-semibold mt-2">
                                 ₹<%= item.variantId ? (item.variantId.salePrice || item.variantId.regularPrice) : 0 %>
                               </p>
-                            <% if (!isAvailable) { %>
+                            <% if (isOutOfStock) { %>
+                                <span class="inline-block mt-1 text-[10px] bg-red-500/10 border border-red-500/30 text-red-500 font-black uppercase tracking-wider px-2 py-0.5 rounded">Out of Stock</span>
+                            <% } else if (!isAvailable) { %>
                                 <span class="inline-block mt-1 text-[10px] bg-red-500/10 border border-red-500/30 text-red-500 font-black uppercase tracking-wider px-2 py-0.5 rounded">Unavailable</span>
                             <% } %>
                         </div>
@@ -41,6 +45,12 @@
                                 onclick="addToCartFromWishlist('<%= item.variantId.productId._id %>', '<%= item.variantId._id %>', this)"
                                 class="flex-1 sm:flex-initial bg-lime-400 hover:bg-lime-300 text-black px-5 py-2.5 font-bold text-sm rounded-lg transition duration-200">
                                 Add to Cart
+                            </button>
+                        <% } else if (isOutOfStock) { %>
+                            <button
+                                onclick="Swal.fire({ icon: 'warning', title: 'Out of Stock', text: 'This product is currently out of stock.', confirmButtonColor: '#84cc16' })"
+                                class="flex-1 sm:flex-initial bg-zinc-800 text-zinc-500 px-5 py-2.5 font-bold text-sm rounded-lg cursor-not-allowed">
+                                Out of Stock
                             </button>
                         <% } else { %>
                             <button

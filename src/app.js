@@ -14,7 +14,7 @@ import morgan from 'morgan';
 
 import passport from './config/passport.js';
 import { title } from 'process';
-import { csrfProtection } from "./middleware/csrf.js";
+import { csrfToken } from "./middleware/csrf.js";
 import Cart from "./models/Cart.js";
 import Wishlist from "./models/Wishlist.js";
 
@@ -32,7 +32,7 @@ app.use(morgan("dev"))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionConfig);
-app.use(csrfProtection);
+app.use(csrfToken);
 
 // Initialize Passport for Google OAuth
 app.use(passport.initialize());

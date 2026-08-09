@@ -273,10 +273,11 @@ export const getProductDetails = async (req, res) => {
       isActive: true,
     });
 
-    if (!variants.length) {
+    if (!variants || variants.length === 0) {
       return res.redirect("/shop");
     }
 
+    const defaultVariant = variants[0];
     const defaultPrice = defaultVariant.salePrice != null ? defaultVariant.salePrice : defaultVariant.regularPrice;
     const offer = await getBestOffer(product, defaultPrice);
 

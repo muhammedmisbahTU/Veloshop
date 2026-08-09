@@ -35,7 +35,11 @@ Shopping Cart
                 <%= item.product.name %>
             </h2>
             <% if (item.isUnavailable) { %>
-                <span class="text-xs bg-red-500/10 border border-red-500/30 text-red-500 font-black uppercase tracking-wider px-2 py-0.5 rounded">Unavailable</span>
+                <% if (item.isOutOfStock) { %>
+                    <span class="text-xs bg-red-500/10 border border-red-500/30 text-red-500 font-black uppercase tracking-wider px-2 py-0.5 rounded">Out of Stock</span>
+                <% } else { %>
+                    <span class="text-xs bg-red-500/10 border border-red-500/30 text-red-500 font-black uppercase tracking-wider px-2 py-0.5 rounded">Unavailable</span>
+                <% } %>
             <% } %>
         </div>
 
