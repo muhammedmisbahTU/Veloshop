@@ -127,14 +127,6 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    if (variant.stock < quantity) {
-      return res.json({
-        success: false,
-
-        message: "Not enough stock.",
-      });
-    }
-
     let cart = await Cart.findOne({
       userId,
     });
@@ -142,7 +134,6 @@ export const addToCart = async (req, res) => {
     if (!cart) {
       cart = new Cart({
         userId,
-
         items: [],
       });
     }
@@ -150,6 +141,15 @@ export const addToCart = async (req, res) => {
     const existingItem = cart.items.find(
       (item) => item.variantId.toString() === variantId,
     );
+
+    const totalRequested = (existingItem ? existingItem.quantity : 0) + quantity;
+
+    if (variant.stock < totalRequested) {
+      return res.json({
+        success: false,
+        message: "Not enough stock.",
+      });
+    }
 
     if (existingItem) {
       existingItem.quantity += quantity;

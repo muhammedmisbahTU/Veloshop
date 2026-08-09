@@ -8,6 +8,26 @@ import { applyCoupon } from "../services/couponService.js";
 import Coupon from "../models/Coupon.js";
 import { calculateCheckout } from "../services/checkoutService.js";
 
+async function getRevalidatedCoupon(req, cart) {
+  if (!req.session?.checkout?.coupon?.code) {
+    return null;
+  }
+  const result = await applyCoupon(
+    req.session.checkout.coupon.code,
+    cart,
+    req.session.user?.id || req.user?._id
+  );
+  if (!result.success) {
+    delete req.session.checkout.coupon;
+    return null;
+  }
+  return {
+    id: result.coupon._id,
+    code: result.coupon.code,
+    discount: result.discount
+  };
+}
+
 class CheckoutController {
   async getCheckout(req, res) {
     try {
@@ -52,12 +72,19 @@ class CheckoutController {
             return res.redirect("/cart");
         }
 
-        const couponDiscount = req.session.checkout?.coupon?.discount || 0;
-        const totals = await calculateCheckout(cartItems, couponDiscount);
+        let totals = await calculateCheckout(cartItems, 0);
+        let couponData = null;
+        if (req.session.checkout?.coupon) {
+            const revalidated = await getRevalidatedCoupon(req, cartItems);
+            if (revalidated) {
+                couponData = revalidated;
+                totals = await calculateCheckout(cartItems, revalidated.discount);
+            }
+        }
 
         req.session.checkout = {
             ...totals,
-            coupon: req.session.checkout?.coupon || null
+            coupon: couponData
         };
 
         const Wallet = (await import("../models/Wallet.js")).default;
@@ -180,8 +207,15 @@ class CheckoutController {
         });
         }
 
-    const couponDiscount = req.session.checkout?.coupon?.discount || 0;
-    const totals = await calculateCheckout(cart, couponDiscount);
+    let totals = await calculateCheckout(cart, 0);
+    let couponData = null;
+    if (req.session.checkout?.coupon) {
+        const revalidated = await getRevalidatedCoupon(req, cart);
+        if (revalidated) {
+            couponData = revalidated;
+            totals = await calculateCheckout(cart, revalidated.discount);
+        }
+    }
 
     const addressSnapshot = {
         addressLine1: address.addressLine1,
@@ -200,8 +234,6 @@ class CheckoutController {
         quantity: item.quantity,
         price: item.variantId.salePrice != null ? item.variantId.salePrice : item.variantId.regularPrice
     }));
-
-    const couponData = req.session.checkout?.coupon || null;
     const orderNumber = `ORD-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
     // Perform atomic stock check and decrement
@@ -495,7 +527,8 @@ class CheckoutController {
     }
 
     const cart = await Cart.findOne({ userId: req.session.user.id })
-        .populate("items.variantId");
+        .populate("items.variantId")
+        .populate("items.productId");
 
     if (!cart || cart.items.length === 0) {
         return res.json({
@@ -508,7 +541,7 @@ class CheckoutController {
 
     const result = await applyCoupon(
         code,
-        totals.subtotal,
+        cart,
         req.session.user.id
     );
 

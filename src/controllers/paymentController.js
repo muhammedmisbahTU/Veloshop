@@ -54,13 +54,15 @@ class PaymentController {
       });
 
       if (isValid) {
-        order.paymentStatus = "SUCCESS";
-        order.status = "CONFIRMED";
-        order.paymentGatewayId = razorpay_payment_id;
-        await order.save();
+        if (order.status === "PENDING" || order.status === "PAYMENT_FAILED") {
+          order.paymentStatus = "SUCCESS";
+          order.status = "CONFIRMED";
+          order.paymentGatewayId = razorpay_payment_id;
+          await order.save();
+        }
         return res.json({ success: true, message: "Payment verified successfully" });
       } else {
-        if (order.status !== "PAYMENT_FAILED") {
+        if (order.status === "PENDING") {
           order.paymentStatus = "FAILED";
           order.status = "PAYMENT_FAILED";
           await order.save();
@@ -79,7 +81,7 @@ class PaymentController {
     try {
       const userId = req.session?.user?.id || req.user?._id;
       const order = await Order.findOne({ _id: req.params.id, userId });
-      if (order && order.status !== "PAYMENT_FAILED") {
+      if (order && order.status === "PENDING") {
         order.paymentStatus = "FAILED";
         order.status = "PAYMENT_FAILED";
         await order.save();

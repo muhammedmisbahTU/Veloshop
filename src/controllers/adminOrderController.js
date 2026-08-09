@@ -105,29 +105,7 @@ async updateOrderStatus(req,res){
 
 try{
 
-
 const {status}=req.body;
-
-
-const order = await Order.findById(
-    req.params.id
-);
-
-
-
-if(!order){
-
-return res.json({
-
-success:false,
-
-message:"Order not found"
-
-});
-
-}
-
-
 
 const allowedStatus=[
 
@@ -140,10 +118,7 @@ const allowedStatus=[
 
 ];
 
-
-
 if(!allowedStatus.includes(status)){
-
 
 return res.json({
 
@@ -153,10 +128,7 @@ message:"Invalid status"
 
 });
 
-
 }
-
-
 
 // prevent invalid movement
 
@@ -191,28 +163,30 @@ CANCELLED:[]
 
 };
 
+const allowedSourceStates = Object.keys(transitions).filter(k => transitions[k].includes(status));
 
+const order = await Order.findOneAndUpdate(
+  {
+    _id: req.params.id,
+    status: { $in: allowedSourceStates }
+  },
+  {
+    $set: { status: status }
+  },
+  { new: false }
+);
 
-if(
-!transitions[order.status]
-.includes(status)
-){
-
+if(!order){
 
 return res.json({
 
 success:false,
 
-message:
-`Cannot change ${order.status} to ${status}`
+message:`Cannot change order status to ${status} (invalid transition or order not found)`
 
 });
 
-
 }
-
-
-
 
 if (status === "CANCELLED" && order.status !== "CANCELLED") {
     const Variant = (await import("../models/Variant.js")).default;
@@ -223,13 +197,12 @@ if (status === "CANCELLED" && order.status !== "CANCELLED") {
                 variant.stock += item.quantity;
                 await variant.save();
             }
-            item.itemStatus = "CANCELLED";
-            item.cancelReason = "Cancelled by Administrator";
         }
     }
     
     // Wallet refund logic for admin cancellation
-    if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET")) {
+    const totalToRefund = order.grandTotal - (order.refundAmount || 0);
+    if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET") && totalToRefund > 0) {
         const Wallet = (await import("../models/Wallet.js")).default;
         const Transaction = (await import("../models/Transaction.js")).default;
 
@@ -238,7 +211,7 @@ if (status === "CANCELLED" && order.status !== "CANCELLED") {
             wallet = await Wallet.create({ userId: order.userId, balance: 0 });
         }
 
-        wallet.balance += order.grandTotal;
+        wallet.balance += totalToRefund;
         await wallet.save();
 
         await Transaction.create({
@@ -246,37 +219,47 @@ if (status === "CANCELLED" && order.status !== "CANCELLED") {
             walletId: wallet._id,
             referenceType: "REFUND",
             referenceId: order._id,
-            amount: order.grandTotal,
+            amount: totalToRefund,
             balanceAfter: wallet.balance,
             transactionType: "CREDIT",
             status: "SUCCESS",
             description: `Refund for cancelled order ${order.orderNumber}`
         });
 
-        order.paymentStatus = "REFUNDED";
-        order.refundStatus = "COMPLETED";
-        order.refundAmount = order.grandTotal;
+        await Order.updateOne(
+            { _id: order._id },
+            {
+                $set: {
+                    paymentStatus: "REFUNDED",
+                    refundStatus: "COMPLETED",
+                    refundAmount: order.grandTotal,
+                    "items.$[].itemStatus": "CANCELLED",
+                    "items.$[].cancellationReason": "Cancelled by Administrator"
+                }
+            }
+        );
     } else {
-        order.paymentStatus = "FAILED";
+        await Order.updateOne(
+            { _id: order._id },
+            {
+                $set: {
+                    paymentStatus: "FAILED",
+                    "items.$[].itemStatus": "CANCELLED",
+                    "items.$[].cancellationReason": "Cancelled by Administrator"
+                }
+            }
+        );
     }
-    order.cancellationReason = "Cancelled by Administrator";
 }
-
-order.status=status;
 
 // when delivered
 if(status==="DELIVERED"){
-    order.deliveryDate=new Date();
+    const setFields = { deliveryDate: new Date() };
+    if(order.paymentMethod==="COD" || order.paymentMethod==="ONLINE" || order.paymentMethod==="CARD" || order.paymentMethod==="UPI"){
+        setFields.paymentStatus = "SUCCESS";
+    }
+    await Order.updateOne({ _id: order._id }, { $set: setFields });
 }
-
-// payment update for COD or ONLINE success
-if(status==="DELIVERED" && (order.paymentMethod==="COD" || order.paymentMethod==="ONLINE" || order.paymentMethod==="CARD" || order.paymentMethod==="UPI")){
-    order.paymentStatus="SUCCESS";
-}
-
-await order.save();
-
-
 
 return res.json({
 
@@ -286,13 +269,9 @@ message:"Order status updated"
 
 });
 
-
-
 }catch(error){
 
-
 console.log(error);
-
 
 return res.status(500).json({
 
@@ -302,9 +281,7 @@ message:"Something went wrong"
 
 });
 
-
 }
-
 
   }
 
@@ -313,46 +290,80 @@ message:"Something went wrong"
       const { orderId, itemId } = req.params;
       const { status, rejectedReason } = req.body;
 
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res.json({ success: false, message: "Order not found" });
-      }
-
-      const item = order.items.id(itemId);
-      if (!item) {
-        return res.json({ success: false, message: "Product not found" });
-      }
-
       const validStatuses = ["APPROVED", "REJECTED"];
       if (!validStatuses.includes(status)) {
         return res.json({ success: false, message: "Invalid status value" });
       }
 
-      if (item.returnStatus === "APPROVED" || item.returnStatus === "COMPLETED") {
-        return res.json({ success: false, message: "Return request is already approved/completed" });
+      const order = await Order.findOneAndUpdate(
+        {
+          _id: orderId,
+          items: {
+            $elemMatch: {
+              _id: itemId,
+              returnStatus: "REQUESTED"
+            }
+          }
+        },
+        {
+          $set: {
+            "items.$[elem].returnStatus": status,
+            "items.$[elem].returnReason": rejectedReason || "No reason provided"
+          }
+        },
+        {
+          arrayFilters: [{ "elem._id": itemId }],
+          new: false
+        }
+      );
+
+      if (!order) {
+        return res.json({ success: false, message: "Order or item not found, or return request is already processed" });
       }
 
-      item.returnStatus = status;
+      const item = order.items.id(itemId);
 
       if (status === "APPROVED") {
-        // Increment stock when return is approved
         const Variant = (await import("../models/Variant.js")).default;
         const variant = await Variant.findById(item.variantId);
         if (variant) {
           variant.stock += item.quantity;
           await variant.save();
         }
-        item.itemStatus = "RETURNED";
 
-        // Check if all items in the order have been returned or cancelled
-        const activeItems = order.items.filter(i => i.itemStatus === "ACTIVE");
+        await Order.updateOne(
+          { _id: order._id, "items._id": itemId },
+          { $set: { "items.$.itemStatus": "RETURNED" } }
+        );
+
+        const activeItems = order.items.filter(i => i.itemStatus === "ACTIVE" && i._id.toString() !== itemId.toString());
+        const newOrderStatus = activeItems.length === 0 ? "RETURNED" : order.status;
+
+        // Proportional refund calculation
+        const originalSubtotal = order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        let itemRefund = 0;
+
         if (activeItems.length === 0) {
-          order.status = "RETURNED";
+          itemRefund = order.grandTotal - (order.refundAmount || 0);
+        } else {
+          if (originalSubtotal > 0) {
+            const totalDiscount = (order.couponDiscount || 0) + (order.offerDiscount || 0);
+            const itemPriceTotal = item.price * item.quantity;
+            const itemDiscount = (totalDiscount * itemPriceTotal) / originalSubtotal;
+            const itemTax = ((order.taxAmount || 0) * itemPriceTotal) / originalSubtotal;
+            itemRefund = itemPriceTotal - itemDiscount + itemTax;
+          } else {
+            itemRefund = item.price * item.quantity;
+          }
+          itemRefund = Math.min(itemRefund, order.grandTotal - (order.refundAmount || 0));
         }
-        order.refundStatus = "COMPLETED";
+        itemRefund = Math.max(0, parseFloat(itemRefund.toFixed(2)));
 
-        // Process refund for returned item if paid
-        if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET")) {
+        let newRefundAmount = (order.refundAmount || 0);
+        let newPaymentStatus = order.paymentStatus;
+        let newRefundStatus = order.refundStatus;
+
+        if (order.paymentStatus === "SUCCESS" && (order.paymentMethod === "ONLINE" || order.paymentMethod === "WALLET") && itemRefund > 0) {
           const Wallet = (await import("../models/Wallet.js")).default;
           const Transaction = (await import("../models/Transaction.js")).default;
 
@@ -361,8 +372,7 @@ message:"Something went wrong"
             wallet = await Wallet.create({ userId: order.userId, balance: 0 });
           }
 
-          const itemTotal = item.price * item.quantity;
-          wallet.balance += itemTotal;
+          wallet.balance += itemRefund;
           await wallet.save();
 
           await Transaction.create({
@@ -370,24 +380,37 @@ message:"Something went wrong"
             walletId: wallet._id,
             referenceType: "REFUND",
             referenceId: order._id,
-            amount: itemTotal,
+            amount: itemRefund,
             balanceAfter: wallet.balance,
             transactionType: "CREDIT",
             status: "SUCCESS",
             description: `Refund for returned item (${item.productName}) in order ${order.orderNumber}`
           });
 
-          order.refundAmount = (order.refundAmount || 0) + itemTotal;
-          // If all items are returned/cancelled, mark overall order as REFUNDED
+          newRefundAmount += itemRefund;
           if (activeItems.length === 0) {
-             order.paymentStatus = "REFUNDED";
+             newPaymentStatus = "REFUNDED";
+             newRefundStatus = "COMPLETED";
           }
         }
-      } else if (status === "REJECTED") {
-        order.returnRejectedReason = rejectedReason || "Rejected by administrator";
-      }
 
-      await order.save();
+        await Order.updateOne(
+          { _id: order._id },
+          {
+            $set: {
+              status: newOrderStatus,
+              refundAmount: newRefundAmount,
+              paymentStatus: newPaymentStatus,
+              refundStatus: newRefundStatus
+            }
+          }
+        );
+      } else if (status === "REJECTED") {
+        await Order.updateOne(
+          { _id: order._id },
+          { $set: { returnRejectedReason: rejectedReason || "Rejected by administrator" } }
+        );
+      }
 
       return res.json({
         success: true,

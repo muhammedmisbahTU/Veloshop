@@ -1,6 +1,6 @@
 import Coupon from "../models/Coupon.js";
 
-export const applyCoupon = async (code, subtotal, userId) => {
+export const applyCoupon = async (code, cart, userId) => {
   const coupon = await Coupon.findOne({
     code: code.toUpperCase().trim(),
     isActive: true,
@@ -29,10 +29,40 @@ export const applyCoupon = async (code, subtotal, userId) => {
     };
   }
 
-  if (subtotal < coupon.minimumPurchase) {
+  let overallSubtotal = 0;
+  let eligibleSubtotal = 0;
+
+  for (const item of cart.items) {
+    const price = item.variantId.salePrice != null ? item.variantId.salePrice : item.variantId.regularPrice;
+    const itemSubtotal = price * item.quantity;
+    overallSubtotal += itemSubtotal;
+
+    let isEligible = false;
+    if (coupon.applicableTo === "ALL" || !coupon.applicableTo) {
+      isEligible = true;
+    } else if (coupon.applicableTo === "PRODUCT") {
+      isEligible = coupon.products.some(p => p.toString() === item.productId._id.toString() || p.toString() === item.productId.toString());
+    } else if (coupon.applicableTo === "CATEGORY") {
+      const catId = item.productId.categoryId ? (item.productId.categoryId._id || item.productId.categoryId) : null;
+      isEligible = catId && coupon.categories.some(c => c.toString() === catId.toString());
+    }
+
+    if (isEligible) {
+      eligibleSubtotal += itemSubtotal;
+    }
+  }
+
+  if (eligibleSubtotal === 0) {
     return {
       success: false,
-      message: `Minimum purchase ₹${coupon.minimumPurchase}`,
+      message: "No eligible items in cart for this coupon",
+    };
+  }
+
+  if (eligibleSubtotal < coupon.minimumPurchase) {
+    return {
+      success: false,
+      message: `Minimum purchase of eligible products is ₹${coupon.minimumPurchase}`,
     };
   }
 
@@ -55,7 +85,7 @@ export const applyCoupon = async (code, subtotal, userId) => {
   let discount = 0;
 
   if (coupon.discountType === "PERCENTAGE") {
-    discount = subtotal * coupon.discountValue / 100;
+    discount = eligibleSubtotal * coupon.discountValue / 100;
 
     if (coupon.maximumDiscount) {
       discount = Math.min(discount, coupon.maximumDiscount);
@@ -64,14 +94,14 @@ export const applyCoupon = async (code, subtotal, userId) => {
     discount = coupon.discountValue;
   }
 
-  if (discount > subtotal) {
-    discount = subtotal;
+  if (discount > eligibleSubtotal) {
+    discount = eligibleSubtotal;
   }
 
   return {
     success: true,
     coupon,
     discount,
-    finalTotal: subtotal - discount,
+    finalTotal: overallSubtotal - discount,
   };
 };
