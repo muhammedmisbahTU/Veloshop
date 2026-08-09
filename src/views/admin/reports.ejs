@@ -87,20 +87,20 @@
                 <% if (orders && orders.length > 0) { %>
                     <% orders.forEach(order => { %>
                         <tr class="hover:bg-zinc-900/40 transition">
-                            <td class="p-5 text-lime-400 font-semibold"><%= order.orderNumber %></td>
-                            <td class="p-5 text-zinc-400"><%= order.createdAt.toDateString() %></td>
-                            <td class="p-5"><%= order.paymentMethod %></td>
-                            <td class="p-5">
-                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= order.paymentStatus === 'SUCCESS' ? 'bg-green-500/10 text-green-400' : order.paymentStatus === 'FAILED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400' %>">
+                            <td class="p-5 text-lime-400 font-semibold whitespace-nowrap"><%= order.orderNumber %></td>
+                            <td class="p-5 text-zinc-400 whitespace-nowrap"><%= order.createdAt.toDateString() %></td>
+                            <td class="p-5 whitespace-nowrap"><%= order.paymentMethod %></td>
+                            <td class="p-5 whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap <%= order.paymentStatus === 'SUCCESS' ? 'bg-green-500/10 text-green-400' : order.paymentStatus === 'FAILED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400' %>">
                                     <%= order.paymentStatus %>
                                 </span>
                             </td>
-                            <td class="p-5">
-                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= order.status === 'DELIVERED' ? 'bg-green-500/10 text-green-400' : order.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400' %>">
+                            <td class="p-5 whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap <%= order.status === 'DELIVERED' ? 'bg-green-500/10 text-green-400' : order.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400' %>">
                                     <%= order.status %>
                                 </span>
                             </td>
-                            <td class="p-5 text-right font-bold">₹<%= order.grandTotal.toFixed(2) %></td>
+                            <td class="p-5 text-right font-bold whitespace-nowrap">₹<%= order.grandTotal.toFixed(2) %></td>
                         </tr>
                     <% }) %>
                 <% } else { %>

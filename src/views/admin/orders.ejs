@@ -69,7 +69,7 @@ Action
 <tr class="border-t border-white/10 text-white">
 
 
-<td class="p-5">
+<td class="p-5 whitespace-nowrap">
 
 
 <span class="text-lime-400 font-semibold">
@@ -104,7 +104,7 @@ Action
 
 
 
-<td class="p-5 text-zinc-300">
+<td class="p-5 text-zinc-300 whitespace-nowrap">
 
 
 <%= order.createdAt.toDateString() %>
@@ -115,7 +115,7 @@ Action
 
 
 
-<td class="p-5">
+<td class="p-5 whitespace-nowrap">
 
 
 <%= order.paymentMethod %>
@@ -136,10 +136,10 @@ Action
 
 
 
-<td class="p-5 text-lime-400 font-semibold">
+<td class="p-5 text-lime-400 font-semibold whitespace-nowrap">
 
 
-₹<%= order.grandTotal %>
+INR <%= order.grandTotal %>
 
 
 </td>
@@ -147,7 +147,7 @@ Action
 
 
 
-<td class="p-5">
+<td class="p-5 whitespace-nowrap">
 
 
 <span
@@ -187,7 +187,7 @@ order.status==="CANCELLED"
 
 href="/admin/orders/<%=order._id%>"
 
-class="text-lime-400 hover:text-lime-300">
+class="text-lime-400 hover:text-lime-300 whitespace-nowrap">
 
 View
 

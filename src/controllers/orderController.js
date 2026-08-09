@@ -468,186 +468,126 @@ res.setHeader(
 
 
 const doc = new PDFDocument({
-margin:50
+  margin: 50,
+  size: "A4"
 });
-
 
 doc.pipe(res);
 
+const brandColor = "#84CC16"; // Lime/Green accent
+const darkSlate = "#0F172A"; // Very dark slate for readable text
+const lightSlate = "#475569"; // Slate gray for secondary text/labels
+const tableHeaderBg = "#F1F5F9"; // Cool gray header background
+const borderBg = "#E2E8F0"; // Very light border line
 
+// 1. Accent Color Banner at the top
+doc.rect(0, 0, doc.page.width, 12).fill(brandColor);
 
-// Header
+// 2. Company Brand Header
+doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(22).text("VELOSHOP", 50, 40);
+doc.fillColor(lightSlate).font("Helvetica").fontSize(9).text("Premium Mechanical Keyboards, Mice & Accessories", 50, 65);
+doc.text("support@veloshop.com | www.veloshop.com", 50, 78);
 
-doc
-.fontSize(22)
-.text("INVOICE",{
-align:"center"
+// Invoice Label on the right
+doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(20).text("INVOICE", doc.page.width - 150, 40, { align: "right", width: 100 });
+doc.strokeColor(borderBg).lineWidth(1).moveTo(50, 100).lineTo(doc.page.width - 50, 100).stroke();
+
+// 3. Billing & Order Info Columns (Two-column grid)
+// Left Column: Customer Details
+doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(11).text("BILLED TO:", 50, 120);
+doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(10).text(order.userId.fullName, 50, 135);
+doc.fillColor(lightSlate).font("Helvetica").fontSize(9);
+doc.text(order.addressSnapshot.addressLine1, 50, 150, { width: 230 });
+doc.text(`${order.addressSnapshot.city}, ${order.addressSnapshot.state}`, 50, 165, { width: 230 });
+doc.text(`${order.addressSnapshot.country} - ${order.addressSnapshot.pinCode}`, 50, 180, { width: 230 });
+
+// Right Column: Invoice Details metadata
+doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(11).text("ORDER DETAILS:", doc.page.width - 290, 120, { width: 220 });
+
+const detailsStartY = 135;
+const detailsRowHeight = 14;
+
+const metadata = [
+  { label: "Order ID:", val: order.orderNumber },
+  { label: "Date:", val: order.createdAt.toDateString() },
+  { label: "Payment Method:", val: order.paymentMethod },
+  { label: "Payment Status:", val: order.paymentStatus }
+];
+
+metadata.forEach((item, index) => {
+  const rowY = detailsStartY + (index * detailsRowHeight);
+  doc.fillColor(lightSlate).font("Helvetica-Bold").fontSize(9).text(item.label, doc.page.width - 290, rowY, { width: 100 });
+  doc.fillColor(darkSlate).font("Helvetica").fontSize(8.5).text(item.val, doc.page.width - 190, rowY, { width: 140, align: "left" });
 });
 
+doc.strokeColor(borderBg).lineWidth(1).moveTo(50, 205).lineTo(doc.page.width - 50, 205).stroke();
 
-doc.moveDown();
+// 4. Products Table
+const tableStartY = 225;
 
+// Draw Table Header Background block
+doc.rect(50, tableStartY, doc.page.width - 100, 20).fill(tableHeaderBg);
 
+// Table Headers Text
+doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(9);
+doc.text("Item Description", 60, tableStartY + 6, { width: 210 });
+doc.text("Price", 270, tableStartY + 6, { width: 60, align: "right" });
+doc.text("Qty", 335, tableStartY + 6, { width: 35, align: "right" });
+doc.text("Status", 375, tableStartY + 6, { width: 85, align: "right" });
+doc.text("Total", 465, tableStartY + 6, { width: doc.page.width - 50 - 465 - 10, align: "right" });
 
-doc
-.fontSize(12)
-.text(
-`Order ID : ${order.orderNumber}`
-);
+let currentY = tableStartY + 20;
 
+order.items.forEach((item, index) => {
+  // Zebra striping background for clean visual grouping
+  if (index % 2 === 1) {
+    doc.rect(50, currentY, doc.page.width - 100, 20).fill("#FAFAFA");
+  }
 
-doc.text(
-`Order Date : ${order.createdAt.toDateString()}`
-);
+  doc.fillColor(darkSlate).font("Helvetica").fontSize(9);
+  doc.text(`${index + 1}. ${item.productName}`, 60, currentY + 6, { width: 200, height: 12, ellipsis: true });
+  doc.text(`INR ${Number(item.price || 0).toFixed(2)}`, 270, currentY + 6, { width: 60, align: "right" });
+  doc.text(`${item.quantity}`, 335, currentY + 6, { width: 35, align: "right" });
+  doc.text(`${item.itemStatus}`, 375, currentY + 6, { width: 85, align: "right" });
+  
+  const rowTotal = (item.price || 0) * (item.quantity || 0);
+  doc.text(`INR ${Number(rowTotal).toFixed(2)}`, 465, currentY + 6, { width: doc.page.width - 50 - 465 - 10, align: "right" });
 
-
-doc.text(
-`Payment Method : ${order.paymentMethod}`
-);
-
-
-doc.text(
-`Payment Status : ${order.paymentStatus}`
-);
-
-
-
-doc.moveDown();
-
-
-// Customer Details
-
-doc
-.fontSize(15)
-.text("Billing Details");
-
-
-doc.fontSize(11);
-
-
-doc.text(
-`${order.userId.fullName}`
-);
-
-
-doc.text(
-`${order.addressSnapshot.addressLine1}`
-);
-
-
-doc.text(
-`${order.addressSnapshot.city}, ${order.addressSnapshot.state}`
-);
-
-
-doc.text(
-`${order.addressSnapshot.country} - ${order.addressSnapshot.pinCode}`
-);
-
-
-
-doc.moveDown();
-
-
-// Products
-
-doc
-.fontSize(15)
-.text("Products");
-
-
-doc.moveDown();
-
-
-
-order.items.forEach((item,index)=>{
-
-
-doc.fontSize(11).text(
-
-`${index+1}. ${item.productName}`
-
-);
-
-
-doc.text(
-
-`Quantity : ${item.quantity}`
-
-);
-
-
-doc.text(
-
-`Price : ₹${item.price}`
-
-);
-
-
-doc.text(
-
-`Status : ${item.itemStatus}`
-
-);
-
-
-doc.moveDown();
-
-
+  // Light bottom border line
+  doc.strokeColor(borderBg).lineWidth(0.5).moveTo(50, currentY + 20).lineTo(doc.page.width - 50, currentY + 20).stroke();
+  currentY += 20;
 });
 
+// 5. Payment Summary Block (Right Aligned layout)
+currentY += 15;
 
+const summaryLabelsX = doc.page.width - 250;
+const summaryValuesX = doc.page.width - 140;
+const summaryRowHeight = 16;
 
-// Summary
+const summaryData = [
+  { label: "Subtotal:", val: `INR ${Number(order.subtotal || 0).toFixed(2)}` },
+  { label: "Discount:", val: `INR ${Number((order.couponDiscount || 0) + (order.offerDiscount || 0)).toFixed(2)}` },
+  { label: "Tax Amount:", val: `INR ${Number(order.taxAmount || 0).toFixed(2)}` },
+  { label: "Shipping Cost:", val: `INR ${Number(order.shippingCost || 0).toFixed(2)}` }
+];
 
+summaryData.forEach((item, index) => {
+  const rowY = currentY + (index * summaryRowHeight);
+  doc.fillColor(lightSlate).font("Helvetica-Bold").fontSize(9).text(item.label, summaryLabelsX, rowY, { width: 100 });
+  doc.fillColor(darkSlate).font("Helvetica").fontSize(9).text(item.val, summaryValuesX, rowY, { width: 100, align: "right" });
+});
 
-doc
-.fontSize(15)
-.text("Payment Summary");
+// Highlighted Grand Total Row
+const grandTotalY = currentY + (summaryData.length * summaryRowHeight) + 5;
+doc.rect(summaryLabelsX - 10, grandTotalY - 4, 180, 20).fill("#ECFDF5"); // Light green fill
 
+doc.fillColor("#047857").font("Helvetica-Bold").fontSize(10).text("Grand Total:", summaryLabelsX, grandTotalY, { width: 100 });
+doc.fillColor("#047857").font("Helvetica-Bold").fontSize(10).text(`INR ${Number(order.grandTotal || 0).toFixed(2)}`, summaryValuesX, grandTotalY, { width: 100, align: 'right' });
 
-doc.fontSize(11);
-
-
-doc.text(
-`Subtotal : ₹${order.subtotal}`
-);
-
-
-doc.text(
-`Discount : ₹${order.couponDiscount + order.offerDiscount}`
-);
-
-
-doc.text(
-`Tax : ₹${order.taxAmount}`
-);
-
-
-doc.text(
-`Shipping : ₹${order.shippingCost}`
-);
-
-
-doc.text(
-`Grand Total : ₹${order.grandTotal}`
-);
-
-
-
-doc.moveDown();
-
-
-doc
-.fontSize(12)
-.text(
-"Thank you for shopping with us!",
-{
-align:"center"
-}
-);
-
-
+// 6. Footer section at page bottom
+doc.strokeColor(borderBg).lineWidth(1).moveTo(50, doc.page.height - 80).lineTo(doc.page.width - 50, doc.page.height - 80).stroke();
+doc.fillColor(lightSlate).font("Helvetica-Oblique").fontSize(9).text("Thank you for shopping with us!", 50, doc.page.height - 65, { align: "center", width: doc.page.width - 100 });
 
 doc.end();
 

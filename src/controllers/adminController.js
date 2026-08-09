@@ -701,37 +701,125 @@ export const downloadSalesReport = async (req, res) => {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename=sales-report-${filter}-${Date.now()}.pdf`);
 
-      const doc = new PDFDocument({ margin: 50 });
+      const doc = new PDFDocument({ margin: 50, size: "A4" });
       doc.pipe(res);
 
-      // Title header
-      doc.fontSize(22).text("VELOSHOP SALES REPORT", { align: "center" });
-      doc.fontSize(12).text(`Filter Type: ${filter.toUpperCase()}`, { align: "center" });
+      const brandColor = "#84CC16"; // Lime/Green brand accent
+      const darkSlate = "#0F172A"; // Dark body text
+      const lightSlate = "#475569"; // Secondary gray text
+      const tableHeaderBg = "#F1F5F9"; // Cool gray headers
+      const borderBg = "#E2E8F0"; // Subtle border lines
+
+      // 1. Accent Banner
+      doc.rect(0, 0, doc.page.width, 12).fill(brandColor);
+
+      // 2. Title Header
+      doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(20).text("VELOSHOP SALES REPORT", 50, 40);
+      
+      let dateRangeStr = `Filter: ${filter.toUpperCase()}`;
       if (filter === "custom") {
-        doc.text(`Range: ${startDate} to ${endDate}`, { align: "center" });
+        dateRangeStr += ` (${startDate} to ${endDate})`;
       }
-      doc.moveDown();
+      doc.fillColor(lightSlate).font("Helvetica").fontSize(9).text(dateRangeStr, 50, 62);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 50, 74);
+      
+      doc.strokeColor(borderBg).lineWidth(1).moveTo(50, 95).lineTo(doc.page.width - 50, 95).stroke();
 
-      // Summary
-      doc.fontSize(15).text("Summary Analytics", { underline: true });
-      doc.moveDown(0.5);
-      doc.fontSize(11).text(`Total Orders Count: ${summary.orderCount}`);
-      doc.text(`Total Sales Value (Paid): ₹${summary.totalSales.toFixed(2)}`);
-      doc.text(`Total Discounts Applied: ₹${summary.totalDiscounts.toFixed(2)}`);
-      doc.text(`Coupon Deductions: ₹${summary.couponDeductions.toFixed(2)}`);
-      doc.text(`Final Net Revenue: ₹${summary.finalAmount.toFixed(2)}`);
-      doc.text(`Cancelled Revenue Loss: ₹${summary.cancelledAmount.toFixed(2)}`);
-      doc.text(`Returned Revenue Loss: ₹${summary.returnedAmount.toFixed(2)}`);
-      doc.moveDown();
+      // 3. Analytics Summary (Two-column dashboard layout)
+      doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(13).text("Summary Analytics", 50, 110);
+      
+      const metricStartY = 130;
+      const metricRowHeight = 16;
+      
+      const leftColX = 50;
+      const leftColValueX = 180;
+      const rightColX = doc.page.width / 2 + 10;
+      const rightColValueX = rightColX + 140;
 
-      // Orders list table
-      doc.fontSize(15).text("Order Ledger", { underline: true });
-      doc.moveDown(0.5);
-      orders.forEach((order, index) => {
-        doc.fontSize(10).text(
-          `${index + 1}. Order: ${order.orderNumber} | Date: ${order.createdAt.toLocaleDateString()} | Total: ₹${order.grandTotal.toFixed(2)} | Method: ${order.paymentMethod} | Status: ${order.status}`
-        );
+      const leftMetrics = [
+        { label: "Total Orders Count:", val: `${summary.orderCount}` },
+        { label: "Total Sales Value (Paid):", val: `INR ${Number(summary.totalSales || 0).toFixed(2)}` },
+        { label: "Final Net Revenue:", val: `INR ${Number(summary.finalAmount || 0).toFixed(2)}` },
+      ];
+
+      const rightMetrics = [
+        { label: "Total Discounts Applied:", val: `INR ${Number(summary.totalDiscounts || 0).toFixed(2)}` },
+        { label: "Coupon Deductions:", val: `INR ${Number(summary.couponDeductions || 0).toFixed(2)}` },
+        { label: "Cancelled Revenue Loss:", val: `INR ${Number(summary.cancelledAmount || 0).toFixed(2)}` },
+        { label: "Returned Revenue Loss:", val: `INR ${Number(summary.returnedAmount || 0).toFixed(2)}` },
+      ];
+
+      // Render Left Metrics
+      leftMetrics.forEach((m, idx) => {
+        const y = metricStartY + (idx * metricRowHeight);
+        doc.fillColor(lightSlate).font("Helvetica-Bold").fontSize(9).text(m.label, leftColX, y);
+        doc.fillColor(darkSlate).font("Helvetica").fontSize(9).text(m.val, leftColValueX, y);
       });
+
+      // Render Right Metrics
+      rightMetrics.forEach((m, idx) => {
+        const y = metricStartY + (idx * metricRowHeight);
+        doc.fillColor(lightSlate).font("Helvetica-Bold").fontSize(9).text(m.label, rightColX, y);
+        doc.fillColor(darkSlate).font("Helvetica").fontSize(9).text(m.val, rightColValueX, y);
+      });
+
+      doc.strokeColor(borderBg).lineWidth(1).moveTo(50, 205).lineTo(doc.page.width - 50, 205).stroke();
+
+      // 4. Order Ledger Table
+      doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(13).text("Order Ledger", 50, 220);
+
+      const tableStartY = 240;
+      doc.rect(50, tableStartY, doc.page.width - 100, 20).fill(tableHeaderBg);
+
+      // Ledger Table Headers
+      doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(9);
+      doc.text("Order Number", 50, tableStartY + 6, { width: 150 });
+      doc.text("Date", 205, tableStartY + 6, { width: 60 });
+      doc.text("Payment Method", 270, tableStartY + 6, { width: 85 });
+      doc.text("Status", 360, tableStartY + 6, { width: 90 });
+      doc.text("Grand Total", 455, tableStartY + 6, { width: doc.page.width - 50 - 455, align: "right" });
+
+      let currentY = tableStartY + 20;
+
+      orders.forEach((order, index) => {
+        // Page break calculation
+        if (currentY > doc.page.height - 80) {
+          doc.addPage();
+          // Draw top accent banner on the new page
+          doc.rect(0, 0, doc.page.width, 12).fill(brandColor);
+          
+          // Re-draw headers on new page
+          doc.rect(50, 40, doc.page.width - 100, 20).fill(tableHeaderBg);
+          doc.fillColor(darkSlate).font("Helvetica-Bold").fontSize(9);
+          doc.text("Order Number", 50, 46, { width: 150 });
+          doc.text("Date", 205, 46, { width: 60 });
+          doc.text("Payment Method", 270, 46, { width: 85 });
+          doc.text("Status", 360, 46, { width: 90 });
+          doc.text("Grand Total", 455, 46, { width: doc.page.width - 50 - 455, align: "right" });
+          
+          currentY = 60;
+        }
+
+        // Alternating row background shading
+        if (index % 2 === 1) {
+          doc.rect(50, currentY, doc.page.width - 100, 20).fill("#FAFAFA");
+        }
+
+        doc.fillColor(darkSlate).font("Helvetica").fontSize(8);
+        doc.text(order.orderNumber, 50, currentY + 6, { width: 150 });
+        doc.text(new Date(order.createdAt).toLocaleDateString(), 205, currentY + 6, { width: 60 });
+        doc.text(order.paymentMethod || "N/A", 270, currentY + 6, { width: 85 });
+        doc.text(order.status || "N/A", 360, currentY + 6, { width: 90 });
+        doc.text(`INR ${Number(order.grandTotal || 0).toFixed(2)}`, 455, currentY + 6, { width: doc.page.width - 50 - 455, align: "right" });
+
+        // Light bottom border line
+        doc.strokeColor(borderBg).lineWidth(0.5).moveTo(50, currentY + 20).lineTo(doc.page.width - 50, currentY + 20).stroke();
+        currentY += 20;
+      });
+
+      // Footer
+      doc.strokeColor(borderBg).lineWidth(1).moveTo(50, doc.page.height - 50).lineTo(doc.page.width - 50, doc.page.height - 50).stroke();
+      doc.fillColor(lightSlate).font("Helvetica").fontSize(8).text("Veloshop Administration Panel - Confidential Sales Report", 50, doc.page.height - 40, { align: "center", width: doc.page.width - 100 });
 
       doc.end();
     }
