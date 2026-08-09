@@ -424,9 +424,11 @@ filterValidation
             if (isWishlisted) {
                 icon.classList.remove("fa-solid", "text-red-500");
                 icon.classList.add("fa-regular");
+                if (window.updateNavbarWishlistCount) window.updateNavbarWishlistCount(-1);
             } else {
                 icon.classList.remove("fa-regular");
                 icon.classList.add("fa-solid", "text-red-500");
+                if (window.updateNavbarWishlistCount) window.updateNavbarWishlistCount(1);
             }
 
             Swal.fire({
@@ -485,6 +487,8 @@ filterValidation
                 });
                 return;
             }
+
+            if (window.updateNavbarCartCount) window.updateNavbarCartCount(1);
 
             Swal.fire({
                 icon: "success",

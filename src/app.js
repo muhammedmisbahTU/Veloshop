@@ -15,6 +15,8 @@ import morgan from 'morgan';
 import passport from './config/passport.js';
 import { title } from 'process';
 import { csrfProtection } from "./middleware/csrf.js";
+import Cart from "./models/Cart.js";
+import Wishlist from "./models/Wishlist.js";
 
 const app = express();
 dotenv.config();
@@ -37,13 +39,33 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Session flash & user helper middleware
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   res.locals.errorMessage = req.session.errorMessage || null;
   res.locals.successMessage = req.session.successMessage || null;
   delete req.session.errorMessage;
   delete req.session.successMessage;
-  res.locals.user = req.user || req.session.user || null;
+  const user = req.user || req.session.user || null;
+  res.locals.user = user;
   res.locals.path = req.path;
+  res.locals.cartCount = 0;
+  res.locals.wishlistCount = 0;
+
+  if (user) {
+    try {
+      const [cart, wishlist] = await Promise.all([
+        Cart.findOne({ userId: user._id || user.id }),
+        Wishlist.findOne({ userId: user._id || user.id })
+      ]);
+      if (cart && cart.items) {
+        res.locals.cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+      }
+      if (wishlist && wishlist.items) {
+        res.locals.wishlistCount = wishlist.items.length;
+      }
+    } catch (err) {
+      console.error("Error fetching navbar counts:", err);
+    }
+  }
   next();
 });
 

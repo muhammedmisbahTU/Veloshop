@@ -8,10 +8,44 @@
         <a href="/" class="hover:text-lime-400">Home</a>
         <a href="/shop" class="hover:text-lime-400">Shop</a>
         <% if (locals.user) { %>
-        <a href="/cart" class="hover:text-lime-400">Cart</a>
+        <a href="/cart" class="hover:text-lime-400 flex items-center gap-1">
+            Cart
+            <span id="nav-cart-count" class="bg-lime-400 text-black text-[10px] font-black px-1.5 py-0.5 rounded-full <%= locals.cartCount > 0 ? '' : 'hidden' %>"><%= locals.cartCount %></span>
+        </a>
         <a href="/orders" class="hover:text-lime-400">Orders</a>
-        <a href="/wishlist" class="hover:text-lime-400">Wishlist</a>
+        <a href="/wishlist" class="hover:text-lime-400 flex items-center gap-1">
+            Wishlist
+            <span id="nav-wishlist-count" class="bg-lime-400 text-black text-[10px] font-black px-1.5 py-0.5 rounded-full <%= locals.wishlistCount > 0 ? '' : 'hidden' %>"><%= locals.wishlistCount %></span>
+        </a>
         <% } %>
+
+        <script>
+            window.updateNavbarCartCount = function(change) {
+                const badge = document.getElementById("nav-cart-count");
+                if (!badge) return;
+                let count = parseInt(badge.textContent) || 0;
+                count = Math.max(0, count + change);
+                badge.textContent = count;
+                if (count > 0) {
+                    badge.classList.remove("hidden");
+                } else {
+                    badge.classList.add("hidden");
+                }
+            };
+
+            window.updateNavbarWishlistCount = function(change) {
+                const badge = document.getElementById("nav-wishlist-count");
+                if (!badge) return;
+                let count = parseInt(badge.textContent) || 0;
+                count = Math.max(0, count + change);
+                badge.textContent = count;
+                if (count > 0) {
+                    badge.classList.remove("hidden");
+                } else {
+                    badge.classList.add("hidden");
+                }
+            };
+        </script>
     </div>
 
     <div class="flex items-center gap-4">

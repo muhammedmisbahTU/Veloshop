@@ -8,20 +8,15 @@ Shopping Cart
 
 
 <% if(cartItems.length === 0){ %>
-
-
-<div class="text-center">
-
-<h2>
-Your cart is empty
-</h2>
-
-
-<a href="/shop">
-Continue Shopping
-</a>
-
-
+<div class="text-center py-20 bg-zinc-900 border border-white/5 rounded-3xl">
+    <svg class="w-16 h-16 text-zinc-700 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+    </svg>
+    <h3 class="text-lg font-bold text-white mb-2">Your cart is empty.</h3>
+    <p class="text-sm text-zinc-500 max-w-sm mx-auto mb-6">Explore our products and add them to your cart!</p>
+    <a href="/shop" class="px-6 py-3 bg-lime-400 hover:bg-lime-300 text-black font-black text-sm rounded-xl transition duration-300">
+        Continue Shopping
+    </a>
 </div>
 
 

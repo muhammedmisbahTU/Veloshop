@@ -619,6 +619,8 @@ async function addToCart(event) {
             return;
         }
 
+         const wasWishlisted = heartIcon && heartIcon.classList.contains("fa-solid");
+
          await fetch(`/wishlist/${variantId}`, {
             method: "DELETE"
         });
@@ -627,6 +629,8 @@ async function addToCart(event) {
             heartIcon.className = "fa-regular fa-heart";
         }
 
+        if (window.updateNavbarCartCount) window.updateNavbarCartCount(quantity);
+        if (wasWishlisted && window.updateNavbarWishlistCount) window.updateNavbarWishlistCount(-1);
 
         Swal.fire({
             icon: "success",
@@ -691,11 +695,13 @@ wishlistBtn.addEventListener("click", async () => {
 
             icon.classList.remove("fa-solid", "text-red-500");
             icon.classList.add("fa-regular");
+            if (window.updateNavbarWishlistCount) window.updateNavbarWishlistCount(-1);
 
         } else {
 
             icon.classList.remove("fa-regular");
             icon.classList.add("fa-solid", "text-red-500");
+            if (window.updateNavbarWishlistCount) window.updateNavbarWishlistCount(1);
 
         }
 
