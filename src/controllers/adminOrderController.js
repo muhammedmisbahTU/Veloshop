@@ -341,6 +341,12 @@ message:"Something went wrong"
 
         // Proportional refund calculation
         const originalSubtotal = order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        const newSubtotal = activeItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        const newTaxAmount = originalSubtotal > 0 ? parseFloat((((order.taxAmount || 0) * newSubtotal) / originalSubtotal).toFixed(2)) : 0;
+        const newOfferDiscount = originalSubtotal > 0 ? parseFloat((((order.offerDiscount || 0) * newSubtotal) / originalSubtotal).toFixed(2)) : 0;
+        const newCouponDiscount = originalSubtotal > 0 ? parseFloat((((order.couponDiscount || 0) * newSubtotal) / originalSubtotal).toFixed(2)) : 0;
+        const newGrandTotal = Math.max(0, parseFloat((newSubtotal + newTaxAmount + order.shippingCost - newCouponDiscount - newOfferDiscount).toFixed(2)));
+
         let itemRefund = 0;
 
         if (activeItems.length === 0) {
@@ -399,6 +405,11 @@ message:"Something went wrong"
           {
             $set: {
               status: newOrderStatus,
+              subtotal: newSubtotal,
+              taxAmount: newTaxAmount,
+              offerDiscount: newOfferDiscount,
+              couponDiscount: newCouponDiscount,
+              grandTotal: newGrandTotal,
               refundAmount: newRefundAmount,
               paymentStatus: newPaymentStatus,
               refundStatus: newRefundStatus

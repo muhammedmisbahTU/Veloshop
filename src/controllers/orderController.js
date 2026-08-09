@@ -181,14 +181,16 @@ if(variant){
 const activeItems = order.items.filter(
     i => i.itemStatus === "ACTIVE" && i._id.toString() !== itemId.toString()
 );
-
+const originalSubtotal = order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
 const newStatus = activeItems.length === 0 ? "CANCELLED" : order.status;
 
 let newSubtotal = activeItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-const newGrandTotal = Math.max(0, newSubtotal + order.taxAmount + order.shippingCost - order.couponDiscount - order.offerDiscount);
+const newTaxAmount = originalSubtotal > 0 ? parseFloat((((order.taxAmount || 0) * newSubtotal) / originalSubtotal).toFixed(2)) : 0;
+const newOfferDiscount = originalSubtotal > 0 ? parseFloat((((order.offerDiscount || 0) * newSubtotal) / originalSubtotal).toFixed(2)) : 0;
+const newCouponDiscount = originalSubtotal > 0 ? parseFloat((((order.couponDiscount || 0) * newSubtotal) / originalSubtotal).toFixed(2)) : 0;
+const newGrandTotal = Math.max(0, parseFloat((newSubtotal + newTaxAmount + order.shippingCost - newCouponDiscount - newOfferDiscount).toFixed(2)));
 
 // Proportional refund calculation
-const originalSubtotal = order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
 let itemRefund = 0;
 
 if (activeItems.length === 0) {
@@ -249,6 +251,9 @@ await Order.updateOne(
     $set: {
       status: newStatus,
       subtotal: newSubtotal,
+      taxAmount: newTaxAmount,
+      offerDiscount: newOfferDiscount,
+      couponDiscount: newCouponDiscount,
       grandTotal: newGrandTotal,
       refundAmount: newRefundAmount,
       paymentStatus: newPaymentStatus,

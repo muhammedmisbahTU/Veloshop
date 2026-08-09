@@ -17,7 +17,8 @@ export async function calculateCheckout(cart, couponDiscount = 0) {
     }
 
     const shipping = 0;
-    const tax = Math.max(0, (subtotal - offerDiscount) * 0.18);
+    const taxableAmount = Math.max(0, subtotal - offerDiscount - couponDiscount);
+    const tax = parseFloat((taxableAmount * 0.18).toFixed(2));
 
     const grandTotal =
         subtotal
