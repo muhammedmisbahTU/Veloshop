@@ -24,7 +24,8 @@ const orders = await Order.find()
 res.render(
 "admin/orders",
 {
-    orders
+    orders,
+    layout: "layouts/admin-layout"
 }
 );
 
@@ -76,7 +77,8 @@ return res.status(404).send(
 res.render(
 "admin/order-details",
 {
-    order
+    order,
+    layout: "layouts/admin-layout"
 }
 );
 

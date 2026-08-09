@@ -87,12 +87,12 @@ app.use('/', authRoutes);
 app.use('/', adminRoutes);
 app.use('/', userRoutes);
 app.use((req, res, next) => {
-    const err = new Error(`Not Found: ${req.originalUrl}`);
-    err.status = 404;
-    next(err); // Forwarding the 404 to the global error handler below
+  const err = new Error(`Not Found: ${req.originalUrl}`);
+  err.status = 404;
+  next(err); // Forwarding the 404 to the global error handler below
 });
 
-app.use(routeNotFound);  
+app.use(routeNotFound);
 app.use(globalErrorHandler);
 
 // 5. Start Server listening immediately
