@@ -575,11 +575,31 @@ const compileSalesReportData = async (filter, startDateStr, endDateStr) => {
     totalDiscounts += (order.couponDiscount || 0) + (order.offerDiscount || 0);
 
     if (order.status === "CANCELLED") {
-      cancelledAmount += order.grandTotal;
+      cancelledAmount += order.refundAmount || order.grandTotal;
     } else if (order.status === "RETURNED") {
-      returnedAmount += order.grandTotal;
+      returnedAmount += order.refundAmount || order.grandTotal;
     } else {
-      // For CONFIRMED, PROCESSING, SHIPPED, DELIVERED
+      // Aggregate partial refunds from individual items
+      order.items.forEach(item => {
+        if (item.itemStatus === "CANCELLED") {
+          const originalSubtotal = order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+          const totalDiscount = (order.couponDiscount || 0) + (order.offerDiscount || 0);
+          const itemPriceTotal = item.price * item.quantity;
+          const itemDiscount = originalSubtotal > 0 ? (totalDiscount * itemPriceTotal) / originalSubtotal : 0;
+          const itemTax = originalSubtotal > 0 ? ((order.taxAmount || 0) * itemPriceTotal) / originalSubtotal : 0;
+          const itemRefund = itemPriceTotal - itemDiscount + itemTax;
+          cancelledAmount += itemRefund;
+        } else if (item.itemStatus === "RETURNED") {
+          const originalSubtotal = order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+          const totalDiscount = (order.couponDiscount || 0) + (order.offerDiscount || 0);
+          const itemPriceTotal = item.price * item.quantity;
+          const itemDiscount = originalSubtotal > 0 ? (totalDiscount * itemPriceTotal) / originalSubtotal : 0;
+          const itemTax = originalSubtotal > 0 ? ((order.taxAmount || 0) * itemPriceTotal) / originalSubtotal : 0;
+          const itemRefund = itemPriceTotal - itemDiscount + itemTax;
+          returnedAmount += itemRefund;
+        }
+      });
+
       if (order.paymentStatus === "SUCCESS") {
         totalSales += order.grandTotal;
       }
