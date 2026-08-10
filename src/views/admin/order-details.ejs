@@ -1,71 +1,58 @@
 <div class="max-w-7xl mx-auto px-6 py-10">
+<%
+const transitions = {
+    PENDING: ["CONFIRMED", "CANCELLED"],
+    PAYMENT_FAILED: ["CANCELLED", "PENDING"],
+    CONFIRMED: ["PROCESSING", "CANCELLED"],
+    PROCESSING: ["SHIPPED"],
+    SHIPPED: ["DELIVERED"],
+    DELIVERED: [],
+    CANCELLED: [],
+    RETURNED: []
+};
+const allowedNext = transitions[order.status] || [];
+%>
+
+<% if (allowedNext.length > 0) { %>
 <div class="bg-zinc-900 rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-5">
+        Update Order Status
+    </h2>
 
+    <select
+        id="orderStatus"
+        class="bg-zinc-800 text-white rounded-xl p-3 w-full">
+        <option value="<%= order.status %>" selected disabled>
+            <%= order.status.charAt(0) + order.status.slice(1).toLowerCase() %> (Current)
+        </option>
+        <% allowedNext.forEach(status => { %>
+            <option value="<%= status %>">
+                <%= status.charAt(0) + status.slice(1).toLowerCase() %>
+            </option>
+        <% }) %>
+    </select>
 
-<h2 class="text-xl font-bold text-white mb-5">
-Update Order Status
-</h2>
-
-
-
-<select
-id="orderStatus"
-class="bg-zinc-800 text-white rounded-xl p-3 w-full">
-
-
-<option value="PENDING"
-<%= order.status==="PENDING"?"selected":"" %>>
-Pending
-</option>
-
-
-<option value="CONFIRMED"
-<%= order.status==="CONFIRMED"?"selected":"" %>>
-Confirmed
-</option>
-
-
-<option value="PROCESSING"
-<%= order.status==="PROCESSING"?"selected":"" %>>
-Processing
-</option>
-
-
-<option value="SHIPPED"
-<%= order.status==="SHIPPED"?"selected":"" %>>
-Shipped
-</option>
-
-
-<option value="DELIVERED"
-<%= order.status==="DELIVERED"?"selected":"" %>>
-Delivered
-</option>
-
-
-<option value="CANCELLED"
-<%= order.status==="CANCELLED"?"selected":"" %>>
-Cancelled
-</option>
-
-
-</select>
-
-
-
-<button
-
-onclick="updateStatus('<%=order._id%>')"
-
-class="mt-4 bg-lime-400 text-black px-6 py-3 rounded-xl font-semibold">
-
-Update Status
-
-</button>
-
-
-
+    <button
+        onclick="updateStatus('<%=order._id%>')"
+        class="mt-4 bg-lime-400 text-black px-6 py-3 rounded-xl font-semibold hover:bg-lime-300 transition">
+        Update Status
+    </button>
 </div>
+<% } else { %>
+<div class="bg-zinc-900 rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-3">
+        Order Status
+    </h2>
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <span class="px-4 py-2 bg-zinc-800 rounded-xl text-zinc-300 font-semibold border border-white/5 w-fit">
+            <%= order.status %>
+        </span>
+        <span class="text-sm text-zinc-500">
+            This order is in a final state and cannot be further updated.
+        </span>
+    </div>
+</div>
+<% } %>
 
 <div class="flex justify-between items-center mb-8">
 
@@ -250,72 +237,58 @@ Products
 <% order.items.forEach(item=>{ %>
 
 
-<div class="flex items-center gap-5 
-border-b border-white/10 py-4">
+<div class="border-b border-white/10 py-4">
+    <div class="flex items-center gap-5">
+        <img
+        src="<%= item.thumbnail %>"
+        class="w-16 h-16 rounded-xl object-cover"
+        >
 
+        <div class="flex-1">
+            <h3 class="text-white font-semibold">
+            <%= item.productName %>
+            </h3>
+            <p class="text-zinc-400 text-sm">
+            Qty: <%= item.quantity %>
+            </p>
+            <p class="text-zinc-400 text-sm">
+            Price: ₹<%= item.price %>
+            </p>
+        </div>
 
+        <span class="text-sm <%= item.itemStatus==="CANCELLED" ? "text-red-400" : item.itemStatus==="RETURNED" ? "text-purple-400" : "text-green-400" %>">
+        <%= item.itemStatus %>
+        </span>
+    </div>
 
-<img
+    <!-- Return Processing Section -->
+    <% if (item.returnStatus && item.returnStatus !== "NONE") { %>
+        <div class="mt-3 bg-zinc-800/40 p-4 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+            <div>
+                <p class="text-xs uppercase tracking-wider text-zinc-500 font-bold">Return Request</p>
+                <p class="text-sm text-zinc-300 mt-1">Reason: <span class="italic text-white">"<%= item.returnReason || 'No reason provided' %>"</span></p>
+                
+                <% if (item.returnStatus === "APPROVED") { %>
+                    <span class="inline-block mt-2 text-xs bg-green-500/10 border border-green-500/30 text-green-400 font-semibold px-2 py-0.5 rounded">APPROVED</span>
+                <% } else if (item.returnStatus === "REJECTED") { %>
+                    <span class="inline-block mt-2 text-xs bg-red-500/10 border border-red-500/30 text-red-400 font-semibold px-2 py-0.5 rounded">REJECTED</span>
+                <% } else { %>
+                    <span class="inline-block mt-2 text-xs bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-semibold px-2 py-0.5 rounded">PENDING APPROVAL</span>
+                <% } %>
+            </div>
 
-src="<%= item.thumbnail %>"
-
-class="w-16 h-16 rounded-xl object-cover"
-
->
-
-
-
-<div class="flex-1">
-
-
-<h3 class="text-white font-semibold">
-
-<%= item.productName %>
-
-</h3>
-
-
-<p class="text-zinc-400">
-
-Qty:
-<%= item.quantity %>
-
-</p>
-
-
-<p class="text-zinc-400">
-
-Price:
-₹<%= item.price %>
-
-</p>
-
-
-</div>
-
-
-
-
-<span class="
-text-sm
-
-<%= item.itemStatus==="CANCELLED"
-?
-"text-red-400"
-:
-"text-green-400"
-
-%>
-">
-
-
-<%= item.itemStatus %>
-
-
-</span>
-
-
-
+            <% if (item.returnStatus === "REQUESTED") { %>
+                <div class="flex gap-2">
+                    <button onclick="processReturn('<%= order._id %>', '<%= item._id %>', 'APPROVED')" class="bg-green-600 hover:bg-green-500 text-white font-semibold text-xs px-4 py-2 rounded-xl transition">
+                        Approve
+                    </button>
+                    <button onclick="processReturn('<%= order._id %>', '<%= item._id %>', 'REJECTED')" class="bg-red-600 hover:bg-red-500 text-white font-semibold text-xs px-4 py-2 rounded-xl transition">
+                        Reject
+                    </button>
+                </div>
+            <% } %>
+        </div>
+    <% } %>
 </div>
 
 
@@ -500,6 +473,75 @@ title:data.message
 }
 
 
+}
+
+async function processReturn(orderId, itemId, status) {
+    let rejectedReason = "";
+    if (status === "REJECTED") {
+        const { value: reason } = await Swal.fire({
+            title: 'Reject Return Request',
+            input: 'text',
+            inputLabel: 'Reason for rejection',
+            inputPlaceholder: 'Enter reason here...',
+            inputValidator: (value) => {
+                if (!value || value.trim().length < 3) {
+                    return 'Please enter a valid rejection reason!'
+                }
+            },
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#71717a'
+        });
+        if (!reason) return;
+        rejectedReason = reason;
+    } else {
+        const result = await Swal.fire({
+            title: 'Approve Return',
+            text: 'Are you sure you want to approve this return request? The item value (including tax minus discount) will be refunded to the user\'s wallet.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#22c55e',
+            cancelButtonColor: '#71717a'
+        });
+        if (!result.isConfirmed) return;
+    }
+
+    try {
+        const response = await fetch(`/admin/orders/${orderId}/item/${itemId}/return-status`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                status,
+                rejectedReason
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: data.message
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Failed",
+                text: data.message
+            });
+        }
+    } catch (err) {
+        console.error("Process return error:", err);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Something went wrong processing this return request."
+        });
+    }
 }
 
 

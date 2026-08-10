@@ -84,12 +84,44 @@
 
                         <% if (item.itemStatus === "CANCELLED") { %>
 
-                            <span class="text-red-400 text-sm">
-                                <%= item.itemStatus %>
+                            <span class="text-red-400 text-sm font-semibold">
+                                CANCELLED
                             </span>
 
-                            <p class="text-sm text-red-400 mt-2">
-                                Reason: <%= item.cancelReason %>
+                            <p class="text-sm text-zinc-500 mt-2">
+                                Reason: <%= item.cancellationReason || item.cancelReason || 'No reason provided' %>
+                            </p>
+
+                        <% } else if (item.itemStatus === "RETURNED") { %>
+
+                            <span class="text-purple-400 text-sm font-semibold">
+                                RETURNED
+                            </span>
+
+                        <% } else if (item.returnStatus === "REQUESTED") { %>
+
+                            <span class="text-yellow-400 text-sm font-semibold">
+                                Return Requested
+                            </span>
+
+                            <p class="text-zinc-500 text-sm mt-2">
+                                Reason: <%= item.returnReason %>
+                            </p>
+
+                        <% } else if (item.returnStatus === "APPROVED") { %>
+
+                            <span class="text-green-400 text-sm font-semibold">
+                                Return Approved
+                            </span>
+
+                        <% } else if (item.returnStatus === "REJECTED") { %>
+
+                            <span class="text-red-400 text-sm font-semibold">
+                                Return Rejected
+                            </span>
+
+                            <p class="text-sm text-red-400 mt-2 font-medium">
+                                Rejection Reason: <%= item.returnReason %>
                             </p>
 
                         <% } else if (
@@ -115,16 +147,6 @@
                                 class="text-sm text-yellow-400 hover:text-yellow-300">
                                 Return Product
                             </button>
-
-                        <% } else if (item.returnStatus === "REQUESTED") { %>
-
-                            <span class="text-yellow-400 text-sm">
-                                Return Requested
-                            </span>
-
-                            <p class="text-zinc-400 text-sm">
-                                Reason: <%= item.returnReason %>
-                            </p>
 
                         <% } else { %>
 

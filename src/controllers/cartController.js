@@ -49,7 +49,7 @@ export const getCart = async (req, res) => {
     const cartItems = cart.items.map((item) => {
       const variant = item.variantId;
       const product = variant.productId;
-      const price = item.priceSnapshot;
+      const price = variant.salePrice != null ? variant.salePrice : variant.regularPrice;
       
       const isOutOfStock = variant.stock <= 0;
       const isInactive = product.status !== "ACTIVE" || !variant.isActive;
