@@ -672,20 +672,71 @@ res.render(
 
 
 
-}catch(error){
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Search failed");
+    }
+  }
 
-console.log(error);
+  async returnOrder(req, res) {
+    try {
+      const userId = req.session?.user?.id || req.user?._id;
+      const { orderId } = req.params;
+      const { reason } = req.body;
 
+      if (!reason || reason.trim().length < 3) {
+        return res.json({
+          success: false,
+          message: "Return reason is required"
+        });
+      }
 
-res.status(500).send(
-"Search failed"
-);
+      const order = await Order.findOne({ _id: orderId, userId });
+      if (!order) {
+        return res.json({
+          success: false,
+          message: "Order not found"
+        });
+      }
 
+      if (order.status !== "DELIVERED") {
+        return res.json({
+          success: false,
+          message: "Only delivered orders can be returned"
+        });
+      }
 
-}
+      const returnableItems = order.items.filter(item => item.itemStatus === "ACTIVE" && item.returnStatus === "NONE");
 
-}
+      if (returnableItems.length === 0) {
+        return res.json({
+          success: false,
+          message: "No eligible items to return in this order"
+        });
+      }
 
+      returnableItems.forEach(item => {
+        item.returnStatus = "REQUESTED";
+        item.returnReason = reason;
+      });
+
+      order.returnStatus = "REQUESTED";
+      order.returnReason = reason;
+
+      await order.save();
+
+      return res.json({
+        success: true,
+        message: "Return request submitted for all items in this order"
+      });
+    } catch (error) {
+      console.error("Return order error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong"
+      });
+    }
+  }
 }
 
 

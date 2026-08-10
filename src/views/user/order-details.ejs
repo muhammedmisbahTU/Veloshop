@@ -16,22 +16,32 @@
             </p>
         </div>
 
-        <a
-        href="/orders/<%= order._id %>/invoice"
-        class="inline-flex items-center gap-2 
-        bg-lime-400 hover:bg-lime-300 
-        text-black px-5 py-3 rounded-xl 
-        font-semibold">
+        <div class="flex flex-wrap items-center gap-3">
+            <a
+            href="/orders/<%= order._id %>/invoice"
+            class="inline-flex items-center gap-2 
+            bg-lime-400 hover:bg-lime-300 
+            text-black px-5 py-3 rounded-xl 
+            font-semibold">
+            Download Invoice PDF
+            </a>
 
+            <%
+            const hasReturnableItems = order.status === "DELIVERED" && order.items.some(item => item.itemStatus === "ACTIVE" && item.returnStatus === "NONE");
+            %>
+            <% if (hasReturnableItems) { %>
+                <button
+                    onclick="returnEntireOrder('<%= order._id %>')"
+                    class="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-5 py-3 rounded-xl font-semibold transition">
+                    Return Entire Order
+                </button>
+            <% } %>
 
-        Download Invoice PDF
-
-        </a>
-
-        <a href="/orders"
-           class="border border-white/10 hover:border-lime-400 hover:text-lime-400 transition px-5 py-3 rounded-xl text-sm">
-            ← Back to Orders
-        </a>
+            <a href="/orders"
+               class="border border-white/10 hover:border-lime-400 hover:text-lime-400 transition px-5 py-3 rounded-xl text-sm">
+                ← Back to Orders
+            </a>
+        </div>
 
     </div>
 
@@ -696,131 +706,65 @@ title:data.message
 let returnOrderId=null;
 let returnItemId=null;
 
-
-
 function returnItem(orderId,itemId){
-
-
-returnOrderId=orderId;
-returnItemId=itemId;
-
-
-document
-.getElementById("returnModal")
-.classList.remove("hidden");
-
-
-document
-.getElementById("returnModal")
-.classList.add("flex");
-
-
+    returnOrderId=orderId;
+    returnItemId=itemId;
+    document.getElementById("returnModal").classList.remove("hidden");
+    document.getElementById("returnModal").classList.add("flex");
 }
 
-
+function returnEntireOrder(orderId){
+    returnOrderId=orderId;
+    returnItemId=null;
+    document.getElementById("returnModal").classList.remove("hidden");
+    document.getElementById("returnModal").classList.add("flex");
+}
 
 function closeReturnModal(){
-
-
-document
-.getElementById("returnModal")
-.classList.add("hidden");
-
-
-document
-.getElementById("returnModal")
-.classList.remove("flex");
-
-
-document.getElementById("returnReason").value="";
-
-
+    document.getElementById("returnModal").classList.add("hidden");
+    document.getElementById("returnModal").classList.remove("flex");
+    document.getElementById("returnReason").value="";
 }
-
-
 
 async function submitReturn(){
+    const reason = document.getElementById("returnReason").value.trim();
 
+    if(!reason){
+        return Swal.fire({
+            icon:"warning",
+            title:"Reason required"
+        });
+    }
 
-const reason =
-document.getElementById("returnReason").value.trim();
+    const url = returnItemId 
+        ? `/orders/${returnOrderId}/item/${returnItemId}/return`
+        : `/orders/${returnOrderId}/return`;
 
+    const response = await fetch(url, {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            reason
+        })
+    });
 
+    const data = await response.json();
 
-if(!reason){
-
-return Swal.fire({
-
-icon:"warning",
-
-title:"Reason required"
-
-});
-
-}
-
-
-
-const response = await fetch(
-
-`/orders/${returnOrderId}/item/${returnItemId}/return`,
-
-{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-reason
-
-})
-
-}
-
-);
-
-
-
-const data =
-await response.json();
-
-
-
-if(data.success){
-
-
-Swal.fire({
-
-icon:"success",
-
-title:data.message
-
-}).then(()=>{
-
-location.reload();
-
-});
-
-
-}
-
-else{
-
-
-Swal.fire({
-
-icon:"error",
-
-title:data.message
-
-});
-
-
-}
+    if(data.success){
+        Swal.fire({
+            icon:"success",
+            title:data.message
+        }).then(()=>{
+            location.reload();
+        });
+    } else {
+        Swal.fire({
+            icon:"error",
+            title:data.message
+        });
+    }
 
 
 }
