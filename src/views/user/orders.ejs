@@ -106,30 +106,30 @@ Search
 
 
                     <% 
-                    let statusColor = "bg-yellow-400/20 text-yellow-400";
+                    let statusColor = "bg-yellow-400/20 text-yellow-400 border border-yellow-500/20";
 
                     if(order.status === "CONFIRMED"){
-                        statusColor = "bg-lime-400/20 text-lime-400";
+                        statusColor = "bg-lime-400/20 text-lime-400 border border-lime-500/20";
                     }
 
                     if(order.status === "PROCESSING"){
-                        statusColor = "bg-blue-400/20 text-blue-400";
+                        statusColor = "bg-blue-400/20 text-blue-400 border border-blue-500/20";
                     }
 
                     if(order.status === "SHIPPED"){
-                        statusColor = "bg-purple-400/20 text-purple-400";
+                        statusColor = "bg-purple-400/20 text-purple-400 border border-purple-500/20";
                     }
 
                     if(order.status === "DELIVERED"){
-                        statusColor = "bg-green-400/20 text-green-400";
+                        statusColor = "bg-green-400/20 text-green-400 border border-green-500/20";
                     }
 
-                    if(order.status === "CANCELLED"){
-                        statusColor = "bg-red-400/20 text-red-400";
+                    if(order.status === "CANCELLED" || order.status === "PAYMENT_FAILED"){
+                        statusColor = "bg-red-400/20 text-red-400 border border-red-500/20";
                     }
 
                     if(order.status === "RETURNED"){
-                        statusColor = "bg-zinc-400/20 text-zinc-400";
+                        statusColor = "bg-purple-500/10 text-purple-400 border border-purple-500/20";
                     }
 
                     %>
