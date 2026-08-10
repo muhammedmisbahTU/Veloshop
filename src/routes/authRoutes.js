@@ -65,6 +65,18 @@ router.get(
       }
       req.logIn(user, (loginErr) => {
         if (loginErr) return next(loginErr);
+        
+        // Populate req.session.user to match local login session structure
+        req.session.user = {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          isEmailVerified: user.isEmailVerified,
+          isActive: user.isActive,
+        };
+
         if (user.role === "ADMIN") {
           return res.redirect("/admin/users");
         }

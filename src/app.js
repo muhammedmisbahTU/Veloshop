@@ -41,6 +41,18 @@ app.use(passport.session());
 
 // Session flash & user helper middleware
 app.use(async (req, res, next) => {
+  if (req.user && !req.session.user) {
+    req.session.user = {
+      id: req.user._id,
+      fullName: req.user.fullName,
+      email: req.user.email,
+      role: req.user.role,
+      avatar: req.user.avatar,
+      isEmailVerified: req.user.isEmailVerified,
+      isActive: req.user.isActive,
+    };
+  }
+
   res.locals.errorMessage = req.session.errorMessage || null;
   res.locals.successMessage = req.session.successMessage || null;
   delete req.session.errorMessage;
