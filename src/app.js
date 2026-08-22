@@ -19,6 +19,7 @@ import Cart from "./models/Cart.js";
 import Wishlist from "./models/Wishlist.js";
 
 const app = express();
+app.set('trust proxy', 1);
 dotenv.config();
 connectDB();
 
