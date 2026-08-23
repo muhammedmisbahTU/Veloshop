@@ -243,10 +243,10 @@
                                         <% if (product.minPrice === 0) { %>
                                             <span class="text-xs text-zinc-500 font-bold">Contact Store</span>
                                         <% } else if (product.minPrice === product.maxPrice) { %>
-                                            <span class="text-lg font-black text-white">$<%= product.minPrice.toFixed(2) %></span>
+                                            <span class="text-lg font-black text-white">₹<%= product.minPrice.toFixed(2) %></span>
                                         <% } else { %>
                                             <span class="text-xs text-zinc-500 block font-semibold">Starting from</span>
-                                            <span class="text-lg font-black text-white">$<%= product.minPrice.toFixed(2) %></span>
+                                            <span class="text-lg font-black text-white">₹<%= product.minPrice.toFixed(2) %></span>
                                         <% } %>
                                     </div>
 
