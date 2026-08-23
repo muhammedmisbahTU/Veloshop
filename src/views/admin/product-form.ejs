@@ -145,6 +145,9 @@ validation
       rule: "required",
       errorMessage: "Description is required",
     },
-  ]);
+  ])
+  .onSuccess((event) => {
+    event.currentTarget.submit();
+  });
     </script>
 </section>

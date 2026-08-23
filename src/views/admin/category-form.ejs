@@ -48,10 +48,14 @@
 <script>
 const validation = new JustValidate('#categoryForm');
 
-validation.addField('#categoryName', [
-  {
-    rule: 'required',
-    errorMessage: 'Category Name is requiredd',
-  },
-]);
+validation
+  .addField('#categoryName', [
+    {
+      rule: 'required',
+      errorMessage: 'Category Name is requiredd',
+    },
+  ])
+  .onSuccess((event) => {
+    event.currentTarget.submit();
+  });
 </script>

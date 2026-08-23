@@ -274,7 +274,7 @@ export const createOffer = async (req, res) => {
       });
     }
 
-    if (value.offerType === 'PRODUCT' && !value.product) {
+    if (value.type === 'PRODUCT' && !value.product) {
       return renderOfferForm({
         req,
         res,
@@ -285,7 +285,7 @@ export const createOffer = async (req, res) => {
       });
     }
 
-    if (value.offerType === 'CATEGORY' && !value.category) {
+    if (value.type === 'CATEGORY' && !value.category) {
       return renderOfferForm({
         req,
         res,
@@ -312,9 +312,9 @@ export const createOffer = async (req, res) => {
       isDeleted: false,
     };
 
-    if (value.offerType === 'PRODUCT') {
+    if (value.type === 'PRODUCT') {
       duplicateQuery.product = value.product;
-    } else {
+    } else if (value.type === 'CATEGORY') {
       duplicateQuery.category = value.category;
     }
 
@@ -440,15 +440,17 @@ export const updateOffer = async (req, res) => {
 
     offer.title = value.title;
 
-    offer.offerType = value.offerType;
+    offer.type = value.type;
 
     offer.discountType = value.discountType;
 
     offer.discountValue = value.discountValue;
 
-    offer.product = value.offerType === 'PRODUCT' ? value.product : null;
+    offer.product = value.type === 'PRODUCT' ? value.product : null;
 
-    offer.category = value.offerType === 'CATEGORY' ? value.category : null;
+    offer.category = value.type === 'CATEGORY' ? value.category : null;
+
+    offer.referralCode = value.type === 'REFERRAL' ? value.referralCode : null;
 
     offer.startDate = value.startDate;
 

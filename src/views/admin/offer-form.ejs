@@ -1,11 +1,14 @@
 <section class="max-w-xl mx-auto">
 
-    <h1 class="text-3xl text-white font-black mb-5">
-        Add Offer
-    </h1>
+    <div class="flex items-center justify-between mb-5">
+        <h1 class="text-3xl text-white font-black">
+            <%= mode === 'edit' ? 'Edit Offer' : 'Add Offer' %>
+        </h1>
+        <a href="/admin/offers" class="text-zinc-400 hover:text-white text-sm font-semibold">&larr; Back to Offers</a>
+    </div>
 
 
-    <form method="POST" action="/admin/offers" class="space-y-4 bg-zinc-950 p-6">
+    <form method="POST" action="<%= mode === 'edit' ? `/admin/offers/${offer._id}` : '/admin/offers' %>" class="space-y-4 bg-zinc-950 p-6">
 
 
         <!-- Validation Errors -->
@@ -150,7 +153,7 @@
 
                 <button class="bg-lime-400 px-6 py-3 font-black text-black">
 
-                    Create Offer
+                    <%= mode === 'edit' ? 'Update Offer' : 'Create Offer' %>
 
                 </button>
 
