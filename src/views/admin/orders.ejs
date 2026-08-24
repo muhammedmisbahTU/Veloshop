@@ -88,13 +88,13 @@ Action
 
 
 <p>
-<%= order.userId.fullName %>
+<%= order.userId?.fullName || 'Deleted User' %>
 </p>
 
 
 <p class="text-zinc-400 text-sm">
 
-<%= order.userId.email %>
+<%= order.userId?.email || 'N/A' %>
 
 </p>
 
