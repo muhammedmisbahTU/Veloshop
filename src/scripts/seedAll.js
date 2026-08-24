@@ -38,7 +38,7 @@ const seedAll = async () => {
     // Seed Users
     const hashedPassword = await bcrypt.hash("password123", 10);
     const users = [];
-    
+
     // Create an Admin user
     const admin = await User.create({
       fullName: "Admin User",
@@ -68,7 +68,7 @@ const seedAll = async () => {
       { name: "Mousepads", slug: "mousepads" },
       { name: "Headsets", slug: "headsets" }
     ];
-    
+
     const categories = await Category.insertMany(categoriesData);
     console.log(`Seeded ${categories.length} categories.`);
 
@@ -105,11 +105,32 @@ const seedAll = async () => {
       for (const color of colors) {
         const regularPrice = parseFloat(faker.commerce.price({ min: 3000, max: 15000 }));
         
-        const variantImages = [
-          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' Front')}`,
-          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' Side')}`,
-          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' Back')}`
-        ];
+        let variantImages = [];
+        if (p.cat.name === "Gaming Keyboards") {
+          if (color.name === "Black") {
+            variantImages = [
+              "https://images.unsplash.com/photo-1595225476474-87563907a212?w=600&q=80",
+              "https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=600&q=80"
+            ];
+          } else {
+            variantImages = [
+              "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600&q=80",
+              "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80"
+            ];
+          }
+        } else {
+          if (color.name === "Black") {
+            variantImages = [
+              "https://images.unsplash.com/photo-1615663245857-ac93bb7c3f81?w=600&q=80",
+              "https://images.unsplash.com/photo-1527814050087-379381547939?w=600&q=80"
+            ];
+          } else {
+            variantImages = [
+              "https://images.unsplash.com/photo-1625948332159-86ab875508a3?w=600&q=80",
+              "https://images.unsplash.com/photo-1524143986875-3b098d78b363?w=600&q=80"
+            ];
+          }
+        }
 
         const variant = await Variant.create({
           productId: product._id,
@@ -130,19 +151,19 @@ const seedAll = async () => {
     // Seed Orders
     const statuses = ["DELIVERED", "CONFIRMED", "PROCESSING", "SHIPPED"];
     let orderCount = 0;
-    
+
     for (let i = 0; i < 30; i++) {
       const user = faker.helpers.arrayElement(users.slice(1)); // Pick a regular user
       const orderItems = [];
       let grandTotal = 0;
-      
+
       // Pick 1-3 random variants
       const itemsCount = faker.number.int({ min: 1, max: 3 });
       for (let k = 0; k < itemsCount; k++) {
         const item = faker.helpers.arrayElement(allVariants);
         const qty = faker.number.int({ min: 1, max: 2 });
         const price = item.variant.salePrice || item.variant.regularPrice;
-        
+
         orderItems.push({
           variantId: item.variant._id,
           sku: item.variant.sku,
