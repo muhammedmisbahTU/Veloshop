@@ -105,32 +105,11 @@ const seedAll = async () => {
       for (const color of colors) {
         const regularPrice = parseFloat(faker.commerce.price({ min: 3000, max: 15000 }));
         
-        let variantImages = [];
-        if (p.cat.name === "Gaming Keyboards") {
-          if (color.name === "Black") {
-            variantImages = [
-              "https://images.unsplash.com/photo-1595225476474-87563907a212?w=600&q=80",
-              "https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=600&q=80"
-            ];
-          } else {
-            variantImages = [
-              "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600&q=80",
-              "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80"
-            ];
-          }
-        } else {
-          if (color.name === "Black") {
-            variantImages = [
-              "https://images.unsplash.com/photo-1615663245857-ac93bb7c3f81?w=600&q=80",
-              "https://images.unsplash.com/photo-1527814050087-379381547939?w=600&q=80"
-            ];
-          } else {
-            variantImages = [
-              "https://images.unsplash.com/photo-1625948332159-86ab875508a3?w=600&q=80",
-              "https://images.unsplash.com/photo-1524143986875-3b098d78b363?w=600&q=80"
-            ];
-          }
-        }
+        const variantImages = [
+          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' - Angle 1')}`,
+          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' - Angle 2')}`,
+          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' - Angle 3')}`
+        ];
 
         const variant = await Variant.create({
           productId: product._id,
