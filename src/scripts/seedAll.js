@@ -77,12 +77,12 @@ const seedAll = async () => {
     const mouseCat = categories.find(c => c.name === "Gaming Mice");
 
     const productsData = [
-      { name: "Razer BlackWidow V3", brand: "Razer", cat: keyboardCat, desc: "Mechanical Gaming Keyboard with Green Switches." },
-      { name: "Logitech G Pro X", brand: "Logitech", cat: keyboardCat, desc: "Tenkeyless mechanical gaming keyboard." },
-      { name: "Corsair K70 RGB", brand: "Corsair", cat: keyboardCat, desc: "Mechanical keyboard with Cherry MX Speed." },
-      { name: "Logitech G502 Hero", brand: "Logitech", cat: mouseCat, desc: "High performance gaming mouse with 25K sensor." },
-      { name: "Razer DeathAdder V2", brand: "Razer", cat: mouseCat, desc: "Ergonomic wired gaming mouse." },
-      { name: "SteelSeries Rival 3", brand: "SteelSeries", cat: mouseCat, desc: "Wired gaming mouse with true tracking." }
+      { name: "Razer BlackWidow V3", brand: "Razer", cat: keyboardCat, desc: "Mechanical Gaming Keyboard with Green Switches.", img: "https://images.unsplash.com/photo-1595225476474-87563907a212?w=600&q=80" },
+      { name: "Logitech G Pro X", brand: "Logitech", cat: keyboardCat, desc: "Tenkeyless mechanical gaming keyboard.", img: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&q=80" },
+      { name: "Corsair K70 RGB", brand: "Corsair", cat: keyboardCat, desc: "Mechanical keyboard with Cherry MX Speed.", img: "https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=600&q=80" },
+      { name: "Logitech G502 Hero", brand: "Logitech", cat: mouseCat, desc: "High performance gaming mouse with 25K sensor.", img: "https://images.unsplash.com/photo-1615663245857-ac93bb7c3f81?w=600&q=80" },
+      { name: "Razer DeathAdder V2", brand: "Razer", cat: mouseCat, desc: "Ergonomic wired gaming mouse.", img: "https://images.unsplash.com/photo-1527814050087-379381547939?w=600&q=80" },
+      { name: "SteelSeries Rival 3", brand: "SteelSeries", cat: mouseCat, desc: "Wired gaming mouse with true tracking.", img: "https://images.unsplash.com/photo-1524143986875-3b098d78b363?w=600&q=80" }
     ];
 
     const allVariants = [];
@@ -106,7 +106,7 @@ const seedAll = async () => {
           stock: faker.number.int({ min: 20, max: 200 }),
           regularPrice: regularPrice,
           salePrice: regularPrice * 0.9,
-          images: [`https://via.placeholder.com/600x600?text=${encodeURIComponent(p.name)}`],
+          images: [p.img],
           attributes: [
             { name: "Color", value: faker.helpers.arrayElement(["Black", "White"]) }
           ]
