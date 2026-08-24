@@ -105,11 +105,38 @@ const seedAll = async () => {
       for (const color of colors) {
         const regularPrice = parseFloat(faker.commerce.price({ min: 3000, max: 15000 }));
         
-        const variantImages = [
-          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' - Angle 1')}`,
-          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' - Angle 2')}`,
-          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' - Angle 3')}`
-        ];
+        let variantImages = [];
+
+        if (p.cat.name === "Gaming Keyboards") {
+          if (color.name === "Black") {
+            variantImages = [
+              "https://source.unsplash.com/KYw1eUx1J7Y/600x600",
+              "https://source.unsplash.com/07bxCZgKY-k/600x600",
+              "https://source.unsplash.com/p5rgceFiOH0/600x600"
+            ];
+          } else {
+            variantImages = [
+              "https://source.unsplash.com/PXaQXThG1FY/600x600",
+              "https://source.unsplash.com/cHlK4sZXOQo/600x600",
+              "https://source.unsplash.com/PXaQXThG1FY/600x600" // Fallback since there are 2
+            ];
+          }
+        } else {
+          // Mice
+          if (color.name === "Black") {
+            variantImages = [
+              "https://source.unsplash.com/j4PqlNVZ4Bc/600x600",
+              "https://source.unsplash.com/4PchFKrUw84/600x600",
+              "https://source.unsplash.com/ZtxED1cpB1E/600x600"
+            ];
+          } else {
+            variantImages = [
+              "https://source.unsplash.com/VghbBAYqUJ0/600x600",
+              "https://source.unsplash.com/TfxQ1k9Ecpw/600x600",
+              "https://source.unsplash.com/IdXQOXyvS5M/600x600"
+            ];
+          }
+        }
 
         const variant = await Variant.create({
           productId: product._id,
