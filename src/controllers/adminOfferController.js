@@ -318,6 +318,23 @@ export const createOffer = async (req, res) => {
       duplicateQuery.category = value.category;
     }
 
+    if (value.type === 'REFERRAL') {
+      const existingReferral = await Offer.findOne({
+        referralCode: value.referralCode,
+        isDeleted: false,
+      });
+      if (existingReferral) {
+        return renderOfferForm({
+          req,
+          res,
+          mode: 'create',
+          offer: req.body,
+          formErrors: ['An active offer with this referral code already exists.'],
+          statusCode: 409,
+        });
+      }
+    }
+
     const existingOffer = await Offer.findOne(duplicateQuery);
 
     if (existingOffer) {
@@ -343,7 +360,7 @@ export const createOffer = async (req, res) => {
 
       category: value.type === 'CATEGORY' ? value.category : null,
 
-      referralCode: value.type === 'REFERRAL' ? value.referralCode : null,
+      referralCode: value.type === 'REFERRAL' ? value.referralCode : undefined,
 
       startDate: value.startDate,
 
@@ -357,9 +374,20 @@ export const createOffer = async (req, res) => {
   } catch (error) {
     console.error('Create offer error:', error);
 
-    setFlash(req, 'error', 'Failed to create offer.');
+    let errorMsg = 'Failed to create offer.';
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      errorMsg = `An offer with this ${field} already exists.`;
+    }
 
-    res.redirect('/admin/offers/new');
+    return renderOfferForm({
+      req,
+      res,
+      mode: 'create',
+      offer: req.body,
+      formErrors: [errorMsg],
+      statusCode: 400,
+    });
   }
 };
 
@@ -438,6 +466,24 @@ export const updateOffer = async (req, res) => {
       });
     }
 
+    if (value.type === 'REFERRAL') {
+      const existingReferral = await Offer.findOne({
+        referralCode: value.referralCode,
+        isDeleted: false,
+        _id: { $ne: offer._id }
+      });
+      if (existingReferral) {
+        return renderOfferForm({
+          req,
+          res,
+          mode: 'edit',
+          offer: { ...offer.toObject(), ...req.body },
+          formErrors: ['An active offer with this referral code already exists.'],
+          statusCode: 409,
+        });
+      }
+    }
+
     offer.title = value.title;
 
     offer.type = value.type;
@@ -450,7 +496,7 @@ export const updateOffer = async (req, res) => {
 
     offer.category = value.type === 'CATEGORY' ? value.category : null;
 
-    offer.referralCode = value.type === 'REFERRAL' ? value.referralCode : null;
+    offer.referralCode = value.type === 'REFERRAL' ? value.referralCode : undefined;
 
     offer.startDate = value.startDate;
 
@@ -464,9 +510,20 @@ export const updateOffer = async (req, res) => {
   } catch (error) {
     console.error('Update offer error:', error);
 
-    setFlash(req, 'error', 'Failed to update offer.');
+    let errorMsg = 'Failed to update offer.';
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      errorMsg = `An offer with this ${field} already exists.`;
+    }
 
-    res.redirect('/admin/offers');
+    return renderOfferForm({
+      req,
+      res,
+      mode: 'edit',
+      offer: { ...offer.toObject(), ...req.body },
+      formErrors: [errorMsg],
+      statusCode: 400,
+    });
   }
 };
 
