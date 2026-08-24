@@ -104,36 +104,36 @@ const seedAll = async () => {
       // Create variants
       for (const color of colors) {
         const regularPrice = parseFloat(faker.commerce.price({ min: 3000, max: 15000 }));
-        
+
         let variantImages = [];
 
         if (p.cat.name === "Gaming Keyboards") {
           if (color.name === "Black") {
             variantImages = [
-              "https://unsplash.com/photos/black-and-orange-computer-keyboard-KYw1eUx1J7Y",
-              "https://unsplash.com/photos/black-computer-keyboard-07bxCZgKY-k",
-              "https://unsplash.com/photos/a-black-and-white-keyboard-with-red-keys-p5rgceFiOH0"
+              "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef",
+              "https://images.unsplash.com/photo-1574012716378-0ca6f4c18c08",
+              "https://images.unsplash.com/photo-1635987391914-cb84b567e68f"
             ];
           } else {
             variantImages = [
-              "https://unsplash.com/photos/silver-and-white-computer-keyboard-PXaQXThG1FY",
-              "https://unsplash.com/photos/white-corded-computer-keyboard-on-white-surface-cHlK4sZXOQo",
-              "https://unsplash.com/photos/a-keyboard-and-a-mouse-on-a-desk--xCjYkaJqqY" 
+              "https://images.unsplash.com/photo-1587829741301-dc798b83add3",
+              "https://images.unsplash.com/photo-1541140532154-b024d705b90a",
+              "https://plus.unsplash.com/premium_photo-1683543124615-fb42e42c6201"
             ];
           }
         } else {
           // Mice
           if (color.name === "Black") {
             variantImages = [
-              "https://unsplash.com/photos/black-and-red-corded-computer-mouse-j4PqlNVZ4Bc",
-              "https://unsplash.com/photos/black-cordless-computer-mouse-on-black-surface-4PchFKrUw84",
-              "https://unsplash.com/photos/closeup-photo-of-gray-and-black-cordless-mouse-ZtxED1cpB1E"
+              "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46",
+              "https://images.unsplash.com/photo-1605773527852-c546a8584ea3",
+              "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7"
             ];
           } else {
             variantImages = [
-              "https://unsplash.com/photos/white-and-grey-logitech-g-series-cordless-mouse-on-white-surface-VghbBAYqUJ0",
-              "https://unsplash.com/photos/a-white-computer-mouse-on-a-yellow-background-TfxQ1k9Ecpw",
-              "https://unsplash.com/photos/white-computer-mouse-on-a-bright-yellow-background-IdXQOXyvS5M"
+              "https://images.unsplash.com/photo-1754820978711-611479056f97",
+              "https://images.unsplash.com/photo-1755373255602-c030aac3bc69",
+              "https://images.unsplash.com/photo-1527814050087-3793815479db"
             ];
           }
         }
