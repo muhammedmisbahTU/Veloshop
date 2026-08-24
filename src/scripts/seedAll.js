@@ -77,12 +77,12 @@ const seedAll = async () => {
     const mouseCat = categories.find(c => c.name === "Gaming Mice");
 
     const productsData = [
-      { name: "Razer BlackWidow V3", brand: "Razer", cat: keyboardCat, desc: "Mechanical Gaming Keyboard with Green Switches.", img: "https://images.unsplash.com/photo-1595225476474-87563907a212?w=600&q=80" },
-      { name: "Logitech G Pro X", brand: "Logitech", cat: keyboardCat, desc: "Tenkeyless mechanical gaming keyboard.", img: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&q=80" },
-      { name: "Corsair K70 RGB", brand: "Corsair", cat: keyboardCat, desc: "Mechanical keyboard with Cherry MX Speed.", img: "https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=600&q=80" },
-      { name: "Logitech G502 Hero", brand: "Logitech", cat: mouseCat, desc: "High performance gaming mouse with 25K sensor.", img: "https://images.unsplash.com/photo-1615663245857-ac93bb7c3f81?w=600&q=80" },
-      { name: "Razer DeathAdder V2", brand: "Razer", cat: mouseCat, desc: "Ergonomic wired gaming mouse.", img: "https://images.unsplash.com/photo-1527814050087-379381547939?w=600&q=80" },
-      { name: "SteelSeries Rival 3", brand: "SteelSeries", cat: mouseCat, desc: "Wired gaming mouse with true tracking.", img: "https://images.unsplash.com/photo-1524143986875-3b098d78b363?w=600&q=80" }
+      { name: "Razer BlackWidow V3", brand: "Razer", cat: keyboardCat, desc: "Mechanical Gaming Keyboard with Green Switches." },
+      { name: "Logitech G Pro X", brand: "Logitech", cat: keyboardCat, desc: "Tenkeyless mechanical gaming keyboard." },
+      { name: "Corsair K70 RGB", brand: "Corsair", cat: keyboardCat, desc: "Mechanical keyboard with Cherry MX Speed." },
+      { name: "Logitech G502 Hero", brand: "Logitech", cat: mouseCat, desc: "High performance gaming mouse with 25K sensor." },
+      { name: "Razer DeathAdder V2", brand: "Razer", cat: mouseCat, desc: "Ergonomic wired gaming mouse." },
+      { name: "SteelSeries Rival 3", brand: "SteelSeries", cat: mouseCat, desc: "Wired gaming mouse with true tracking." }
     ];
 
     const allVariants = [];
@@ -96,19 +96,30 @@ const seedAll = async () => {
         tags: ["gaming", "esports", "RGB"]
       });
 
+      const colors = [
+        { name: "Black", bg: "1a1a1a", fg: "ffffff" },
+        { name: "White", bg: "f5f5f5", fg: "1a1a1a" }
+      ];
+
       // Create variants
-      for (let j = 0; j < 2; j++) {
+      for (const color of colors) {
         const regularPrice = parseFloat(faker.commerce.price({ min: 3000, max: 15000 }));
         
+        const variantImages = [
+          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' Front')}`,
+          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' Side')}`,
+          `https://placehold.co/600x600/${color.bg}/${color.fg}/png?text=${encodeURIComponent(p.name + '\\n' + color.name + ' Back')}`
+        ];
+
         const variant = await Variant.create({
           productId: product._id,
           sku: faker.string.alphanumeric(8).toUpperCase(),
           stock: faker.number.int({ min: 20, max: 200 }),
           regularPrice: regularPrice,
           salePrice: regularPrice * 0.9,
-          images: [p.img],
+          images: variantImages,
           attributes: [
-            { name: "Color", value: faker.helpers.arrayElement(["Black", "White"]) }
+            { name: "Color", value: color.name }
           ]
         });
         allVariants.push({ variant, product });
