@@ -158,10 +158,10 @@
                         No address found.
                     </p>
 
-                    <a href="/profile/addresses"
-                        class="bg-lime-400 text-black px-6 py-3 rounded-xl font-semibold">
+                    <button type="button" id="emptyAddAddressBtn"
+                        class="bg-lime-400 text-black px-6 py-3 rounded-xl font-semibold hover:bg-lime-300 transition">
                         Add Address
-                    </a>
+                    </button>
 
                 </div>
 
@@ -599,6 +599,17 @@ showAddFormBtn.addEventListener("click", () => {
     addAddressForm.classList.remove("hidden");
     showAddFormBtn.classList.add("hidden");
 });
+
+const emptyAddAddressBtn = document.getElementById("emptyAddAddressBtn");
+if (emptyAddAddressBtn) {
+    emptyAddAddressBtn.addEventListener("click", () => {
+        addAddressForm.classList.remove("hidden");
+        if (showAddFormBtn) {
+            showAddFormBtn.classList.add("hidden");
+        }
+        addAddressForm.scrollIntoView({ behavior: 'smooth' });
+    });
+}
 
 cancelAddBtn.addEventListener("click", () => {
     addAddressForm.classList.add("hidden");
