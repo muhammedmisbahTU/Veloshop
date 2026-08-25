@@ -140,5 +140,35 @@
         startDateInput.addEventListener('change', function() {
             expiryDateInput.min = startDateInput.value;
         });
+
+        // Form validation on submit
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const discountType = discountTypeSelect.value;
+            const discountValueInput = document.getElementsByName('discountValue')[0];
+            const minimumPurchaseInput = document.getElementsByName('minimumPurchase')[0];
+            const discountValue = parseFloat(discountValueInput.value) || 0;
+            const minimumPurchase = parseFloat(minimumPurchaseInput.value) || 0;
+
+            if (discountType === 'PERCENTAGE' && discountValue > 100) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Discount',
+                    text: 'Percentage discount cannot exceed 100%.'
+                });
+                return false;
+            }
+
+            if (discountType === 'FIXED' && discountValue > minimumPurchase) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Discount',
+                    text: 'Fixed discount value cannot exceed the minimum purchase amount.'
+                });
+                return false;
+            }
+        });
     });
 </script>
