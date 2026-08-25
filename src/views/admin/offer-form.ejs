@@ -98,7 +98,7 @@
 
                     <% products.forEach(p=>{ %>
 
-                        <option value="<%=p._id%>" <%=offer?.product==p._id ? "selected" : "" %>>
+                        <option value="<%=p._id%>" <%= (offer?.product && offer.product.toString() === p._id.toString()) ? "selected" : "" %>>
                             <%=p.name%>
                         </option>
 
@@ -121,7 +121,7 @@
 
                     <% categories.forEach(c=>{ %>
 
-                        <option value="<%=c._id%>" <%=offer?.category==c._id ? "selected" : "" %>>
+                        <option value="<%=c._id%>" <%= (offer?.category && offer.category.toString() === c._id.toString()) ? "selected" : "" %>>
                             <%=c.name%>
                         </option>
 
