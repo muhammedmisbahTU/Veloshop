@@ -25,19 +25,32 @@ const seedOffers = async () => {
 
 
         // Find existing data
-        const keyboard = await Product.findOne({
-            name: /keyboard/i
+        let keyboard = await Product.findOne({
+            $or: [
+                { name: /keyboard/i },
+                { description: /keyboard/i }
+            ]
         });
 
-        const mouse = await Product.findOne({
-            name: /mouse/i
+        let mouse = await Product.findOne({
+            $or: [
+                { name: /mouse/i },
+                { description: /mouse/i }
+            ]
         });
 
         const gamingCategory = await Category.findOne({
             name: /gaming/i
         });
 
-
+        // Fallback to any two products if they still aren't found
+        if (!keyboard || !mouse) {
+            const products = await Product.find().limit(2);
+            if (products.length >= 2) {
+                keyboard = keyboard || products[0];
+                mouse = mouse || products[1];
+            }
+        }
 
         if (!keyboard || !mouse) {
 

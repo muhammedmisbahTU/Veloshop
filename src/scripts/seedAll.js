@@ -13,6 +13,7 @@ import Offer from "../models/Offer.js";
 import Cart from "../models/Cart.js";
 import Wishlist from "../models/Wishlist.js";
 import Address from "../models/Address.js";
+import Coupon from "../models/Coupon.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ const seedAll = async () => {
     await Cart.deleteMany({});
     await Wishlist.deleteMany({});
     await Address.deleteMany({});
+    await Coupon.deleteMany({});
 
     console.log("Cleared existing data.");
 
@@ -204,6 +206,52 @@ const seedAll = async () => {
     }
 
     console.log(`Seeded ${orderCount} orders.`);
+
+    // Seed Coupons
+    await Coupon.create([
+      {
+        code: "WELCOME50",
+        description: "Get 50% off on your first purchase!",
+        discountType: "PERCENTAGE",
+        discountValue: 50,
+        minimumPurchase: 300,
+        maximumDiscount: 150,
+        startDate: new Date(),
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        usageLimit: null,
+        usagePerUser: 1,
+        applicableTo: "ALL",
+        isActive: true
+      },
+      {
+        code: "VELO500",
+        description: "Flat ₹500 off on purchases above ₹2000",
+        discountType: "FIXED",
+        discountValue: 500,
+        minimumPurchase: 2000,
+        startDate: new Date(),
+        expiryDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+        usageLimit: 100,
+        usagePerUser: 1,
+        applicableTo: "ALL",
+        isActive: true
+      },
+      {
+        code: "VELO10",
+        description: "10% off on all products",
+        discountType: "PERCENTAGE",
+        discountValue: 10,
+        minimumPurchase: 500,
+        maximumDiscount: 500,
+        startDate: new Date(),
+        expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+        usageLimit: null,
+        usagePerUser: 5,
+        applicableTo: "ALL",
+        isActive: true
+      }
+    ]);
+    console.log("Seeded coupons.");
 
     console.log("Database seeded successfully with eCommerce PC gear data!");
     process.exit(0);
