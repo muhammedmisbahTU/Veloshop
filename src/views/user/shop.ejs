@@ -216,6 +216,11 @@
                                         Sold Out
                                     </span>
                                 <% } %>
+                                <% if (product.appliedOffer) { %>
+                                    <span class="absolute top-4 right-4 bg-lime-400 text-black text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-lime-400/20 shadow-lg">
+                                        <%= product.appliedOffer.discountType === 'PERCENTAGE' ? product.appliedOffer.discountValue + '% OFF' : '₹' + product.appliedOffer.discountValue + ' OFF' %>
+                                    </span>
+                                <% } %>
                             </div>
 
                             <!-- Product Information -->
@@ -242,11 +247,18 @@
                                     <div>
                                         <% if (product.minPrice === 0) { %>
                                             <span class="text-xs text-zinc-500 font-bold">Contact Store</span>
-                                        <% } else if (product.minPrice === product.maxPrice) { %>
-                                            <span class="text-lg font-black text-white">₹<%= product.minPrice.toFixed(2) %></span>
                                         <% } else { %>
-                                            <span class="text-xs text-zinc-500 block font-semibold">Starting from</span>
-                                            <span class="text-lg font-black text-white">₹<%= product.minPrice.toFixed(2) %></span>
+                                            <% if (product.appliedOffer && product.offerDiscount > 0) { %>
+                                                <div class="flex flex-col">
+                                                    <span class="text-xs text-zinc-500 line-through">₹<%= product.originalMinPrice.toFixed(2) %></span>
+                                                    <span class="text-lg font-black text-lime-400">₹<%= product.minPrice.toFixed(2) %></span>
+                                                </div>
+                                            <% } else if (product.minPrice === product.maxPrice) { %>
+                                                <span class="text-lg font-black text-white">₹<%= product.minPrice.toFixed(2) %></span>
+                                            <% } else { %>
+                                                <span class="text-xs text-zinc-500 block font-semibold">Starting from</span>
+                                                <span class="text-lg font-black text-white">₹<%= product.minPrice.toFixed(2) %></span>
+                                            <% } %>
                                         <% } %>
                                     </div>
 

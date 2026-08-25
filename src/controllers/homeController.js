@@ -1,9 +1,10 @@
+import mongoose from "mongoose";
 import Banner from "../models/Banner.js";
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import Variant from "../models/Variant.js";
 import wishlistService from "../services/wishlistService.js";
-import {getBestOffer} from "../services/offerService.js";
+import {getBestOffer, getProductOffers} from "../services/offerService.js";
 import { calculateOfferPrice } from "../services/priceService.js";
 
 const attachVariantImages = async (products) => {
@@ -81,6 +82,16 @@ const attachVariantDetails = async (products) => {
   const productIds = products.map((p) => p._id);
   const variants = await Variant.find({ productId: { $in: productIds }, isActive: true });
 
+  // Get active offers
+  const now = new Date();
+  const Offer = (await import("../models/Offer.js")).default;
+  const activeOffers = await Offer.find({
+    isActive: true,
+    isDeleted: false,
+    startDate: { $lte: now },
+    expiryDate: { $gte: now }
+  });
+
   const detailsByProductId = new Map();
   variants.forEach((v) => {
     const pid = v.productId.toString();
@@ -107,21 +118,66 @@ const attachVariantDetails = async (products) => {
     }
   });
 
-  return products.map((product) => {
-    const details = detailsByProductId.get(product._id.toString()) || {
+  return products.map((productDoc) => {
+    const product = productDoc.toObject ? productDoc.toObject() : productDoc;
+    const pid = product._id.toString();
+    const details = detailsByProductId.get(pid) || {
       images: [],
       minPrice: 0,
       maxPrice: 0,
       stock: 0,
       defaultVariantId: null
     };
+
+    // Calculate product and category offers for the product
+    const categoryIdStr = (product.categoryId?._id || product.categoryId || "").toString();
+
+    const productOffersList = activeOffers.filter(
+      offer => offer.type === "PRODUCT" && offer.product && offer.product.toString() === pid
+    );
+    const categoryOffersList = activeOffers.filter(
+      offer => offer.type === "CATEGORY" && offer.category && offer.category.toString() === categoryIdStr
+    );
+
+    let productOffer = null;
+    let productDiscount = 0;
+    for (const offer of productOffersList) {
+      const discount = offer.discountType === "PERCENTAGE" 
+        ? (details.minPrice * offer.discountValue) / 100 
+        : offer.discountValue;
+      if (discount > productDiscount) {
+        productDiscount = discount;
+        productOffer = offer;
+      }
+    }
+
+    let categoryOffer = null;
+    let categoryDiscount = 0;
+    for (const offer of categoryOffersList) {
+      const discount = offer.discountType === "PERCENTAGE" 
+        ? (details.minPrice * offer.discountValue) / 100 
+        : offer.discountValue;
+      if (discount > categoryDiscount) {
+        categoryDiscount = discount;
+        categoryOffer = offer;
+      }
+    }
+
+    const appliedOffer = productDiscount >= categoryDiscount ? productOffer : categoryOffer;
+    const appliedDiscountAmount = Math.max(productDiscount, categoryDiscount);
+
     return {
-      ...product.toObject(),
+      ...product,
       displayImage: details.images[0] || "",
-      minPrice: details.minPrice,
+      originalMinPrice: details.minPrice,
+      minPrice: Math.max(0, details.minPrice - appliedDiscountAmount),
       maxPrice: details.maxPrice,
       stock: details.stock,
-      defaultVariantId: details.defaultVariantId
+      defaultVariantId: details.defaultVariantId,
+      productOffer,
+      categoryOffer,
+      appliedOffer,
+      offerDiscount: appliedDiscountAmount
     };
   });
 };
@@ -261,8 +317,12 @@ export const getShop = async (req, res) => {
 
 export const getProductDetails = async (req, res) => {
   try {
-
-    const product = await Product.findById(req.params.id).populate("categoryId");
+    let product;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      product = await Product.findById(req.params.id).populate("categoryId");
+    } else {
+      product = await Product.findOne({ slug: req.params.id }).populate("categoryId");
+    }
 
     if (!product || product.isDeleted || product.status !== "ACTIVE") {
       return res.redirect("/shop");
@@ -279,18 +339,17 @@ export const getProductDetails = async (req, res) => {
 
     const defaultVariant = variants[0];
     const defaultPrice = defaultVariant.salePrice != null ? defaultVariant.salePrice : defaultVariant.regularPrice;
-    const offer = await getBestOffer(product, defaultPrice);
+    
+    // Get both product & category offers, and the best one
+    const offersData = await getProductOffers(product, defaultPrice);
+    const offer = offersData.bestOffer;
 
-
-    const pricing =
-    calculateOfferPrice(
-    defaultVariant.salePrice ||
-    defaultVariant.regularPrice,
-    offer
+    const pricing = calculateOfferPrice(
+      defaultVariant.salePrice || defaultVariant.regularPrice,
+      offer
     );
 
     let defaultDiscount = null;
-
     if (defaultVariant.salePrice) {
       defaultDiscount = Math.round(
         ((defaultVariant.regularPrice - defaultVariant.salePrice) /
@@ -298,7 +357,6 @@ export const getProductDetails = async (req, res) => {
           100,
       );
     }
-
 
     const relatedProducts = await Product.find({
       categoryId: product.categoryId._id,
@@ -314,12 +372,27 @@ export const getProductDetails = async (req, res) => {
       }).lean();
 
       p.variant = variant;
+      if (variant) {
+        const vPrice = variant.salePrice != null ? variant.salePrice : variant.regularPrice;
+        const vOffers = await getProductOffers(p, vPrice);
+        p.productOffer = vOffers.productOffer;
+        p.categoryOffer = vOffers.categoryOffer;
+        p.appliedOffer = vOffers.appliedOffer;
+        
+        let discountAmt = 0;
+        if (vOffers.appliedOffer) {
+          if (vOffers.appliedOffer.discountType === "PERCENTAGE") {
+            discountAmt = (vPrice * vOffers.appliedOffer.discountValue) / 100;
+          } else {
+            discountAmt = vOffers.appliedOffer.discountValue;
+          }
+        }
+        p.discountedPrice = Math.max(0, vPrice - discountAmt);
+      }
     }
 
     const userId = req.session?.user?.id || req.user?._id;
-
     let isWishlisted = false;
-
     if (userId) {
       isWishlisted = await wishlistService.isWishlisted(
         userId,
@@ -335,6 +408,8 @@ export const getProductDetails = async (req, res) => {
       defaultDiscount,
       relatedProducts,
       isWishlisted,
+      productOffer: offersData.productOffer,
+      categoryOffer: offersData.categoryOffer,
       offer,
       pricing
     });
@@ -343,4 +418,4 @@ export const getProductDetails = async (req, res) => {
     console.error("Product detail page error:", error);
     res.redirect("/shop");
   }
-}
+};

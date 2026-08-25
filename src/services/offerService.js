@@ -1,49 +1,66 @@
 import Offer from "../models/Offer.js";
 
-export const getBestOffer = async (product, price) => {
+export const getProductOffers = async (product, price) => {
   const now = new Date();
+  const categoryId = product.categoryId?._id || product.categoryId;
 
   const offers = await Offer.find({
     isActive: true,
-
+    isDeleted: false,
     startDate: {
       $lte: now,
     },
-
     expiryDate: {
       $gte: now,
     },
-
     $or: [
       {
         product: product._id,
       },
-
       {
-        category: product.categoryId,
+        category: categoryId,
       },
     ],
   });
 
-  let best = null;
-
-  let highest = 0;
+  let productOffer = null;
+  let categoryOffer = null;
+  let productDiscount = 0;
+  let categoryDiscount = 0;
 
   for (const offer of offers) {
-    let discount;
-
+    let discount = 0;
     if (offer.discountType === "PERCENTAGE") {
       discount = (price * offer.discountValue) / 100;
     } else {
       discount = offer.discountValue;
     }
 
-    if (discount > highest) {
-      highest = discount;
-
-      best = offer;
+    if (offer.type === "PRODUCT" || (offer.product && offer.product.toString() === product._id.toString())) {
+      if (!productOffer || discount > productDiscount) {
+        productOffer = offer;
+        productDiscount = discount;
+      }
+    } else if (offer.type === "CATEGORY" || (offer.category && offer.category.toString() === categoryId.toString())) {
+      if (!categoryOffer || discount > categoryDiscount) {
+        categoryOffer = offer;
+        categoryDiscount = discount;
+      }
     }
   }
 
-  return best;
+  const bestOffer = productDiscount >= categoryDiscount ? productOffer : categoryOffer;
+
+  return {
+    productOffer,
+    categoryOffer,
+    bestOffer,
+    appliedOffer: bestOffer,
+  };
 };
+
+export const getBestOffer = async (product, price) => {
+  const res = await getProductOffers(product, price);
+  return res.bestOffer;
+};
+

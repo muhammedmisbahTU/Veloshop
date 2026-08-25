@@ -152,48 +152,79 @@
             </div>
 
             <!-- Price -->
-
             <div>
-
-                <% if(defaultVariant?.salePrice){ %>
-
+                <% if (offer) { %>
                     <div class="flex items-center gap-3">
-
-                        <span id="salePrice"
-                            class="text-4xl font-black text-white">
-
-                            ₹<%= defaultVariant?.salePrice %>
-
+                        <span id="salePrice" class="text-4xl font-black text-white">
+                            ₹<%= pricing.finalPrice %>
                         </span>
-
-                        <span id="regularPrice"
-                            class="line-through text-zinc-500">
-
-                            ₹<%= defaultVariant.regularPrice %>
-
+                        <span id="regularPrice" class="line-through text-zinc-500">
+                            ₹<%= pricing.originalPrice %>
                         </span>
-
                     </div>
-
-                <% }else{ %>
-
-                    <span id="salePrice"
-                        class="text-4xl font-black">
-
+                <% } else if (defaultVariant?.salePrice) { %>
+                    <div class="flex items-center gap-3">
+                        <span id="salePrice" class="text-4xl font-black text-white">
+                            ₹<%= defaultVariant?.salePrice %>
+                        </span>
+                        <span id="regularPrice" class="line-through text-zinc-500">
+                            ₹<%= defaultVariant.regularPrice %>
+                        </span>
+                    </div>
+                <% } else { %>
+                    <span id="salePrice" class="text-4xl font-black text-white">
                         ₹<%= defaultVariant.regularPrice %>
-
                     </span>
-
                 <% } %>
-
             </div>
 
             <!-- Discount -->
-            <span id="discount">
-            <% if (defaultDiscount) { %>
+            <span id="discount" class="text-sm text-lime-400 font-bold bg-lime-400/10 px-2 py-1 rounded-lg">
+            <% if (offer) { %>
+                <%= Math.round((pricing.discount / pricing.originalPrice) * 100) %>% OFF (Offer Applied)
+            <% } else if (defaultDiscount) { %>
                 <%= defaultDiscount %>% OFF
             <% } %>
             </span>
+
+            <!-- Offers Section -->
+            <% if (productOffer || categoryOffer) { %>
+                <div class="bg-zinc-950 border border-white/5 rounded-2xl p-4 my-4 space-y-3">
+                    <p class="text-xs uppercase tracking-wider text-lime-400 font-black">Available Offers</p>
+                    
+                    <% if (productOffer) { %>
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-900/50 border border-white/5">
+                            <div>
+                                <span class="text-sm font-bold text-white"><%= productOffer.title %></span>
+                                <p class="text-xs text-zinc-400">
+                                    <%= productOffer.discountType === "PERCENTAGE" ? productOffer.discountValue + "%" : "₹" + productOffer.discountValue %> discount on this product
+                                </p>
+                            </div>
+                            <% if (offer && offer._id.toString() === productOffer._id.toString()) { %>
+                                <span class="bg-lime-400/10 text-lime-400 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-lime-400/20">Applied</span>
+                            <% } else { %>
+                                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1">Best Offer Applies</span>
+                            <% } %>
+                        </div>
+                    <% } %>
+
+                    <% if (categoryOffer) { %>
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-900/50 border border-white/5">
+                            <div>
+                                <span class="text-sm font-bold text-white"><%= categoryOffer.title %></span>
+                                <p class="text-xs text-zinc-400">
+                                    <%= categoryOffer.discountType === "PERCENTAGE" ? categoryOffer.discountValue + "%" : "₹" + categoryOffer.discountValue %> discount on <%= product.categoryId.name %> category
+                                </p>
+                            </div>
+                            <% if (offer && offer._id.toString() === categoryOffer._id.toString()) { %>
+                                <span class="bg-lime-400/10 text-lime-400 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-lime-400/20">Applied</span>
+                            <% } else { %>
+                                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1">Best Offer Applies</span>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
             <!-- Stock -->
 
             <div>
@@ -446,17 +477,58 @@ function findVariant() {
     //Discount
     const discount = document.getElementById("discount");
 
-    if (variant.salePrice) {
+    // Calculate best active offer on the client side
+    let basePrice = variant.salePrice || variant.regularPrice;
+    let prodDiscountAmt = 0;
+    if (productOffer) {
+        prodDiscountAmt = productOffer.discountType === "PERCENTAGE" 
+            ? (basePrice * productOffer.discountValue) / 100 
+            : productOffer.discountValue;
+    }
+    let catDiscountAmt = 0;
+    if (categoryOffer) {
+        catDiscountAmt = categoryOffer.discountType === "PERCENTAGE" 
+            ? (basePrice * categoryOffer.discountValue) / 100 
+            : categoryOffer.discountValue;
+    }
 
-        let percent = Math.round(
-            ((variant.regularPrice - variant.salePrice) /
-            variant.regularPrice) * 100
-        );
+    const appliedDiscount = Math.max(prodDiscountAmt, catDiscountAmt);
+    const finalPrice = Math.max(0, basePrice - appliedDiscount);
 
-        discount.innerHTML = percent + "% OFF";
-
+    if (appliedDiscount > 0) {
+        if (!document.getElementById("regularPrice")) {
+            const salePriceEl = document.getElementById("salePrice");
+            const parent = salePriceEl.parentElement;
+            parent.innerHTML = `
+                <span id="salePrice" class="text-4xl font-black text-white">₹${finalPrice}</span>
+                <span id="regularPrice" class="line-through text-zinc-500">₹${basePrice}</span>
+            `;
+        } else {
+            document.getElementById("salePrice").innerHTML = "₹" + finalPrice;
+            document.getElementById("regularPrice").innerHTML = "₹" + basePrice;
+        }
+        discount.innerHTML = Math.round((appliedDiscount / basePrice) * 100) + "% OFF (Offer Applied)";
+        discount.className = "text-sm text-lime-400 font-bold bg-lime-400/10 px-2 py-1 rounded-lg";
     } else {
-        discount.innerHTML = "";
+        if (variant.salePrice) {
+            let percent = Math.round(
+                ((variant.regularPrice - variant.salePrice) /
+                variant.regularPrice) * 100
+            );
+            discount.innerHTML = percent + "% OFF";
+            discount.className = "text-sm text-lime-400 font-bold bg-lime-400/10 px-2 py-1 rounded-lg";
+            if (document.getElementById("regularPrice")) {
+                document.getElementById("salePrice").innerHTML = "₹" + variant.salePrice;
+                document.getElementById("regularPrice").innerHTML = "₹" + variant.regularPrice;
+            }
+        } else {
+            discount.innerHTML = "";
+            discount.className = "";
+            const salePriceEl = document.getElementById("salePrice");
+            salePriceEl.parentElement.innerHTML = `
+                <span id="salePrice" class="text-4xl font-black text-white">₹${variant.regularPrice}</span>
+            `;
+        }
     }
 
     const stock=document.getElementById("stockStatus");
@@ -502,14 +574,6 @@ function findVariant() {
         cartBtn.innerHTML="Add to Cart";
         cartBtn.className = "flex-1 py-4 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300";
 
-    }
-
-    document.getElementById("salePrice").innerHTML =
-        "₹" + (variant.salePrice || variant.regularPrice);
-
-    if (document.getElementById("regularPrice")) {
-        document.getElementById("regularPrice").innerHTML =
-            "₹" + variant.regularPrice;
     }
 
     // Change main image
@@ -728,6 +792,8 @@ wishlistBtn.addEventListener("click", async () => {
 </script>
 <script>
 
+const productOffer = <%- JSON.stringify(productOffer || null) %>;
+const categoryOffer = <%- JSON.stringify(categoryOffer || null) %>;
 const variants = <%- JSON.stringify(
     variants.map(v=>({
         id:v._id,
