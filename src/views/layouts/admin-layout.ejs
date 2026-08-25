@@ -7,6 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="https://unpkg.com/just-validate@latest/dist/just-validate.production.min.js"></script>
+    <style>
+        /* Custom date picker styling for dark mode */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(82%) sepia(28%) saturate(1212%) hue-rotate(42deg) brightness(98%) contrast(93%);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            background-color: rgba(163, 230, 53, 0.1);
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-black text-white">
     <div class="flex min-h-screen">
