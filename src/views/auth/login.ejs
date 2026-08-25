@@ -167,14 +167,18 @@
                         <label class="block text-sm mb-2">
                             Password
                         </label>
-
-                        <input
-                            id="loginPassword"
-                            type="password"
-                            name="password"
-                            placeholder="Enter your password"
-                            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:border-lime-400 focus:outline-none"
-                        >
+                        <div class="relative">
+                            <input
+                                id="loginPassword"
+                                type="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                class="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-12 py-3 focus:border-lime-400 focus:outline-none"
+                            >
+                            <button type="button" class="toggle-password absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- error -->
