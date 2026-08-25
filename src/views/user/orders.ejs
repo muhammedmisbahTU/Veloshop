@@ -54,6 +54,74 @@ Search
 
 
 </div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+async function retryPayment(orderId) {
+    try {
+        const response = await fetch(`/payment/retry/${orderId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success && data.paymentRequired) {
+            const options = {
+                key: data.keyId,
+                amount: data.amount,
+                currency: data.currency,
+                name: "Veloshop",
+                description: "Retry Payment",
+                order_id: data.razorpayOrderId,
+                handler: async function (response) {
+                    try {
+                        const verifyRes = await fetch("/payment/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                orderId: data.orderId,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            })
+                        });
+                        const verifyData = await verifyRes.json();
+                        if (verifyData.success) {
+                            window.location.href = `/order-success/${data.orderId}`;
+                        } else {
+                            window.location.href = `/payment-failure/${data.orderId}?message=${encodeURIComponent(verifyData.message || "Payment verification failed")}`;
+                        }
+                    } catch (e) {
+                        window.location.href = `/payment-failure/${data.orderId}?message=VerificationRequestError`;
+                    }
+                },
+                modal: {
+                    ondismiss: function () {
+                        fetch(`/payment/cancel/${data.orderId}`, { method: "POST" })
+                            .finally(() => {
+                                window.location.href = `/payment-failure/${data.orderId}?message=PaymentCancelledByUser`;
+                            });
+                    }
+                },
+                theme: { color: "#a3e635" }
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Cannot retry payment",
+                text: data.message || "Failed to initialize payment gateway."
+            });
+        }
+    } catch (err) {
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Network error while retrying payment."
+        });
+    }
+}
+</script>
 
 
     <% if(orders && orders.length > 0){ %>
@@ -241,8 +309,14 @@ Search
                 <!-- Button -->
 
 
-                <div class="flex items-center">
-
+                <div class="flex items-center gap-3">
+                    <% if (order.status === "PAYMENT_FAILED" || (order.paymentMethod === "ONLINE" && order.paymentStatus === "FAILED")) { %>
+                        <button
+                            onclick="retryPayment('<%= order._id %>')"
+                            class="bg-blue-500 hover:bg-blue-400 transition text-white font-semibold px-6 py-3 rounded-xl">
+                            Retry Payment
+                        </button>
+                    <% } %>
 
                     <a
                         href="/orders/<%= order._id %>"
@@ -251,7 +325,6 @@ Search
                         View Details
 
                     </a>
-
 
                 </div>
 
