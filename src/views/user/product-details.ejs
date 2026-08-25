@@ -188,11 +188,11 @@
             </span>
 
             <!-- Offers Section -->
-            <% if (productOffer || categoryOffer) { %>
+            <% if (locals.productOffer || locals.categoryOffer) { %>
                 <div class="bg-zinc-950 border border-white/5 rounded-2xl p-4 my-4 space-y-3">
                     <p class="text-xs uppercase tracking-wider text-lime-400 font-black">Available Offers</p>
                     
-                    <% if (productOffer) { %>
+                    <% if (locals.productOffer) { %>
                         <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-900/50 border border-white/5">
                             <div>
                                 <span class="text-sm font-bold text-white"><%= productOffer.title %></span>
@@ -208,7 +208,7 @@
                         </div>
                     <% } %>
 
-                    <% if (categoryOffer) { %>
+                    <% if (locals.categoryOffer) { %>
                         <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-900/50 border border-white/5">
                             <div>
                                 <span class="text-sm font-bold text-white"><%= categoryOffer.title %></span>
@@ -792,8 +792,8 @@ wishlistBtn.addEventListener("click", async () => {
 </script>
 <script>
 
-const productOffer = <%- JSON.stringify(productOffer || null) %>;
-const categoryOffer = <%- JSON.stringify(categoryOffer || null) %>;
+const productOffer = <%- JSON.stringify(locals.productOffer || null) %>;
+const categoryOffer = <%- JSON.stringify(locals.categoryOffer || null) %>;
 const variants = <%- JSON.stringify(
     variants.map(v=>({
         id:v._id,

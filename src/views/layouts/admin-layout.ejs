@@ -7,6 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="https://unpkg.com/just-validate@latest/dist/just-validate.production.min.js"></script>
+    <style>
+        /* Custom date picker styling for dark mode */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(82%) sepia(28%) saturate(1212%) hue-rotate(42deg) brightness(98%) contrast(93%);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            background-color: rgba(163, 230, 53, 0.1);
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-black text-white">
     <div class="flex min-h-screen">
@@ -94,6 +107,102 @@
               }
             });
           }
+
+          // Double submit prevention and button loading indicators
+          let activeBtn = null;
+          let isSubmittingForm = false;
+
+          function setButtonLoading(btn) {
+            if (btn.hasAttribute('data-loading') || btn.disabled) return;
+            activeBtn = btn;
+            const originalContent = btn.innerHTML || btn.value || '';
+            
+            btn.setAttribute('data-loading', 'true');
+            btn.setAttribute('data-original-content', originalContent);
+            btn.disabled = true;
+            btn.classList.add('pointer-events-none', 'opacity-70');
+
+            if (btn.tagName === 'INPUT') {
+              btn.value = 'Processing...';
+            } else {
+              btn.innerHTML = `
+                <span class="inline-flex items-center gap-2">
+                  <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              `;
+            }
+          }
+
+          function restoreButtonState(btn) {
+            if (!btn || !btn.hasAttribute('data-loading')) return;
+            const content = btn.getAttribute('data-original-content') || '';
+            if (btn.tagName === 'INPUT') {
+              btn.value = content;
+            } else {
+              btn.innerHTML = content;
+            }
+            btn.removeAttribute('data-loading');
+            btn.removeAttribute('data-original-content');
+            btn.disabled = false;
+            btn.classList.remove('pointer-events-none', 'opacity-70');
+            if (activeBtn === btn) {
+              activeBtn = null;
+            }
+          }
+
+          document.addEventListener('click', (e) => {
+            const btn = e.target.closest('button, input[type="submit"], a.btn-submit');
+            if (!btn) return;
+            
+            const form = btn.closest('form');
+            if (form) {
+              form._submitButton = btn;
+            } else {
+              setButtonLoading(btn);
+            }
+          });
+
+          document.addEventListener('submit', (e) => {
+            const form = e.target;
+            const btn = form._submitButton || form.querySelector('button[type="submit"], input[type="submit"]');
+            if (btn) {
+              setButtonLoading(btn);
+              isSubmittingForm = true;
+              
+              setTimeout(() => {
+                if (e.defaultPrevented && !btn.hasAttribute('data-fetch-active')) {
+                  isSubmittingForm = false;
+                  restoreButtonState(btn);
+                }
+              }, 50);
+            }
+          });
+
+          const originalFetch = window.fetch;
+          window.fetch = async function(...args) {
+            const currentBtn = activeBtn;
+            if (currentBtn) {
+              currentBtn.setAttribute('data-fetch-active', 'true');
+            }
+            try {
+              const response = await originalFetch(...args);
+              setTimeout(() => {
+                if (currentBtn) currentBtn.removeAttribute('data-fetch-active');
+                restoreButtonState(currentBtn);
+              }, 500);
+              return response;
+            } catch (err) {
+              setTimeout(() => {
+                if (currentBtn) currentBtn.removeAttribute('data-fetch-active');
+                restoreButtonState(currentBtn);
+              }, 500);
+              throw err;
+            }
+          };
         });
       })();
     </script>

@@ -29,9 +29,14 @@ export const couponSchema = Joi.object({
     .positive()
     .required()
     .custom((value, helpers) => {
-      const discountType = helpers.state.ancestors[0].discountType;
+      const parent = helpers.state.ancestors[0];
+      const discountType = parent.discountType;
+      const minimumPurchase = Number(parent.minimumPurchase) || 0;
       if (discountType === "PERCENTAGE" && value > 100) {
         return helpers.message("Percentage discount cannot exceed 100.");
+      }
+      if (discountType === "FIXED" && value > minimumPurchase) {
+        return helpers.message("Fixed discount value cannot exceed the minimum purchase amount.");
       }
       return value;
     })
@@ -44,6 +49,15 @@ export const couponSchema = Joi.object({
   minimumPurchase: Joi.number()
     .min(0)
     .default(0)
+    .custom((value, helpers) => {
+      const parent = helpers.state.ancestors[0];
+      const discountType = parent.discountType;
+      const discountValue = Number(parent.discountValue) || 0;
+      if (discountType === "FIXED" && discountValue > value) {
+        return helpers.message("Minimum purchase amount must be greater than or equal to the fixed discount value.");
+      }
+      return value;
+    })
     .messages({
       "number.base": "Minimum purchase must be a number.",
       "number.min": "Minimum purchase cannot be negative."

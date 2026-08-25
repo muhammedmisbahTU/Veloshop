@@ -110,17 +110,27 @@
                 <!-- Password -->
                 <div>
                     <label class="text-sm text-gray-300">Password</label>
-                    <input id="password" type="password" name="password"
-                        class="w-full mt-2 p-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
-                        placeholder="Create password">
+                    <div class="relative">
+                        <input id="password" type="password" name="password"
+                            class="w-full mt-2 pl-3 pr-12 py-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
+                            placeholder="Create password">
+                        <button type="button" class="toggle-password absolute right-4 top-1/2 -translate-y-1/2 mt-1 text-gray-400 hover:text-white">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Confirm -->
                 <div>
                     <label class="text-sm text-gray-300">Confirm Password</label>
-                    <input id="confirmPassword" type="password" name="confirmPassword"
-                        class="w-full mt-2 p-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
-                        placeholder="Confirm password">
+                    <div class="relative">
+                        <input id="confirmPassword" type="password" name="confirmPassword"
+                            class="w-full mt-2 pl-3 pr-12 py-3 bg-black/60 border border-white/10 rounded-xl focus:border-lime-400 outline-none"
+                            placeholder="Confirm password">
+                        <button type="button" class="toggle-password absolute right-4 top-1/2 -translate-y-1/2 mt-1 text-gray-400 hover:text-white">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Terms -->
@@ -136,6 +146,20 @@
                 </button>
 
             </form>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-4 my-6">
+                <div class="flex-1 h-px bg-white/10"></div>
+                <span class="text-gray-500 text-xs uppercase tracking-wider">OR CONTINUE WITH</span>
+                <div class="flex-1 h-px bg-white/10"></div>
+            </div>
+
+            <!-- Google Sign-In -->
+            <a href="/auth/google"
+                class="flex items-center justify-center gap-3 border border-white/10 rounded-xl h-14 hover:border-lime-400 transition text-white">
+                <span class="text-xl">G</span>
+                Continue with Google
+            </a>
 
 
         </div>
